@@ -2,7 +2,7 @@
 
 Due elenchi:
 
-1. **Domande per il cliente:** quello che non abbiamo potuto trasformare in una proposta lo chiediamo. Tre vanno sulla slide 20, le altre si tengono pronte.
+1. **Domande per il cliente:** quello che non abbiamo potuto trasformare in una proposta lo chiediamo. Quattro vanno sulla slide 24 (le numero 1, 2, 4 e 5), le altre si tengono pronte.
 2. **Domande dei finti clienti:** per la prova di giovedì 29/10. Chi fa il cliente le usa per mettere in difficoltà chi presenta; sotto ogni domanda c'è una traccia di risposta.
 
 ---
@@ -13,11 +13,11 @@ Per ognuna portiamo la nostra proposta, così il cliente sceglie e non deve inve
 
 | # | Domanda | La nostra proposta | Dove serve |
 |---|---------|--------------------|------------|
-| 1 | Quale proposta di visual preferite (logo, palette)? | Le proposte di DGS | Identità visiva |
+| 1 | Quale proposta di retro delle carte preferite? | Una delle tre proposte di DGS (slide 10) | Identità visiva |
 | 2 | Partite più tattiche e lunghe (20 punti vita) o più rapide (10 punti vita)? Con 20 quasi tutte finiscono a mazzo esaurito | Decidere dopo le simulazioni del motore; oggi 20 | Regolamento |
 | 3 | Il rank deve esserci alla consegna del 10/12, o può arrivare dopo? | Dopo le funzionalità obbligatorie | Roadmap |
 | 4 | Quante carte deve avere il catalogo alla consegna? | Circa 30 (oggi 12 di prova) | DGS, catalogo |
-| 5 | Come guadagna crediti il giocatore? | Ricompensa giornaliera + premio per le vittorie | Economia di gioco |
+| 5 | Le ricompense in Dream Credits vi sembrano giuste? | Quelle della slide 12: 500 alla registrazione, 50 al giorno, 100 per la missione giornaliera, 30 a vittoria (max 3 al giorno), 250 per l'obiettivo settimanale | Economia di gioco |
 | 6 | Il portale deve inviare email (recupero password, conferma dell'account)? | Solo il recupero password, se c'è tempo | Backend |
 | 7 | Serve un'età minima per registrarsi? | Nessuna domanda in più alla registrazione, solo i consensi a Privacy e Termini | Privacy |
 | 8 | Il gioco deve essere anche in inglese? | Solo italiano in fase 1, testi pronti per la traduzione | Frontend |

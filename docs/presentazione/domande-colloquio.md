@@ -2,7 +2,7 @@
 
 Due elenchi:
 
-1. **Domande per il cliente:** quello che non abbiamo potuto trasformare in una proposta lo chiediamo. Quattro vanno sulla slide 24 (le numero 1, 2, 4 e 5), le altre si tengono pronte.
+1. **Domande per il cliente:** quello che non abbiamo potuto trasformare in una proposta lo chiediamo. Quattro vanno sulla slide 25 (le numero 1, 2, 4 e 5), le altre si tengono pronte.
 2. **Domande dei finti clienti:** per la prova di giovedì 29/10. Chi fa il cliente le usa per mettere in difficoltà chi presenta; sotto ogni domanda c'è una traccia di risposta.
 
 ---

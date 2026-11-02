@@ -1,6 +1,6 @@
 # Colloquio con il cliente · Testi delle slide
 
-Primo incontro con il cliente: **lunedì 2 novembre 2026**. 24 slide in **9 minuti e 40 secondi** (su 10 a disposizione), poi circa 5 minuti di domande.
+Primo incontro con il cliente: **lunedì 2 novembre 2026**. 25 slide in circa **10 minuti e 15 secondi** (15 secondi oltre i 10 a disposizione), poi circa 5 minuti di domande.
 
 Presentano **Cristian** e **Marco**. Le slide usano il design system di Web Development (Midnight `#111522`, Antique Gold `#C9955D`, Ivory `#E8D9C4`, Dream Blue `#8FC8F4`; Cinzel, Cormorant Garamond, Inter) e raccolgono il lavoro dei tre team. Per ogni slide c'è cosa si vede e cosa si dice a voce.
 
@@ -13,8 +13,8 @@ Presentano **Cristian** e **Marco**. Le slide usano il design system di Web Deve
 | A | 0:00–3:40 | 3:40 | Chi siamo, brief, concept, mercato, marketing, identità visiva, fazioni e carte | Cristian | 1–10 |
 | B | 3:40–8:10 | 4:30 | Lord, economia di gioco, regole, proposta tecnica, sito e mockup | Marco | 11–21 |
 | C | 8:10–9:05 | 0:55 | Metodo di lavoro e board | Cristian | 22–23 |
-| D | 9:05–9:40 | 0:35 | Cosa chiediamo al cliente, chiusura | Marco | 24 |
-| | 9:40–15:00 | ~5:00 | Domande del cliente | Entrambi | Si torna alle slide che servono |
+| D | 9:05–10:15 | 1:10 | Costi, cosa chiediamo al cliente, chiusura | Marco | 24–25 |
+| | 10:15–15:00 | ~4:45 | Domande del cliente | Entrambi | Si torna alle slide che servono |
 
 | N. | Slide | Chi | Inizio | Durata |
 |----|-------|-----|--------|--------|
@@ -41,9 +41,10 @@ Presentano **Cristian** e **Marco**. Le slide usano il design system di Web Deve
 | 21 | Mockup: scambio tra amici | Marco | 7:50 | 20 s |
 | 22 | Come lavoriamo | Cristian | 8:10 | 35 s |
 | 23 | La nostra board | Cristian | 8:45 | 20 s |
-| 24 | Cosa vi chiediamo oggi | Marco | 9:05 | 35 s |
+| 24 | Quanto costa e quando si ripaga | Marco | 9:05 | 35 s |
+| 25 | Cosa vi chiediamo oggi | Marco | 9:40 | 35 s |
 
-Cambi di voce: tre (Cristian → Marco alla 11 → Cristian alla 22 → Marco alla 24). Chi passa la parola lo dice con una frase: "Ora Marco vi mostra come si gioca" (fine della 10) e "Cristian vi spiega come lavoriamo" (fine della 21).
+Cambi di voce: tre (Cristian → Marco alla 11 → Cristian alla 22 → Marco dalla 24). Chi passa la parola lo dice con una frase: "Ora Marco vi mostra come si gioca" (fine della 10) e "Cristian vi spiega come lavoriamo" (fine della 21).
 
 ---
 
@@ -105,7 +106,7 @@ In piccolo: "Tutte le richieste obbligatorie sono coperte, e ne aggiungiamo altr
 
 **Sulla slide:** lo slogan «Entra nel sogno. Affronta l'incubo.», cinque format (Creature Reveal, Pack Opening, Dream or Nightmare?, Dreamscape Community su Discord, Enter the Dreamscape) e il lancio in tre mesi: Teasing, Engagement, Launch verso 5.000 utenti. Canali: TikTok, Instagram, YouTube, Discord, Google Ads.
 
-**A voce:** i format e le tre fasi del lancio. Budget e costi di acquisizione arrivano con il media plan.
+**A voce:** i format e le tre fasi del lancio. I costi del lancio si vedono alla slide 24.
 
 ### Slide 7 · Direzione visiva (20 s)
 
@@ -290,9 +291,28 @@ In piccolo: "In più il backoffice per l'admin: carte, pacchetti e configurazion
 
 ---
 
-## Blocco D · Chiusura (Marco, 0:35)
+## Blocco D · Costi e chiusura (Marco, 1:10)
 
-### Slide 24 · Cosa vi chiediamo oggi (35 s)
+### Slide 24 · Quanto costa e quando si ripaga (35 s)
+
+**Sulla slide:** "Stima di Digital Strategy, da confermare con preventivi e con i primi dati reali".
+
+| Numero | Voce | In piccolo |
+|--------|------|------------|
+| 110.000 € | Sviluppo del portale | Prima del lancio. Fascia stimata: 90.000–140.000 € |
+| 24.000 € | Primi 3 mesi | Marketing di lancio per arrivare a 5.000 giocatori |
+| 2.500 € al mese | Gestione | Server, sicurezza, contenuti e supporto. Sale con i giocatori |
+| ≈ 280.000 € | Finanziamento da prevedere | Il punto più basso, al mese 19, con il 15% di riserva |
+
+A destra il grafico "Quando l'investimento si ripaga": il saldo (incassi meno spese) mese per mese, dal lancio a 4 anni, in tre scenari. Ottimista: pari al mese 34. Base: pari al mese 48. Prudente: oltre il mese 48. Il punto più basso del caso base è −242.000 € al mese 19.
+
+In basso: "Ricavi solo dal secondo anno, con acquisti facoltativi: Dream Pass da 10 € al mese, ricariche di Dream Credits e oggetti estetici. Nessun vantaggio in partita."
+
+**A voce:** lo sviluppo costa 110.000 euro, il lancio 24.000 euro per i primi tre mesi, la gestione 2.500 euro al mese. Nel momento più difficile, intorno al mese 19, servono circa 280.000 euro, riserva compresa. I ricavi arrivano dal secondo anno, solo con acquisti facoltativi. Nel caso base l'investimento si ripaga in 4 anni, in meno di 3 se va meglio, oltre i 4 se va peggio. "È una stima: la confermiamo con i preventivi e con i primi dati reali."
+
+Se chiedono il costo totale: in 4 anni si spendono circa **542.000 €** (sviluppo 130.000, marketing 201.000, gestione 180.000, commissioni 31.000), ma più della metà la pagano gli incassi. Per questo da avere da parte bastano circa 280.000 €. Il margine del caso base è piccolo (+4.191 € al mese 48): con il 10% di costi di sviluppo in più il saldo va sotto zero.
+
+### Slide 25 · Cosa vi chiediamo oggi (35 s)
 
 **Sulla slide:** quattro domande e "Grazie. Ora le vostre domande."
 

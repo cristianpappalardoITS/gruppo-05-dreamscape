@@ -14,6 +14,15 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 | [Template](template.md) | Issue, bug, pull request, commit, classi Java, test, decisioni, verbali, `.editorconfig` |
 | [Checklist PR](checklist-pr.md) | Controlli da fare prima di aprire una pull request |
 
+## Guide per i team
+
+| Documento | Contenuto |
+|-----------|-----------|
+| [Guida per Web Development](guide/web-development.md) | Regole e decisioni da seguire nel codice del frontend dal 2/11 |
+| [Guida per Digital Strategy](guide/digital-strategy.md) | Glossario, numeri del gioco e come consegnare catalogo, illustrazioni e testi |
+| [Guida per Software Development](guide/software-development.md) | Motore, backend e database: regole, numeri del gioco e cosa dobbiamo a Web e Digital |
+| [Cose da decidere del 2/11](riunioni/2026-11-02-cose-da-decidere.md) ([PDF](riunioni/2026-11-02-cose-da-decidere.pdf)) | Domande a cui il gruppo deve rispondere per iniziare lo sviluppo |
+
 ## Progettazione
 
 | Documento | Contenuto |

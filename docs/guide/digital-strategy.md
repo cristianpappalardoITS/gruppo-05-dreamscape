@@ -19,7 +19,7 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 
 ## 1. Account GitHub e consegne
 
-- Nel repository oggi c'è solo Valerio (`decosm`). Come entrano **Sara e Maie** è ancora da decidere (domanda 3 del 2/11): l'account serve per assegnare le loro issue.
+- Nel repository ci siete tutti e tre: Valerio (`decosm`), Sara (`saramoutawakil-dotcom`) e Maie (`maie444`), dal 3/11. L'account serve per assegnarvi le issue.
 - **Le consegne vanno sul Drive del gruppo** (decisione 10 del 2/11), con i nomi dei file della tabella qui sotto. Non serve GitHub.
   1. Caricate i file sul Drive, nella cartella della consegna.
   2. Avvisate Marco o Cristian, con il numero della issue.

@@ -29,7 +29,7 @@ Alcune decisioni vanno contro quello che oggi è scritto nelle guide e nelle reg
 | **A** | **Prima di scrivere codice** | | | | |
 | 1 | Creiamo il branch `develop`? | Sì, oggi, protetto | Cristian | 2/11 | ✅ Sì, develop da main, protetto |
 | 2 | Aggiungiamo `.editorconfig` nella radice? | Sì, quello di `template.md` | Cristian | 2/11 | ✅ Con il progetto backend (#68) |
-| 3 | Come entrano Sara e Maie nel repository? | Username a Cristian, invito oggi | Sara, Maie, Cristian | 3/11 | ⏳ Non ancora deciso |
+| 3 | Come entrano Sara e Maie nel repository? | Username a Cristian, invito oggi | Sara, Maie, Cristian | 3/11 | ✅ Nel repository dal 3/11 |
 | 4 | Allineiamo il SiteMap di Alessandro alle decisioni? | Sì, prima delle pagine dello Sprint 4 | Alessandro, Gaia | 6/11 | ✅ Alessandro entro il 6/11, Gaia controlla |
 | 5 | Mazzi non validi: si salvano come bozza? | No, solo mazzi validi | SWD, WMD | 6/11 | ✅ Solo mazzi validi |
 | 6 | Carte offerte in uno scambio: bloccate? | No, ricontrollate all'accettazione | SWD | 6/11 | ✅ Non bloccate, ricontrollate all'accettazione |

@@ -9,5 +9,5 @@
 - [ ] Il motore non dipende da Spring o dal database
 - [ ] I test passano e le parti nuove hanno i loro test
 - [ ] Documentazione aggiornata (`docs/api`, `docs/decisioni`, README di modulo)
-- [ ] Nessuna password, chiave o file generato (`target/`, `node_modules/`...)
+- [ ] Nessuna password, chiave o file generato (`build/`, `node_modules/`...)
 - [ ] La PR collega la issue con `Closes #numero`

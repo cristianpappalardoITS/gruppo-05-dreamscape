@@ -280,7 +280,7 @@ Cosa cambia per SWD, WMD, DGS. Cosa resta aperto.
 - ...
 ```
 
-## Template: README di modulo (`engine/README.md`, `backend/README.md`...)
+## Template: README di modulo (`engine/README.md`, `sviluppo/backend/README.md`...)
 
 ````markdown
 # Nome modulo
@@ -288,17 +288,18 @@ Cosa cambia per SWD, WMD, DGS. Cosa resta aperto.
 Cosa fa il modulo, in una o due frasi.
 
 ## Requisiti
-- Java 17+
-- Maven 3.9+
+- Java 25
+- Docker (PostgreSQL e test con Testcontainers)
+- Gradle: non serve installarlo, c'è il wrapper `./gradlew`
 
 ## Avvio
 ```bash
-mvn spring-boot:run
+./gradlew bootRun
 ```
 
 ## Test
 ```bash
-mvn test
+./gradlew test
 ```
 
 ## Configurazione

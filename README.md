@@ -11,11 +11,9 @@ Progetto Laboratorio Integrato · Gruppo 5 · **Somnia**
 
 | Team | Membri | Ambito |
 |------|--------|--------|
-| **SWD** · Software Developer | Cristian (TL), Marco (Vice TL), Nicolas | Motore di gioco, backend, database, API |
-| **WMD** · Web Developer | Gaia (TL), Alessandro, Daniele, Yuri | Sitemap, UX/UI, wireframe, frontend |
-| **DGS** · Digital Strategist | Sara (TL), Valerio, Maie | Concept, lore, economia di gioco, marketing |
-
-> 🚧 Il brief chiede lo username GitHub di ogni studente (`@username`): va aggiunto qui per tutti i membri.
+| **SWD** · Software Developer | Cristian (TL, [@cristianpappalardoITS](https://github.com/cristianpappalardoITS)), Marco (Vice TL, [@marcorizzone](https://github.com/marcorizzone)), Nicolas ([@nicolascurra-its](https://github.com/nicolascurra-its)) | Motore di gioco, backend, database, API |
+| **WMD** · Web Developer | Gaia (TL, [@gaia-giachero](https://github.com/gaia-giachero)), Alessandro ([@alessandroalzati-boop](https://github.com/alessandroalzati-boop)), Daniele ([@danieleocchii](https://github.com/danieleocchii)), Yuri ([@yuribrescia-cyber](https://github.com/yuribrescia-cyber)) | Sitemap, UX/UI, wireframe, frontend |
+| **DGS** · Digital Strategist | Sara (TL, [@saramoutawakil-dotcom](https://github.com/saramoutawakil-dotcom)), Valerio ([@decosm](https://github.com/decosm)), Maie ([@maie444](https://github.com/maie444)) | Concept, lore, economia di gioco, marketing |
 
 Le decisioni finali dei task comuni (COM-xx) vanno comunicate a **Marco** o **Cristian**, che le registrano in [`docs/decisioni/`](docs/decisioni/README.md).
 

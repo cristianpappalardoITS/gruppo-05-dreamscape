@@ -27,9 +27,16 @@
 -- I Dreamweaver (giocatori) e gli admin.
 -- Gli utenti non si cancellano: si disattivano con is_enabled = FALSE.
 -- Così storico di sfide e scambi resta sempre completo.
--- rating è il punteggio del rank (tipo Elo, si parte da 1000). Si usa solo quando
--- il rank viene attivato, dopo le funzionalità obbligatorie. Le leghe non si salvano:
--- si calcolano dal punteggio.
+-- rating è il punteggio del rank (Elo con K = 32, si parte da 1000). Cambia solo con le
+-- partite classificate. La lega attuale si calcola dal punteggio con la tabella leagues.
+-- starter_faction_id: la fazione scelta nella pagina Benvenuto per il set iniziale.
+-- NULL finché il giocatore non sceglie; una volta scelta non cambia più, e così
+-- set iniziale e pacchetti di benvenuto si ricevono una volta sola.
+-- ranked_deck_id: il "mazzo classificato", quello che il matchmaking usa quando il
+-- giocatore viene scelto come avversario (anche se non è collegato). La chiave esterna
+-- si aggiunge in V3, dopo la creazione di decks.
+-- last_daily_reward_on: giorno (ora italiana) dell'ultima ricompensa per l'accesso
+-- giornaliero. Un UPDATE atomico su questa colonna impedisce di riceverla due volte.
 -- privacy_accepted_at / terms_accepted_at: quando il giocatore ha accettato Privacy Policy
 -- e Termini di servizio alla registrazione. Obbligatori per i giocatori; l'admin, creato
 -- all'avvio da variabili d'ambiente, non passa dalla registrazione.
@@ -41,6 +48,9 @@ CREATE TABLE users (
     role                VARCHAR(20)  NOT NULL DEFAULT 'PLAYER',
     credits             INT          NOT NULL DEFAULT 0,
     rating              INT          NOT NULL DEFAULT 1000,
+    starter_faction_id  UUID         NULL,
+    ranked_deck_id      UUID         NULL,
+    last_daily_reward_on DATE        NULL,
     is_enabled          BOOLEAN      NOT NULL DEFAULT TRUE,
     privacy_accepted_at TIMESTAMPTZ  NULL,
     terms_accepted_at   TIMESTAMPTZ  NULL,
@@ -215,6 +225,9 @@ CREATE TABLE cards (
                                        AND (full_art_illustration_url IS NULL) = (full_art_thumb_url IS NULL))
 );
 
+-- Ora che factions esiste, si collega la fazione del set iniziale scelta dal giocatore.
+ALTER TABLE users ADD CONSTRAINT fk_users_starter_faction FOREIGN KEY (starter_faction_id) REFERENCES factions (id);
+
 -- Ora che cards esiste, si collega il Lord di ogni fazione alla sua carta.
 -- Che sia una Leggendaria della stessa fazione lo controlla il service.
 ALTER TABLE factions
@@ -230,12 +243,16 @@ ALTER TABLE factions
 --   ON_DEATH     quando la carta viene uccisa
 --   ON_KILL      quando la carta uccide una creatura avversaria
 -- description è il testo per i giocatori; {value} viene sostituito con card_effects.effect_value.
+-- has_value: TRUE se l'effetto ha il valore X (es. "Indebolimento 2"). Il backoffice chiede
+-- il numero solo per questi effetti; il service controlla che card_effects.effect_value
+-- ci sia se e solo se has_value è TRUE.
 CREATE TABLE effects (
     id            UUID        NOT NULL DEFAULT uuidv7(),
     code          VARCHAR(50)  NOT NULL,
     name          VARCHAR(80)  NOT NULL,
     description   VARCHAR(255) NOT NULL,
     trigger_event VARCHAR(20)  NOT NULL,
+    has_value     BOOLEAN      NOT NULL DEFAULT FALSE,
     CONSTRAINT pk_effects PRIMARY KEY (id),
     CONSTRAINT uq_effects_code UNIQUE (code),
     CONSTRAINT uq_effects_name UNIQUE (name),
@@ -293,6 +310,11 @@ CREATE TABLE decks (
     CONSTRAINT fk_decks_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
+-- Ora che decks esiste, si collega il mazzo classificato. Se il mazzo viene cancellato
+-- il giocatore resta senza mazzo classificato e il matchmaking non lo sceglie più.
+-- Che il mazzo sia del giocatore e valido lo controlla il service.
+ALTER TABLE users ADD CONSTRAINT fk_users_ranked_deck FOREIGN KEY (ranked_deck_id) REFERENCES decks (id) ON DELETE SET NULL;
+
 -- Le carte di un mazzo. I vincoli del regolamento (20 carte, copie massime per rarità,
 -- limiti per TIER, possesso delle carte) si verificano nel service, non qui.
 -- Full art e copia normale sono la stessa carta: nel mazzo contano insieme.
@@ -318,9 +340,17 @@ CREATE TABLE deck_cards (
 -- V4__create_packs.sql
 -- ============================================================================
 
--- I pacchetti (gestiti dal backoffice).
--- pack_type: SHOP = in vendita nel negozio; STARTER = set iniziale regalato alla
--- registrazione; WELCOME = pacchetto di benvenuto regalato alla registrazione.
+-- I pacchetti (gestiti dal backoffice). Oggi in vendita c'è il Dream Pack; il cliente vuole
+-- più tipi di pacchetti a prezzi diversi, che sono righe di questa tabella: prezzo, slot,
+-- pesi e full_art_chance bastano anche per pacchetti più cari con carte più rare.
+-- pack_type: SHOP = in vendita nel negozio; STARTER = set iniziale; WELCOME = pacchetto
+-- di benvenuto. STARTER e WELCOME si regalano quando il giocatore sceglie la fazione
+-- nella pagina Benvenuto.
+-- faction_id: se valorizzato, il pacchetto pesca solo le carte di quella fazione
+-- (es. i tre set iniziali, uno per fazione, o un futuro pacchetto di fazione).
+-- NULL = tutte le fazioni.
+-- available_from / available_until: periodo di vendita per i pacchetti a tempo
+-- (es. un evento). NULL = nessun limite da quel lato.
 -- Il set iniziale (slot 14 Comuni + 6 Rare) si estrae a caso ma senza superare le copie
 -- massime per carta (rarities.max_copies): così forma sempre un mazzo valido, che il
 -- giocatore compone da sé. Il limite lo applica il service solo ai pacchetti STARTER.
@@ -329,6 +359,7 @@ CREATE TABLE deck_cards (
 -- NULL = pesca da tutte le espansioni attive.
 -- full_art_chance: probabilità (in percentuale) che una carta con versione full art
 -- esca come full art. Si regola per pacchetto, es. più alta in un pacchetto speciale.
+-- Dream Pack: 20% delle Leggendarie, cioè l'1% del pacchetto.
 CREATE TABLE packs (
     id              UUID        NOT NULL DEFAULT uuidv7(),
     name            VARCHAR(60)  NOT NULL,
@@ -336,7 +367,10 @@ CREATE TABLE packs (
     pack_type       VARCHAR(20)  NOT NULL DEFAULT 'SHOP',
     price_credits   INT          NOT NULL DEFAULT 0,
     card_set_id     UUID         NULL,
-    full_art_chance NUMERIC(5,2) NOT NULL DEFAULT 5.00,
+    faction_id      UUID         NULL,
+    full_art_chance NUMERIC(5,2) NOT NULL DEFAULT 20.00,
+    available_from  TIMESTAMPTZ  NULL,
+    available_until TIMESTAMPTZ  NULL,
     image_url       VARCHAR(500) NULL,
     is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ  NOT NULL DEFAULT now(),
@@ -344,10 +378,13 @@ CREATE TABLE packs (
     CONSTRAINT pk_packs PRIMARY KEY (id),
     CONSTRAINT uq_packs_name UNIQUE (name),
     CONSTRAINT fk_packs_card_set FOREIGN KEY (card_set_id) REFERENCES card_sets (id),
+    CONSTRAINT fk_packs_faction FOREIGN KEY (faction_id) REFERENCES factions (id),
     CONSTRAINT chk_packs_type CHECK (pack_type IN ('SHOP', 'STARTER', 'WELCOME')),
     CONSTRAINT chk_packs_price CHECK ((pack_type = 'SHOP' AND price_credits > 0)
                                       OR (pack_type <> 'SHOP' AND price_credits = 0)),
-    CONSTRAINT chk_packs_full_art_chance CHECK (full_art_chance BETWEEN 0 AND 100)
+    CONSTRAINT chk_packs_full_art_chance CHECK (full_art_chance BETWEEN 0 AND 100),
+    CONSTRAINT chk_packs_availability CHECK (available_from IS NULL OR available_until IS NULL
+                                             OR available_from < available_until)
 );
 
 -- Le copertine di un pacchetto: stesso contenuto, immagine diversa.
@@ -372,8 +409,8 @@ CREATE TABLE pack_covers (
 
 -- Gli slot del pacchetto: ogni slot dà card_count carte.
 -- La rarità di ogni carta dello slot si estrae con i pesi di pack_slot_rarities.
--- Es. pacchetto base: slot 1 = 3 carte COMMON; slot 2 = 1 carta RARE;
---     slot 3 = 1 carta EPIC (peso 90) o LEGENDARY (peso 10).
+-- Es. Dream Pack: slot 1 = 3 carte COMMON; slot 2 = 1 carta RARE;
+--     slot 3 (speciale) = 1 carta RARE (peso 70), EPIC (peso 25) o LEGENDARY (peso 5).
 CREATE TABLE pack_slots (
     id         UUID        NOT NULL DEFAULT uuidv7(),
     pack_id    UUID   NOT NULL,
@@ -401,7 +438,8 @@ CREATE TABLE pack_slot_rarities (
 );
 
 -- Ogni apertura di un pacchetto (comprato e aperto subito, oppure regalato).
--- source: PURCHASE = comprato nel negozio; SIGNUP = set iniziale e pacchetti di benvenuto.
+-- source: PURCHASE = comprato nel negozio; SIGNUP = set iniziale e pacchetti di benvenuto,
+-- regalati quando il giocatore sceglie la fazione nella pagina Benvenuto.
 -- price_paid salva il prezzo del momento, che può cambiare in seguito (0 se regalato).
 -- pack_cover_id: la copertina scelta (NULL se il pacchetto non ne ha).
 CREATE TABLE pack_openings (
@@ -512,8 +550,9 @@ CREATE TABLE trade_items (
 -- V6__create_game_modes_challenges_and_matches.sql
 -- ============================================================================
 
--- Le modalità di gioco. Oggi ce n'è una sola, BASE, con gli effetti delle carte
--- (il brief aggiornato permette di modificare la modalità Base).
+-- Le modalità di gioco, cioè le regole. Oggi ce n'è una sola, BASE, con gli effetti delle
+-- carte (il brief aggiornato permette di modificare la modalità Base). Partite rapide e
+-- classificate usano le stesse regole: il tipo di partita sta in matches.match_type.
 -- starting_life_points e round_limit sono i valori del regolamento: un formato futuro
 -- che cambia solo i numeri è una riga nuova. is_active lo accende e spegne dal backoffice.
 -- Carte per mazzo e copie restano uguali per tutte le modalità (configurazione e rarities),
@@ -532,12 +571,15 @@ CREATE TABLE game_modes (
     CONSTRAINT chk_game_modes_round_limit CHECK (round_limit > 0)
 );
 
--- La modalità BASE serve sempre: il service la cerca per code e la usa per ogni sfida.
+-- La modalità BASE serve sempre: il service la cerca per code e la usa per ogni partita.
 INSERT INTO game_modes (code, name, description, starting_life_points, round_limit, is_active)
 VALUES ('BASE', 'Base', 'Regolamento di Dreamscape, con gli effetti delle carte.', 20, 60, TRUE);
 
--- La sfida: A sceglie il mazzo e sfida B (qualunque Dreamweaver, non solo gli amici);
--- B accetta scegliendo il suo mazzo.
+-- La sfida tra amici: A sceglie il mazzo e sfida un amico B; B accetta scegliendo il suo
+-- mazzo. È sempre una partita rapida: niente rank e niente crediti.
+-- Che siano amici lo controlla il service. Al massimo una sfida PENDING per coppia
+-- (indice uq_challenges_pending_pair). Le partite con chi non è amico non passano da qui:
+-- le crea il matchmaking.
 -- Se un mazzo viene cancellato la colonna diventa NULL: lo storico resta
 -- comunque completo grazie alle copie dei mazzi salvate in matches.
 CREATE TABLE challenges (
@@ -560,11 +602,20 @@ CREATE TABLE challenges (
     CONSTRAINT chk_challenges_different_users CHECK (challenger_id <> opponent_id)
 );
 
+-- Una sola sfida in attesa per coppia, in qualunque direzione.
+CREATE UNIQUE INDEX uq_challenges_pending_pair ON challenges (LEAST(challenger_id, opponent_id),
+                                                              GREATEST(challenger_id, opponent_id))
+    WHERE status = 'PENDING';
 CREATE INDEX idx_challenges_opponent_status ON challenges (opponent_id, status);
 CREATE INDEX idx_challenges_challenger_status ON challenges (challenger_id, status);
 
--- Il risultato della partita simulata dal motore. Una sola partita per sfida.
--- winner_id NULL = pareggio.
+-- Il risultato della partita simulata dal motore. winner_id NULL = pareggio.
+-- match_type: CASUAL = partita rapida (niente rank, niente crediti); RANKED = partita
+-- classificata (rank e crediti per la vittoria).
+-- challenger_id = chi ha avviato la partita (chi ha lanciato la sfida o premuto
+-- "Cerca partita"); opponent_id = chi l'ha accettata o chi ha scelto il matchmaking.
+-- challenge_id: valorizzato solo per le sfide tra amici, che sono sempre CASUAL.
+-- Le partite del matchmaking (rapide o classificate) non hanno una sfida.
 -- starting_life_points e round_limit: copia dei valori della modalità usati in questa
 -- partita, così lo storico resta corretto anche se la modalità cambia.
 -- *_deck_snapshot: copia dei mazzi al momento della partita (carte con ATT, DIF, fazione,
@@ -573,11 +624,14 @@ CREATE INDEX idx_challenges_challenger_status ON challenges (challenger_id, stat
 -- random_seed: permette di rigiocare la stessa partita per verifiche e test
 -- (decide anche il lancio della moneta per l'ordine degli effetti).
 -- *_rating_change: variazione del punteggio di rank; NULL se la partita non conta
--- per il rank (rank non ancora attivo, o oltre le prime partite del giorno contro lo
+-- per il rank (partita rapida, o classificata oltre la terza del giorno contro lo
 -- stesso avversario).
 CREATE TABLE matches (
     id                       UUID        NOT NULL DEFAULT uuidv7(),
-    challenge_id             UUID        NOT NULL,
+    match_type               VARCHAR(10) NOT NULL,
+    challenge_id             UUID        NULL,
+    challenger_id            UUID        NOT NULL,
+    opponent_id              UUID        NOT NULL,
     winner_id                UUID        NULL,
     end_reason               VARCHAR(30) NOT NULL,
     total_rounds             INT         NOT NULL,
@@ -595,11 +649,25 @@ CREATE TABLE matches (
     CONSTRAINT pk_matches PRIMARY KEY (id),
     CONSTRAINT uq_matches_challenge UNIQUE (challenge_id),
     CONSTRAINT fk_matches_challenge FOREIGN KEY (challenge_id) REFERENCES challenges (id) ON DELETE CASCADE,
+    CONSTRAINT fk_matches_challenger FOREIGN KEY (challenger_id) REFERENCES users (id),
+    CONSTRAINT fk_matches_opponent FOREIGN KEY (opponent_id) REFERENCES users (id),
     -- Niente ON DELETE SET NULL: una vittoria non deve mai diventare un pareggio.
     CONSTRAINT fk_matches_winner FOREIGN KEY (winner_id) REFERENCES users (id),
+    CONSTRAINT chk_matches_type CHECK (match_type IN ('CASUAL', 'RANKED')),
+    CONSTRAINT chk_matches_different_users CHECK (challenger_id <> opponent_id),
+    -- Le sfide tra amici sono solo partite rapide.
+    CONSTRAINT chk_matches_challenge_casual CHECK (challenge_id IS NULL OR match_type = 'CASUAL'),
+    -- Le partite rapide non cambiano il rank.
+    CONSTRAINT chk_matches_rating CHECK (match_type = 'RANKED'
+                                         OR (challenger_rating_change IS NULL AND opponent_rating_change IS NULL)),
     CONSTRAINT chk_matches_end_reason CHECK (end_reason IN ('LIFE_POINTS', 'DECK_EXHAUSTED', 'ROUND_LIMIT')),
     CONSTRAINT chk_matches_total_rounds CHECK (total_rounds >= 1 AND total_rounds <= round_limit)
 );
+
+-- Storico delle partite di un giocatore e conteggio delle partite del giorno
+-- (massimo 3 contro lo stesso avversario per rank e crediti, massimo 3 vittorie premiate).
+CREATE INDEX idx_matches_challenger_played ON matches (challenger_id, played_at);
+CREATE INDEX idx_matches_opponent_played ON matches (opponent_id, played_at);
 
 
 -- ============================================================================
@@ -609,7 +677,11 @@ CREATE TABLE matches (
 -- Registro di ogni movimento di crediti. users.credits è il saldo attuale;
 -- questa tabella spiega come ci si è arrivati.
 -- I pacchetti regalati (set iniziale e benvenuto) non muovono crediti.
--- I tipi dipendono da come si ottengono i crediti in fase 1 (decisione DGS).
+-- Tipi: SIGNUP_BONUS (500 alla registrazione), DAILY_REWARD (50 al giorno),
+-- PACK_PURCHASE, MATCH_REWARD (30 per vittoria classificata, massimo 3 al giorno, non
+-- contro un amico), MISSION_REWARD (missioni, collegate da user_missions),
+-- LEAGUE_REWARD (prima volta in una lega, collegata da user_league_rewards),
+-- ADMIN_ADJUSTMENT.
 CREATE TABLE credit_transactions (
     id              UUID        NOT NULL DEFAULT uuidv7(),
     user_id         UUID        NOT NULL,
@@ -624,7 +696,8 @@ CREATE TABLE credit_transactions (
     CONSTRAINT fk_credit_transactions_pack_opening FOREIGN KEY (pack_opening_id) REFERENCES pack_openings (id) ON DELETE SET NULL,
     CONSTRAINT fk_credit_transactions_match FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE SET NULL,
     CONSTRAINT chk_credit_transactions_type CHECK (type IN ('SIGNUP_BONUS', 'DAILY_REWARD', 'PACK_PURCHASE',
-                                                            'MATCH_REWARD', 'ADMIN_ADJUSTMENT')),
+                                                            'MATCH_REWARD', 'MISSION_REWARD', 'LEAGUE_REWARD',
+                                                            'ADMIN_ADJUSTMENT')),
     CONSTRAINT chk_credit_transactions_amount CHECK (amount <> 0),
     CONSTRAINT chk_credit_transactions_balance CHECK (balance_after >= 0)
 );
@@ -655,3 +728,98 @@ CREATE TABLE contact_messages (
 );
 
 CREATE INDEX idx_contact_messages_status_created ON contact_messages (status, created_at);
+
+
+-- ============================================================================
+-- V9__create_missions.sql
+-- ============================================================================
+
+-- Missione giornaliera e obiettivo settimanale (versione semplice, Sprint 6).
+-- All'inizio ci sono solo le due missioni fisse; altre si aggiungono con una riga nuova.
+-- period: DAILY = si azzera ogni giorno a mezzanotte, ora italiana; WEEKLY = si azzera
+-- il lunedì a mezzanotte, ora italiana.
+-- goal_type: cosa si conta, es. PLAY_MATCHES (partite giocate) o WIN_MATCHES (vittorie).
+-- goal_count: quante volte farlo; reward_credits: il premio in DC.
+CREATE TABLE missions (
+    id             UUID        NOT NULL DEFAULT uuidv7(),
+    code           VARCHAR(40)  NOT NULL,
+    name           VARCHAR(80)  NOT NULL,
+    description    VARCHAR(255) NOT NULL,
+    period         VARCHAR(10)  NOT NULL,
+    goal_type      VARCHAR(30)  NOT NULL,
+    goal_count     INT          NOT NULL,
+    reward_credits INT          NOT NULL,
+    is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
+    CONSTRAINT pk_missions PRIMARY KEY (id),
+    CONSTRAINT uq_missions_code UNIQUE (code),
+    CONSTRAINT chk_missions_period CHECK (period IN ('DAILY', 'WEEKLY')),
+    CONSTRAINT chk_missions_goal_type CHECK (goal_type IN ('PLAY_MATCHES', 'WIN_MATCHES')),
+    CONSTRAINT chk_missions_goal_count CHECK (goal_count > 0),
+    CONSTRAINT chk_missions_reward CHECK (reward_credits >= 0)
+);
+
+-- L'avanzamento di ogni giocatore in ogni missione, per periodo.
+-- period_start: il giorno (DAILY) o il lunedì (WEEKLY) del periodo, in ora italiana.
+-- La riga nasce alla prima partita utile del periodo. Quando progress arriva a
+-- goal_count si salva completed_at e si paga il premio (credit_transaction_id).
+-- Il vincolo UNIQUE impedisce di prendere il premio due volte nello stesso periodo.
+CREATE TABLE user_missions (
+    id                    UUID        NOT NULL DEFAULT uuidv7(),
+    user_id               UUID        NOT NULL,
+    mission_id            UUID        NOT NULL,
+    period_start          DATE        NOT NULL,
+    progress              INT         NOT NULL DEFAULT 0,
+    completed_at          TIMESTAMPTZ NULL,
+    credit_transaction_id UUID        NULL,
+    CONSTRAINT pk_user_missions PRIMARY KEY (id),
+    CONSTRAINT uq_user_missions_period UNIQUE (user_id, mission_id, period_start),
+    CONSTRAINT fk_user_missions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_missions_mission FOREIGN KEY (mission_id) REFERENCES missions (id),
+    CONSTRAINT fk_user_missions_credit FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL,
+    CONSTRAINT chk_user_missions_progress CHECK (progress >= 0)
+);
+
+-- Le due missioni della versione semplice. I premi sono quelli confermati dal cliente;
+-- che cosa si conta lo propongono Maie e Nicolas.
+INSERT INTO missions (code, name, description, period, goal_type, goal_count, reward_credits) VALUES
+    ('DAILY_PLAY', 'Missione giornaliera', 'Gioca una partita.', 'DAILY', 'PLAY_MATCHES', 1, 100),
+    ('WEEKLY_WIN', 'Obiettivo settimanale', 'Vinci 5 partite.', 'WEEKLY', 'WIN_MATCHES', 5, 250);
+
+
+-- ============================================================================
+-- V10__create_leagues.sql
+-- ============================================================================
+
+-- Le leghe del rank, dalla più bassa alla più alta: Dormiente, Sognatore, Lucido,
+-- Dreamweaver. Si è in una lega quando rating >= min_rating (e sotto la successiva).
+-- reward_credits: premio in DC la prima volta che si entra nella lega (importi di Maie).
+-- Soglie e premi si cambiano dal backoffice, come le rarità.
+CREATE TABLE leagues (
+    id             UUID        NOT NULL DEFAULT uuidv7(),
+    code           VARCHAR(30) NOT NULL,
+    name           VARCHAR(40) NOT NULL,
+    min_rating     INT         NOT NULL,
+    reward_credits INT         NOT NULL DEFAULT 0,
+    CONSTRAINT pk_leagues PRIMARY KEY (id),
+    CONSTRAINT uq_leagues_code UNIQUE (code),
+    CONSTRAINT uq_leagues_name UNIQUE (name),
+    CONSTRAINT uq_leagues_min_rating UNIQUE (min_rating),
+    CONSTRAINT chk_leagues_min_rating CHECK (min_rating >= 0),
+    CONSTRAINT chk_leagues_reward CHECK (reward_credits >= 0)
+);
+
+-- Le leghe raggiunte da ogni giocatore. Una riga nasce la prima volta che entra nella
+-- lega e non si cancella se poi scende: per questo il premio arriva una volta sola.
+-- credit_transaction_id è NULL se la lega non ha premio.
+CREATE TABLE user_league_rewards (
+    id                    UUID        NOT NULL DEFAULT uuidv7(),
+    user_id               UUID        NOT NULL,
+    league_id             UUID        NOT NULL,
+    reached_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    credit_transaction_id UUID        NULL,
+    CONSTRAINT pk_user_league_rewards PRIMARY KEY (id),
+    CONSTRAINT uq_user_league_rewards_user_league UNIQUE (user_id, league_id),
+    CONSTRAINT fk_user_league_rewards_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_league_rewards_league FOREIGN KEY (league_id) REFERENCES leagues (id),
+    CONSTRAINT fk_user_league_rewards_credit FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL
+);

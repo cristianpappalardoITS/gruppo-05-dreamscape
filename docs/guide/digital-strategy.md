@@ -53,7 +53,11 @@ Le cartelle segnate "proposta" le sceglie chi porta i file nel repository: a voi
 | **mazzo** | deck | |
 | **round** | turno | Un round = uno scontro tra due creature |
 | **ATT**, **DIF** | ATK, DEF, forza | Attacco e difesa |
-| **modalità Base** | modalità classica | C'è una sola modalità |
+| **modalità Base** | modalità classica | Le regole del gioco, uguali in tutte le partite |
+| **partita classificata** | partita ranked, partita competitiva | Con un avversario di rank simile: dà punti del rank e DC |
+| **partita rapida** | amichevole, partita libera | Senza rank né DC: con il matchmaking o sfidando un amico |
+| **lega**: **Dormiente**, **Sognatore**, **Lucido**, **Dreamweaver** | livello, divisione | Si sale con il punteggio del rank. La prima volta in una lega si riceve un premio in DC |
+| **mazzo classificato** | mazzo principale | Il mazzo con cui si gioca quando un altro giocatore ti trova con il matchmaking |
 
 ## 3. Numeri già decisi
 
@@ -83,8 +87,9 @@ Sono quelli della presentazione al cliente e del documento di Sara confermato il
 | Registrazione | 500 |
 | Accesso giornaliero | 50 |
 | Missione giornaliera | 100 |
-| Vittoria (massimo 3 al giorno) | 30 |
-| Obiettivo settimanale | 250 |
+| Vittoria in partita classificata (massimo 3 al giorno, non contro un amico) | 30 |
+| Obiettivo settimanale (si azzera il lunedì) | 250 |
+| Prima volta in una lega | Da proporre (Maie) |
 
 1.000 DC = 1 € serve **solo** per le proiezioni economiche: non si scrive nei testi per i giocatori.
 

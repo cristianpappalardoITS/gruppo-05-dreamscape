@@ -130,7 +130,7 @@ Esempio di risposta all'accesso:
 {
   "accessToken": "eyJhbGciOi...",
   "expiresIn": 900,
-  "user": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida", "role": "PLAYER", "credits": 0 }
+  "user": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida", "role": "PLAYER", "credits": 500 }
 }
 ```
 
@@ -353,13 +353,24 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 ```json
 {
   "username": "lucida",
-  "credits": 250,
+  "credits": 750,
+  "rating": 1040,
+  "league": { "code": "DORMANT", "name": "Dormiente", "nextLeagueName": "Sognatore", "nextLeagueMinRating": 1100 },
+  "hasRankedDeck": true,
+  "missions": [
+    { "code": "DAILY_PLAY", "name": "Missione giornaliera", "description": "Gioca una partita.", "progress": 0, "goalCount": 1, "rewardCredits": 100, "isCompleted": false, "resetsAt": "2026-11-03T23:00:00Z" },
+    { "code": "WEEKLY_WIN", "name": "Obiettivo settimanale", "description": "Vinci 5 partite.", "progress": 2, "goalCount": 5, "rewardCredits": 250, "isCompleted": false, "resetsAt": "2026-11-08T23:00:00Z" }
+  ],
   "pendingFriendRequests": 1,
   "pendingTrades": 2,
   "pendingChallenges": 0,
   "latestCards": [ { "card": { "...": "..." }, "isFullArt": false } ]
 }
 ```
+
+- `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
+- `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
+- Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 
 #### Profilo
 
@@ -368,8 +379,9 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 | Vedere i dati | `GET /me` → `username`, `email`, `createdAt` |
 | Cambiare email | `PUT /me` |
 | Cambiare password | `PUT /me/password` |
+| Cancellare l'account | `DELETE /me` con `{ "password": "…" }` → `204` |
 
-Lo username non si cambia (è il nome visibile agli amici).
+Lo username non si cambia (è il nome visibile agli amici). La cancellazione rende anonimo l'account: username ed email spariscono, lo storico di partite e scambi resta per gli altri giocatori. Chiedere conferma prima di mandarla.
 
 #### Crediti
 
@@ -378,14 +390,14 @@ Lo username non si cambia (è il nome visibile agli amici).
 ```json
 {
   "items": [
-    { "type": "PACK_PURCHASE", "amount": -100, "balanceAfter": 150, "createdAt": "2026-10-26T15:02:00Z" },
-    { "type": "DAILY_REWARD", "amount": 50, "balanceAfter": 250, "createdAt": "2026-10-26T09:00:00Z" }
+    { "type": "PACK_PURCHASE", "amount": -500, "balanceAfter": 50, "createdAt": "2026-10-26T15:02:00Z" },
+    { "type": "DAILY_REWARD", "amount": 50, "balanceAfter": 550, "createdAt": "2026-10-26T09:00:00Z" }
   ],
   "page": 0, "size": 20, "totalItems": 2, "totalPages": 1
 }
 ```
 
-Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`, `ADMIN_ADJUSTMENT` (il frontend li traduce in italiano). Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
+Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`, `MISSION_REWARD`, `LEAGUE_REWARD`, `ADMIN_ADJUSTMENT` (il frontend li traduce in italiano). Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
 
 #### Negozio e apertura dei pacchetti
 
@@ -395,10 +407,12 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 [
   {
     "id": "019a1f31-0000-7000-8000-000000000001",
-    "name": "Pacchetto base",
-    "description": "5 carte dal set base.",
-    "priceCredits": 100,
-    "fullArtChance": 5.0,
+    "name": "Dream Pack",
+    "description": "5 carte di tutte le fazioni.",
+    "priceCredits": 500,
+    "fullArtChance": 20.0,
+    "factionCode": null,
+    "availableUntil": null,
     "covers": [
       { "id": "019a1f31-0000-7000-8000-0000000000c1", "name": "Dreams Lord", "factionCode": "DREAMS", "imageUrl": "/images/packs/base-dreams-v1.webp" },
       { "id": "019a1f31-0000-7000-8000-0000000000c2", "name": "Nightmares Lord", "factionCode": "NIGHTMARES", "imageUrl": "/images/packs/base-nightmares-v1.webp" },
@@ -407,21 +421,22 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
     "slots": [
       { "cardCount": 3, "rarities": [ { "code": "COMMON", "chance": 100.0 } ] },
       { "cardCount": 1, "rarities": [ { "code": "RARE", "chance": 100.0 } ] },
-      { "cardCount": 1, "rarities": [ { "code": "EPIC", "chance": 90.0 }, { "code": "LEGENDARY", "chance": 10.0 } ] }
+      { "cardCount": 1, "rarities": [ { "code": "RARE", "chance": 70.0 }, { "code": "EPIC", "chance": 25.0 }, { "code": "LEGENDARY", "chance": 5.0 } ] }
     ]
   }
 ]
 ```
 
 - Il giocatore sceglie una delle tre copertine: il contenuto è lo stesso.
-- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 Epica (10% Leggendaria)".
+- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)".
+- Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione; `availableUntil` (UTC) se è in vendita solo fino a una data.
 
 Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }`:
 
 ```json
 {
   "openingId": "019a2b44-5c6d-7e8f-9a0b-1c2d3e4f5a6b",
-  "creditsAfter": 150,
+  "creditsAfter": 250,
   "cards": [
     { "card": { "...": "..." }, "isFullArt": false },
     { "card": { "...": "..." }, "isFullArt": true }
@@ -449,6 +464,7 @@ Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rule
 | Nuovo mazzo | `POST /decks` |
 | Modifica | `PUT /decks/{deckId}` |
 | Elimina | `DELETE /decks/{deckId}` |
+| Scegli il mazzo classificato | `PUT /me/ranked-deck` con `{ "deckId": "…" }` |
 
 Cosa si manda al salvataggio:
 
@@ -473,7 +489,9 @@ Cosa si riceve:
 
 - Se il mazzo non rispetta le regole il salvataggio risponde `400`, e `problems` dice cosa non va, es. `"Le Rare sono 9: il massimo è 8."`.
 - L'editor mostra i contatori in diretta (carte totali, copie, limiti per rarità) con i numeri di `GET /rules`, così l'utente vede l'errore prima di salvare. Il backend controlla comunque.
+- Si salvano **solo i mazzi validi**: niente bozze.
 - Un mazzo salvato può diventare non valido dopo uno scambio: `isValid: false` e `problems` lo dicono nella lista dei mazzi.
+- Il **mazzo classificato** (`isRanked: true` nella lista) è quello con cui si gioca quando il matchmaking ti sceglie come avversario, anche se non sei collegato. Se diventa non valido, nessuno ti sceglie finché non lo sistemi: conviene segnalarlo nella lista dei mazzi.
 
 #### Amici (pagina nuova)
 
@@ -520,26 +538,45 @@ Proposta di scambio:
 - Stati di uno scambio: `PENDING` (in attesa), `ACCEPTED`, `REJECTED`, `CANCELLED`.
 - Se all'accettazione qualcuno non ha più le carte, arriva un `409` e nessuna carta si muove.
 
-#### Sfide, risultato e storico
+#### Partite: classificata, rapida e sfide tra amici
 
-Le sfide sono **aperte a tutti i Dreamweaver**, non solo agli amici.
+Tutte le partite hanno le regole della Base e le gioca il server subito: non c'è niente da aspettare.
+
+| Tipo | Con chi | Rank | Dream Credits |
+|------|---------|------|---------------|
+| **Classificata** | Un avversario con punteggio simile, scelto dal matchmaking | Sì | 30 DC per vittoria, massimo 3 al giorno. Se il matchmaking sceglie un amico: rank sì, DC no |
+| **Rapida** | Un avversario a caso, scelto dal matchmaking | No | No |
+| **Sfida a un amico** | Un amico, che deve accettare (è una partita rapida) | No | No |
+
+L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con il suo mazzo classificato. Per questo ogni giocatore sceglie un mazzo classificato nella pagina Mazzi.
 
 | Azione | Chiamata |
 |--------|----------|
-| Ricevute / Inviate / Concluse | `GET /challenges?box=received`, `?box=sent`, `?box=completed` |
-| Lancia una sfida | `POST /challenges` con `{ "opponentId": "…", "deckId": "…" }` (solo mazzi validi) |
+| Cerca una partita classificata | `POST /matches/ranked` con `{ "deckId": "…" }` → il risultato della partita |
+| Cerca una partita rapida | `POST /matches/casual` con `{ "deckId": "…" }` → il risultato della partita |
+| Storico | `GET /me/matches?type=RANKED&page=0&size=20` (`type` facoltativo: `RANKED`, `CASUAL`) |
+| Risultato | `GET /matches/{matchId}` |
+| Sfide tra amici ricevute / inviate | `GET /challenges?box=received`, `?box=sent` |
+| Sfida un amico | `POST /challenges` con `{ "opponentId": "…", "deckId": "…" }` (solo amici, solo mazzi validi) |
 | Accetta e gioca | `POST /challenges/{challengeId}/accept` con `{ "deckId": "…" }` → `{ "matchId": "…" }` |
 | Rifiuta / Annulla | `POST /challenges/{challengeId}/reject`, `POST /challenges/{challengeId}/cancel` |
-| Risultato | `GET /matches/{matchId}` |
 
-La partita la gioca il server appena la sfida è accettata: non c'è niente da aspettare. Il risultato:
+- Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
+- Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
+- Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
+
+Il risultato:
 
 ```json
 {
   "id": "019a2c55-6d7e-7f80-9a1b-2c3d4e5f6a7b",
+  "matchType": "RANKED",
   "challenger": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida" },
   "opponent": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" },
   "winnerId": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12",
+  "ratingChange": { "challenger": -16, "opponent": 16 },
+  "creditsEarned": 0,
+  "leagueReached": null,
   "endReason": "LIFE_POINTS",
   "totalRounds": 24,
   "startingLifePoints": 20,
@@ -563,21 +600,27 @@ La partita la gioca il server appena la sfida è accettata: non c'è niente da a
 ```
 
 - `winnerId: null` = pareggio.
+- `challenger` è chi ha avviato la partita, `opponent` l'avversario.
+- `ratingChange` è `null` nelle partite rapide, e nelle classificate oltre la terza del giorno contro lo stesso avversario. `creditsEarned` sono i DC vinti da chi guarda. `leagueReached` dice se con questa partita si entra per la prima volta in una lega (`{ "name": "Sognatore", "rewardCredits": … }`): è il momento per un'animazione.
 - `endReason`: `LIFE_POINTS` (punti vita a 0), `DECK_EXHAUSTED` (mazzo finito), `ROUND_LIMIT` (60 round, pareggio).
 - `outcome`: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
 - Un **round** è un singolo scambio di colpi; uno **scontro** (`clash`) è la serie di round tra le stesse due creature. Nella cronaca si usa "round", non "turno".
 - `decks` contiene la copia dei due mazzi com'erano al momento della partita: serve per mostrare le carte anche se poi i mazzi sono cambiati.
-- **Storico:** è la scheda "Concluse" di `/sfide`. Basta una pagina sola.
+- **Storico:** `/storico`, con un filtro per tipo di partita.
+
+#### Classifica
+
+`GET /leagues` → le leghe con il punteggio minimo e il premio. La lega del giocatore e il suo punteggio sono in `GET /me/summary`. Una classifica con gli altri giocatori (solo username e punteggio) si aggiunge se c'è tempo.
 
 ### Backoffice 🛠️ (solo `role: ADMIN`)
 
 | Pagina | Chiamate | Note |
 |--------|----------|------|
 | Dashboard admin | `GET /admin/stats` | Numeri di utenti, carte, pacchetti, partite |
-| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore, illustrazione 3:2 e ritaglio, full art 2:3 e ritaglio (solo Leggendarie), attiva |
+| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore (solo per gli effetti con la X, `hasValue`), illustrazione 3:2 e ritaglio, full art 2:3 e ritaglio (solo Leggendarie), attiva. ATT e DIF si possono cambiare anche se la carta è già posseduta |
 | Caricamento illustrazioni | `POST /admin/images` (form `multipart/form-data` con il file, il codice della carta e il tipo: illustrazione, full art o copertina) → `{ "url": "/images/cards/base-013-v1.webp", "thumbUrl": "/images/cards/base-013-v1-thumb.webp" }` | Si carica il PNG originale: il backend lo conserva intatto e crea da solo le copie WebP. Una nuova immagine per la stessa carta diventa `-v2`. Le copertine hanno solo `url` |
-| Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
-| Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round. Le carte per mazzo (20) sono in sola lettura |
+| Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, fazione (facoltativa), periodo di vendita (facoltativo), slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
+| Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `/admin/missions`, `/admin/leagues` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round, premi delle missioni, soglie e premi delle leghe. Le carte per mazzo (20) sono in sola lettura |
 | Messaggi | `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | Messaggi del form Contatti: letto, archiviato |
 
 Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`).
@@ -664,10 +707,10 @@ Le pagine che il database permette, già con le decisioni di questi giorni.
 |------|--------|
 | 🔓 Pubblica | Home · Il gioco / Lore · Regolamento · Chi siamo · Contatti · FAQ · Glossario · Privacy Policy · Cookie · Termini di servizio · 404 |
 | 🔓 Accesso | Registrazione · Accesso · Password dimenticata (facoltativa) · Nuova password (facoltativa) |
-| 🔑 Dreamweaver | Benvenuto · Dashboard · Profilo (con cambio email e password) · Crediti · Negozio · Apertura pacchetto · Collezione · Dettaglio carta · Mazzi · Editor mazzo · **Amici** · Scambi · Nuovo scambio · Dettaglio scambio · Sfide (con la scheda Concluse = storico) · Nuova sfida · Accetta sfida · Risultato partita |
+| 🔑 Dreamweaver | Benvenuto (con la scelta della fazione) · Dashboard (con missioni e lega) · Profilo (con cambio email e password e cancellazione dell'account) · Crediti · Negozio · Apertura pacchetto · Collezione · Dettaglio carta · Mazzi · Editor mazzo · **Amici** · Scambi · Nuovo scambio · Dettaglio scambio · **Gioca** (classificata e rapida) · Sfide tra amici · Nuova sfida · Accetta sfida · Risultato partita · Storico · **Classifica** |
 | 🛠️ Backoffice | Dashboard admin · Carte · Pacchetti · Configurazione · Messaggi |
 
-Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** e **Messaggi**; tolto l'accesso admin separato (si entra dalla stessa pagina); Storico unito a Sfide; nessuna scelta della modalità nella Nuova sfida (c'è solo la Base).
+Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**, **Messaggi**, **Gioca** e **Classifica**; tolto l'accesso admin separato (si entra dalla stessa pagina); le sfide si mandano solo agli amici; nessuna scelta della modalità (le regole sono sempre quelle della Base, cambia solo il tipo di partita). Il SiteMap lo aggiorna Alessandro.
 
 ---
 
@@ -688,9 +731,9 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** 
 
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
-| Recupero password in fase 1 | Solo se c'è tempo: richiede l'invio di email | SWD + WMD |
 | Strumenti del frontend e come si caricano i componenti React nelle pagine | Vite, con più pagine HTML, in JavaScript | Gaia (#72) |
+| DC a chi viene scelto dal matchmaking e vince | No: i DC della vittoria vanno solo a chi ha avviato la partita | Maie + SWD |
+| Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
+| Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
 | Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Il database prevede già più pacchetti (`packs`) | Maie, Nicolas |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |
-| Cancellazione dell'account dal profilo | Pulsante che rende anonimo l'account | SWD + WMD |
-| Classifica e rank | Dopo le funzioni obbligatorie; lasciare spazio nel menu | Tutti |

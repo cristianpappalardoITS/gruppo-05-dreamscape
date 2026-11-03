@@ -80,7 +80,8 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Avvio in locale | Sito e API sullo **stesso indirizzo**, con `docker compose up`: il container del frontend serve le pagine e manda `/api` al backend | Live Server su un'altra porta, indirizzo `http://localhost:8080` scritto in `api.js` |
 | Accesso | Token JWT: quello di accesso (15 minuti) in memoria, il refresh token (7 giorni) in un cookie `HttpOnly` che gestisce il backend | Token "salvato nel client" in `localStorage` |
 | Indirizzi delle API | `/api/v1/...` come in [guida-frontend.md](../api/guida-frontend.md) | `/api/decks/save`, `/api/trades/create`, `/api/challenges/create` |
-| Modalità di gioco | Una sola, la Base, con gli effetti | Scelta della modalità nella Nuova sfida |
+| Partite | Regole della Base, con gli effetti, per tutte le partite. **Classificata**: avversario con rank simile scelto dal matchmaking, dà rank e DC. **Rapida**: avversario a caso dal matchmaking, oppure sfida a un amico; niente rank né DC. L'avversario del matchmaking non deve essere collegato: gioca con il suo **mazzo classificato** | Scelta della modalità, attesa dell'avversario collegato |
+| Rank e leghe | In fase 1. Elo, si parte da 1000. Leghe: Dormiente, Sognatore, Lucido, Dreamweaver; premio in DC la prima volta che si entra in una lega | Rank "dopo" |
 | Fazioni | Dreams, Nightmares, Memories, in inglese anche nei testi. Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams | Altri cicli, Sogni / Incubi / Ricordi |
 | Vantaggio di fazione | **+1 ATT** a chi è in vantaggio | "+1 Attacco/Difesa", malus |
 | Rarità | Comune, Rara, Epica, Leggendaria. Le Leggendarie hanno una copia rara **full art** | "Mitica", "TIER" mostrato all'utente |
@@ -88,20 +89,18 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Pacchetto | Oggi c'è il **Dream Pack**: 5 carte, **500 DC**, con tre copertine (una per Lord) e lo stesso contenuto. Si apre subito, all'acquisto. Il cliente vuole **più tipi di pacchetti a prezzi diversi**: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il negozio va pensato per più pacchetti | Pack Base 200, Pack Fazione 350, Pack Elite 500 (nomi e prezzi vecchi), inventario dei pacchetti chiusi |
 | Contenuto del Dream Pack | 3 Comuni, 1 Rara, 1 slot speciale: Rara 70%, Epica 25%, Leggendaria 4%, Leggendaria full art 1% | |
 | Moneta | **Dream Credits (DC)**, numeri interi | "CR", decimali, prezzi in euro |
-| Ricompense | Registrazione 500 · accesso giornaliero 50 · missione giornaliera 100 · vittoria 30 (max 3 al giorno) · obiettivo settimanale 250 | Bonus di 1.000, vittoria +150 |
+| Ricompense | Registrazione 500 · accesso giornaliero 50 · missione giornaliera 100 · vittoria classificata 30 (max 3 al giorno, non contro un amico) · obiettivo settimanale 250 · premio di lega | Bonus di 1.000, vittoria +150, DC nelle partite rapide |
 | Denaro reale | Non c'è in fase 1: il riquadro "Acquista crediti" si mostra solo come "in arrivo" | Pagamenti, prezzi in euro |
 | Dopo la registrazione | 500 DC subito. Poi la pagina **Benvenuto**: il Dreamweaver **sceglie una fazione** e riceve il set iniziale di 20 carte di quella fazione (14 Comuni, 6 Rare) e 2 pacchetti di benvenuto, uno con un'Epica garantita | Ritorno al form di accesso, set con tutte e tre le fazioni |
 | Scambi | **Solo tra amici**, quantità e rarità libere, solo se l'altro accetta. Niente crediti negli scambi | Scambi con chiunque |
-| Sfide | Aperte a tutti i Dreamweaver, con un mazzo valido | |
-| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie max 2, Epiche max 4, Rare max 8. Si salvano **solo i mazzi validi** | Bozze, badge Valido / Non valido |
+| Sfide | Si mandano **solo agli amici**, che accettano: sono partite rapide. Al massimo una sfida in attesa tra due amici, senza scadenza | Sfide a chiunque |
+| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie max 2, Epiche max 4, Rare max 8. Si salvano **solo i mazzi validi**. Ogni giocatore sceglie un mazzo classificato | Bozze, badge Valido / Non valido |
 | Carte in uno scambio | **Non bloccate** mentre lo scambio è in attesa: il server ricontrolla tutto all'accettazione e, se mancano, annulla lo scambio con un messaggio | Carte bloccate o nascoste |
-| Missioni | Una missione giornaliera e un obiettivo settimanale fissi, nello **Sprint 6** (una issue per SWD e una per WMD) | Elenco di missioni configurabili |
+| Missioni | Una missione giornaliera e un obiettivo settimanale fissi, nello **Sprint 6** (una issue per SWD e una per WMD). La settimana inizia il lunedì a mezzanotte, ora italiana | Pagina con un elenco di missioni |
 | Giorno delle ricompense | Inizia a **mezzanotte, ora italiana**. Le date arrivano in UTC e si mostrano nell'ora locale | |
 | Partita | 20 punti vita (confermati dal cliente, da verificare con le simulazioni), max 60 round, poi pareggio. Si dice **round**, non turni | "Turni" |
 
-> I numeri negli esempi JSON di [guida-frontend.md](../api/guida-frontend.md) sono ancora quelli vecchi ("Pacchetto base", 100 crediti, full art 5%). Valgono i numeri di questa tabella. La guida si aggiorna dopo il 2/11.
-
-Ancora da decidere, quindi da non dare per scontato: tipi e prezzi dei nuovi pacchetti, e se skin e animazioni per il retro e per le carte (altra richiesta del cliente) sono in fase 1. Fino alla decisione, chiedete prima di costruire queste parti.
+Skin e animazioni per il retro e per le carte (altra richiesta del cliente) sono nel **Backlog**: non si costruiscono in fase 1. Ancora da decidere, quindi da non dare per scontato: tipi e prezzi dei nuovi pacchetti, soglie e premi delle leghe, quali partite contano per le missioni. Fino alla decisione, chiedete prima di costruire queste parti. Le decisioni, con il perché, sono in [docs/decisioni/](../decisioni/README.md).
 
 ## 4. Il design system
 

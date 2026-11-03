@@ -14,6 +14,12 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 | [Template](template.md) | Issue, bug, pull request, commit, classi Java, test, decisioni, verbali, `.editorconfig` |
 | [Checklist PR](checklist-pr.md) | Controlli da fare prima di aprire una pull request |
 
+## Decisioni
+
+| Documento | Contenuto |
+|-----------|-----------|
+| [Decisioni del gruppo](decisioni/README.md) | Cosa si è deciso e perché, un file per tema, dal 26/10 a oggi, e cosa resta da decidere |
+
 ## Guide per i team
 
 | Documento | Contenuto |
@@ -35,7 +41,7 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 
 | Documento | Contenuto |
 |-----------|-----------|
-| [Proposta di regolamento](proposte/proposta-regolamento-dreamscape.pdf) (PDF) | Regolamento di Dreamscape: modalità Base con effetti, mazzo, rarità, carte iniziali, amici e scambi, rank, punti da valutare |
+| [Proposta di regolamento](proposte/proposta-regolamento-dreamscape.pdf) (PDF) | Regolamento di Dreamscape: modalità Base con effetti, mazzo, rarità, carte iniziali, amici e scambi, rank, punti da valutare. Da aggiornare con le partite classificate e rapide ([decisione 010](decisioni/010-tipi-di-partita-e-rank.md)) |
 | [Rilascio su AWS](proposte/rilascio-aws.md) | **Ipotesi, fuori dalla consegna.** Architettura su AWS, motore su Lambda, regole da seguire da subito per poterci arrivare senza riscrivere il codice |
 
 ## Materiale del gioco
@@ -50,7 +56,6 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 
 | Cartella | Contenuto |
 |----------|-----------|
-| `decisioni/` | Decisioni prese dal gruppo, una per file (`NNN-titolo-breve.md`) |
 | `verbali/` | Verbali delle riunioni (`AAAA-MM-GG-argomento.md`) |
 | `api/` | Elenco degli endpoint REST (la guida per il frontend c'è già) |
 | `diagrammi/` | Diagramma ER, architettura, flussi |

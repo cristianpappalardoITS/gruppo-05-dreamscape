@@ -396,6 +396,7 @@ erDiagram
         varchar goal_type "PLAY_MATCHES, WIN_MATCHES"
         int goal_count
         int reward_credits
+        varchar match_type "NULL = tutte, CASUAL, RANKED"
         boolean is_active
     }
     user_missions {
@@ -419,6 +420,7 @@ erDiagram
         uuid user_id FK
         uuid league_id FK
         timestamptz reached_at
+        uuid match_id FK "partita con cui ci si è entrati"
         uuid credit_transaction_id FK
     }
 ```
@@ -622,25 +624,25 @@ Tutte le partite usano le regole BASE e vengono simulate subito dal server, senz
 - Partita classificata: un avversario con punteggio vicino (es. ±100, poi la distanza si allarga), preferendo chi non si è già affrontato 3 volte oggi.
 
 Per ogni partita, nella stessa transazione:
-1. Ricontrolla la validità di entrambi i mazzi.
+1. Blocca le righe dei due giocatori in `users` (`SELECT ... FOR UPDATE`, sempre in ordine di `id` per evitare stalli) e ricontrolla la validità di entrambi i mazzi. Con il matchmaking asincrono lo stesso avversario può essere scelto da più giocatori nello stesso momento: senza il blocco si perdono aggiornamenti del punteggio e si superano i limiti giornalieri.
 2. Genera il seed e chiama il motore di gioco con i valori della modalità (punti vita, limite di round). Gli passa sempre anche gli effetti delle carte (`card_effects`).
-3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi.
+3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi. Il vincitore è uno dei due giocatori o nessuno (`chk_matches_winner`); i punti vita finali non scendono sotto 0 (`chk_matches_life_points`).
 4. Solo per le classificate:
    - se i due giocatori non si sono già affrontati 3 volte oggi in classificata, calcola le variazioni di punteggio (Elo, K = 32), aggiorna `users.rating` di entrambi e salva `*_rating_change`; altrimenti restano `NULL`;
    - se chi ha avviato la partita vince, non ha già 3 vittorie premiate oggi e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`);
-   - se un punteggio entra per la prima volta in una lega, dà il premio della lega (vedi sotto).
+   - se un punteggio entra per la prima volta in una lega, dà il premio della lega e salva la partita in `user_league_rewards.match_id` (vedi sotto).
 5. Aggiorna le missioni dei due giocatori (vedi sotto).
 
 ### Missioni
 
 - Il periodo si calcola in ora italiana: `DAILY` = il giorno, `WEEKLY` = la settimana che inizia il lunedì. `period_start` è il primo giorno del periodo.
-- Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria).
+- Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria). Se la missione ha `match_type`, contano solo le partite di quel tipo; se è `NULL` contano tutte.
 - Quando `progress` arriva a `goal_count` e `completed_at` è vuoto, salva `completed_at`, scrive `credit_transactions` con `type = 'MISSION_REWARD'` e ne salva l'id in `credit_transaction_id`. Il vincolo `UNIQUE` impedisce una seconda riga nello stesso periodo.
 
 ### Leghe
 
 - Dopo ogni variazione del punteggio, il service cerca le leghe con `min_rating <= rating` che il giocatore non ha in `user_league_rewards`.
-- Per ognuna inserisce la riga e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
+- Per ognuna inserisce la riga, con la partita che l'ha fatta raggiungere (`match_id`), e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
 
 ### Ricompensa giornaliera
 
@@ -648,7 +650,7 @@ Al primo accesso del giorno (ora italiana): `UPDATE users SET credits = credits 
 
 ### Utenti
 
-- **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username ed email sostituiti da valori unici senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Lo storico di sfide, scambi e partite resta valido.
+- **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username `deleted-` + id senza trattini (40 caratteri, per questo la colonna è `VARCHAR(40)`; alla registrazione il limite resta 30) ed email sostituita da un valore unico senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Lo storico di sfide, scambi e partite resta valido.
 - **Primo admin:** creato all'avvio da username e password letti da variabili d'ambiente.
 - **Email:** il portale invia solo l'email di recupero password, se c'è tempo di farla. Se non si fa, `password_reset_tokens` si toglie con una migration.
 
@@ -735,7 +737,7 @@ Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta no
 | `V7__create_credit_transactions.sql` | `credit_transactions` |
 | `V8__create_contact_messages.sql` | `contact_messages` |
 | `V9__create_missions.sql` | `missions` (+ le due missioni fisse), `user_missions` |
-| `V10__create_leagues.sql` | `leagues`, `user_league_rewards` |
+| `V10__create_leagues.sql` | `leagues` (+ le quattro leghe), `user_league_rewards` |
 
 L'ordine conta: ogni file crea tabelle che dipendono solo da quelle dei file precedenti. I riferimenti "all'indietro" si aggiungono con un `ALTER TABLE` appena esiste la tabella di arrivo: `factions.lord_card_id` dopo `cards` (V2), `users.starter_faction_id` dopo `factions` (V2), `users.ranked_deck_id` dopo `decks` (V3).
 
@@ -912,10 +914,14 @@ Quello che resta da decidere prima delle migration. Le decisioni già prese, con
 | Nuovi pacchetti in vendita | Tipi, nomi, prezzi, slot e pesi dei pacchetti oltre al Dream Pack (richiesta del cliente) | Un pacchetto più caro con lo slot speciale più ricco; eventuali pacchetti di fazione o a tempo | Maie + Nicolas |
 | Numero di carte del catalogo | 99 o 102 (risposta del cliente) | 102, cioè 34 per fazione | Nicolas + Maie |
 | Punti vita e limite di round | 20 punti vita confermati dal cliente, da verificare con le simulazioni del motore (#87) | 20 punti vita e 60 round finché non si decide | Marco + Maie |
-| Leghe | Punteggio minimo di ogni lega e premio in DC | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500; premi da proporre | Maie |
+| Leghe | Punteggio minimo di ogni lega e premio in DC | Le quattro leghe sono già in `V10` con le soglie proposte (Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500) e premio 0: soglie e premi si cambiano dal backoffice | Maie |
 | Crediti a chi viene scelto dal matchmaking | Se vince il giocatore scelto come avversario (anche non collegato), riceve i 30 DC? | No: i DC della vittoria vanno solo a chi ha avviato la partita; il rank cambia per tutti e due | Maie + SWD |
-| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici | Maie + Nicolas |
+| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici. Lo schema è già pronto (`missions.match_type`): basta cambiare il dato | Maie + Nicolas |
 | Distanza del matchmaking | Quanto può essere lontano il punteggio dell'avversario in una classificata | ±100, poi si allarga di 100 alla volta fino a ±400, poi chiunque | SWD |
+| Carte disattivate nei mazzi | Se una carta con `is_active = FALSE` già posseduta si può ancora usare nei mazzi | Sì: resta del giocatore e si può usare; non esce più dai pacchetti e non si vede nel catalogo pubblico | SWD |
+| Amicizia tolta o account cancellato | Cosa succede agli scambi e alle sfide in attesa tra i due (le copie offerte restano bloccate finché qualcuno non annulla) | Si annullano da soli (`CANCELLED`) | SWD |
+| Full art scambiata | Un mazzo usa la full art di una Leggendaria e il giocatore scambia la sua unica copia full art | Il mazzo torna alla versione normale (`deck_cards.is_full_art = FALSE`) e resta valido | SWD |
+| Effetto "Non Sequitur X" | Nella lista ha la X, ma il testo non usa nessun numero | Senza valore (`has_value = FALSE`), da confermare con Nicolas | Nicolas |
 | Skin e animazioni | Deciso: Backlog, lo schema non cambia. Da dire al cliente | Tabelle `cosmetics` e `user_cosmetics` quando si fanno | Sara + Gaia |
 
 ---
@@ -977,6 +983,18 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### Correzioni prima delle migration (#69)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Vincitore della partita | Qualunque utente | Uno dei due giocatori o nessuno (`chk_matches_winner`) |
+| Punti vita finali | Anche negativi | Mai sotto 0 (`chk_matches_life_points`) |
+| `users.username` | `VARCHAR(30)` | `VARCHAR(40)`: ci sta lo username dell'account anonimizzato (`deleted-` + id); alla registrazione il limite resta 30 |
+| Missioni | Contavano sempre tutte le partite | `missions.match_type`: `NULL` = tutte, `CASUAL` o `RANKED`; per ora `NULL` per tutte e due |
+| Leghe | Tabella vuota | Le quattro leghe in `V10` con le soglie proposte e premio 0; `user_league_rewards.match_id` per mostrare la lega raggiunta nel risultato della partita |
+| Partite | Nessuna indicazione sulla concorrenza | Righe dei due giocatori bloccate prima di calcolare punteggio e limiti giornalieri |
+| Punti aperti | | Nuovi: carte disattivate nei mazzi, scambi e sfide in attesa quando si toglie un'amicizia, full art scambiata, "Non Sequitur X" |
 
 ### 4 novembre 2026: copie bloccate negli scambi
 

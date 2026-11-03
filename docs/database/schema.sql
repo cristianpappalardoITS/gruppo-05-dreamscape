@@ -3,7 +3,7 @@
 -- PostgreSQL 18 o successivo (serve uuidv7())
 --
 -- Il file è diviso nelle future migration Flyway: ogni blocco "V#__nome"
--- diventerà un file in backend/src/main/resources/db/migration/.
+-- diventerà un file in sviluppo/backend/src/main/resources/db/migration/.
 -- Spiegazione delle scelte: docs/database/schema.md
 -- Regolamento di riferimento: docs/proposte/proposta-regolamento-dreamscape.pdf
 --
@@ -40,9 +40,11 @@
 -- privacy_accepted_at / terms_accepted_at: quando il giocatore ha accettato Privacy Policy
 -- e Termini di servizio alla registrazione. Obbligatori per i giocatori; l'admin, creato
 -- all'avvio da variabili d'ambiente, non passa dalla registrazione.
+-- username: alla registrazione al massimo 30 caratteri (lo controlla il service). La colonna
+-- ne tiene 40 per l'account cancellato, che diventa 'deleted-' + id senza trattini.
 CREATE TABLE users (
     id                  UUID        NOT NULL DEFAULT uuidv7(),
-    username            VARCHAR(30)  NOT NULL,
+    username            VARCHAR(40)  NOT NULL,
     email               VARCHAR(255) NOT NULL,
     password_hash       VARCHAR(255) NOT NULL,
     role                VARCHAR(20)  NOT NULL DEFAULT 'PLAYER',
@@ -626,6 +628,7 @@ CREATE INDEX idx_challenges_challenger_status ON challenges (challenger_id, stat
 -- round_log: lo svolgimento round per round, così come lo restituisce il motore.
 -- random_seed: permette di rigiocare la stessa partita per verifiche e test
 -- (decide anche il lancio della moneta per l'ordine degli effetti).
+-- *_life_points: punti vita alla fine, mai sotto 0 (il motore si ferma a 0).
 -- *_rating_change: variazione del punteggio di rank; NULL se la partita non conta
 -- per il rank (partita rapida, o classificata oltre la terza del giorno contro lo
 -- stesso avversario).
@@ -656,6 +659,9 @@ CREATE TABLE matches (
     CONSTRAINT fk_matches_opponent FOREIGN KEY (opponent_id) REFERENCES users (id),
     -- Niente ON DELETE SET NULL: una vittoria non deve mai diventare un pareggio.
     CONSTRAINT fk_matches_winner FOREIGN KEY (winner_id) REFERENCES users (id),
+    -- Vince uno dei due giocatori, oppure nessuno (pareggio).
+    CONSTRAINT chk_matches_winner CHECK (winner_id IS NULL OR winner_id IN (challenger_id, opponent_id)),
+    CONSTRAINT chk_matches_life_points CHECK (challenger_life_points >= 0 AND opponent_life_points >= 0),
     CONSTRAINT chk_matches_type CHECK (match_type IN ('CASUAL', 'RANKED')),
     CONSTRAINT chk_matches_different_users CHECK (challenger_id <> opponent_id),
     -- Le sfide tra amici sono solo partite rapide.
@@ -743,6 +749,9 @@ CREATE INDEX idx_contact_messages_status_created ON contact_messages (status, cr
 -- il lunedì a mezzanotte, ora italiana.
 -- goal_type: cosa si conta, es. PLAY_MATCHES (partite giocate) o WIN_MATCHES (vittorie).
 -- goal_count: quante volte farlo; reward_credits: il premio in DC.
+-- match_type: quali partite contano. NULL = tutte; CASUAL = solo rapide; RANKED = solo
+-- classificate. Quali partite contano per le due missioni lo decidono Maie e Nicolas
+-- (proposta: giornaliera tutte, settimanale solo RANKED): basta cambiare il dato.
 CREATE TABLE missions (
     id             UUID        NOT NULL DEFAULT uuidv7(),
     code           VARCHAR(40)  NOT NULL,
@@ -752,13 +761,15 @@ CREATE TABLE missions (
     goal_type      VARCHAR(30)  NOT NULL,
     goal_count     INT          NOT NULL,
     reward_credits INT          NOT NULL,
+    match_type     VARCHAR(10)  NULL,
     is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_missions PRIMARY KEY (id),
     CONSTRAINT uq_missions_code UNIQUE (code),
     CONSTRAINT chk_missions_period CHECK (period IN ('DAILY', 'WEEKLY')),
     CONSTRAINT chk_missions_goal_type CHECK (goal_type IN ('PLAY_MATCHES', 'WIN_MATCHES')),
     CONSTRAINT chk_missions_goal_count CHECK (goal_count > 0),
-    CONSTRAINT chk_missions_reward CHECK (reward_credits >= 0)
+    CONSTRAINT chk_missions_reward CHECK (reward_credits >= 0),
+    CONSTRAINT chk_missions_match_type CHECK (match_type IS NULL OR match_type IN ('CASUAL', 'RANKED'))
 );
 
 -- L'avanzamento di ogni giocatore in ogni missione, per periodo.
@@ -783,7 +794,7 @@ CREATE TABLE user_missions (
 );
 
 -- Le due missioni della versione semplice. I premi sono quelli confermati dal cliente;
--- che cosa si conta lo propongono Maie e Nicolas.
+-- che cosa si conta lo propongono Maie e Nicolas: per ora contano tutte le partite (match_type NULL).
 INSERT INTO missions (code, name, description, period, goal_type, goal_count, reward_credits) VALUES
     ('DAILY_PLAY', 'Missione giornaliera', 'Gioca una partita.', 'DAILY', 'PLAY_MATCHES', 1, 100),
     ('WEEKLY_WIN', 'Obiettivo settimanale', 'Vinci 5 partite.', 'WEEKLY', 'WIN_MATCHES', 5, 250);
@@ -814,15 +825,27 @@ CREATE TABLE leagues (
 -- Le leghe raggiunte da ogni giocatore. Una riga nasce la prima volta che entra nella
 -- lega e non si cancella se poi scende: per questo il premio arriva una volta sola.
 -- credit_transaction_id è NULL se la lega non ha premio.
+-- match_id: la partita con cui si è entrati nella lega, per mostrarlo nel risultato
+-- (leagueReached) anche se si ricarica la pagina.
 CREATE TABLE user_league_rewards (
     id                    UUID        NOT NULL DEFAULT uuidv7(),
     user_id               UUID        NOT NULL,
     league_id             UUID        NOT NULL,
     reached_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    match_id              UUID        NULL,
     credit_transaction_id UUID        NULL,
     CONSTRAINT pk_user_league_rewards PRIMARY KEY (id),
     CONSTRAINT uq_user_league_rewards_user_league UNIQUE (user_id, league_id),
     CONSTRAINT fk_user_league_rewards_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_league_rewards_league FOREIGN KEY (league_id) REFERENCES leagues (id),
+    CONSTRAINT fk_user_league_rewards_match FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE SET NULL,
     CONSTRAINT fk_user_league_rewards_credit FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL
 );
+
+-- Le quattro leghe con le soglie proposte. I premi restano a 0 finché Maie non li decide:
+-- soglie e premi si cambiano dal backoffice. Chi si registra parte da 1000, cioè Dormiente.
+INSERT INTO leagues (code, name, min_rating, reward_credits) VALUES
+    ('DORMANT',     'Dormiente',   0,    0),
+    ('DREAMER',     'Sognatore',   1100, 0),
+    ('LUCID',       'Lucido',      1300, 0),
+    ('DREAMWEAVER', 'Dreamweaver', 1500, 0);

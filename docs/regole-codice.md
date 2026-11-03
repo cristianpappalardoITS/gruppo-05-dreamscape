@@ -148,15 +148,17 @@ public class DeckController {
 
 ## Frontend
 
-**Tecnologie scelte:** HTML, CSS e JavaScript, senza framework. I dati arrivano dalle API del backend: vedi la [guida ai dati per il frontend](api/guida-frontend.md).
+**Tecnologie scelte:** pagine **HTML, CSS e JavaScript**; i **componenti** (es. la carta) si scrivono in **React**. Decisione del 2/11: cambia quella del 26/10 "HTML, CSS e JavaScript, senza framework" solo per i componenti. Le pagine non diventano un'applicazione React. I dati arrivano dalle API del backend: vedi la [guida ai dati per il frontend](api/guida-frontend.md).
+
+**Proposta di strumenti, da confermare da Gaia nella #72:** Vite, che gestisce più pagine HTML e i componenti React, in JavaScript (non TypeScript). Il container del frontend serve le pagine e manda `/api` al backend, così sito e API hanno lo stesso indirizzo (decisione 7 del 2/11).
 
 > 🚧 **Da completare a cura del team WMD.**
 >
 > Da indicare:
-> - Eventuali librerie e gestione degli stili (CSS o SCSS), con la motivazione
+> - Strumenti confermati (Vite o altri), come si caricano i componenti React nelle pagine, librerie e gestione degli stili (CSS o SCSS), con la motivazione
 > - Struttura delle cartelle in `frontend/`
-> - Come avviare il frontend in locale e come si collega al backend
-> - Regole di codice specifiche (componenti, stili, gestione delle chiamate alle API)
+> - Come avviare il frontend in locale con Docker Compose
+> - Regole di codice specifiche (quali parti diventano componenti, stili, gestione delle chiamate alle API)
 > - Strumenti di formattazione e lint, se usati
 >
 > Riferimento: il brief del Laboratorio Integrato. La scelta va registrata anche in `docs/decisioni/`.
@@ -164,14 +166,16 @@ public class DeckController {
 Regole che valgono comunque, qualunque tecnologia si scelga:
 
 - Le statistiche delle carte (ATT, DIF, fazione, rarità) devono essere **leggibili anche su mobile**.
-- Le chiamate alle API passano da un unico punto (es. un file `api.js`), non sparse nelle pagine: lì si aggiunge anche il token di accesso.
+- Le chiamate alle API passano da un unico punto (es. un file `api.js`), non sparse nelle pagine e nei componenti: lì si aggiunge anche il token di accesso.
 - Il frontend non decide mai l'esito di una partita né il contenuto di un pacchetto: mostra solo quello che restituisce il server.
+- La carta è **un solo componente React** (#81), usato in tutte le pagine. Le cornici con la finestra trasparente e le coordinate di testi, ATT e DIF le prepara il frontend in JavaScript (decisione 21 del 2/11).
+- Niente dati finti nel frontend: le pagine usano solo le API del backend (decisione 9 del 2/11).
 
 ## Sicurezza e file da non caricare
 
 - **Mai** caricare password, chiavi o credenziali del database. Si usa `application-local.properties` (in `.gitignore`) o variabili d'ambiente.
 - Le password degli utenti si salvano solo con hash (es. BCrypt).
-- Non si caricano: cartelle `target/`, `build/`, `node_modules/`, `.idea/`, `.vscode/`, file `.DS_Store`.
+- Non si caricano: cartelle `target/`, `build/`, `dist/`, `node_modules/`, `.idea/`, `.vscode/`, file `.DS_Store`.
 
 ## Test
 

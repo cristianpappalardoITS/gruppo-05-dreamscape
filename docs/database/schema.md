@@ -29,7 +29,7 @@
 
 | Area | Tabella | Contenuto |
 |------|---------|-----------|
-| Utenti e accesso | `users` | Giocatori e admin (`role`), saldo crediti, punteggio di rank, consensi Privacy e Termini |
+| Utenti e accesso | `users` | Giocatori e admin (`role`), saldo crediti, punteggio di rank, fazione del set iniziale, mazzo classificato, consensi Privacy e Termini |
 | | `refresh_tokens` | Refresh token per l'accesso con JWT (salvati come hash) |
 | | `password_reset_tokens` | Token per il recupero password |
 | Catalogo carte | `factions` | Le fazioni, con il titolo e la carta del loro Lord |
@@ -40,7 +40,7 @@
 | Collezione e mazzi | `user_cards` | Le carte possedute da ogni utente, con il numero di copie (e quante full art) |
 | | `decks` | I mazzi degli utenti |
 | | `deck_cards` | Le carte di ogni mazzo |
-| Pacchetti | `packs` | I pacchetti: in vendita, set iniziale, benvenuto |
+| Pacchetti | `packs` | I pacchetti: in vendita (anche di una fazione o a tempo), set iniziale, benvenuto |
 | | `pack_covers` | Le copertine di un pacchetto (es. una per ogni Lord) |
 | | `pack_slots` | Gli slot di un pacchetto e quante carte dà ciascuno |
 | | `pack_slot_rarities` | Le rarità possibili in ogni slot, con il loro peso |
@@ -49,9 +49,13 @@
 | Amici e scambi | `friendships` | La lista amici: richieste in attesa e amicizie accettate |
 | | `trades` | Le proposte di scambio tra amici e il loro stato |
 | | `trade_items` | Le carte offerte e richieste in ogni scambio |
-| Sfide | `challenges` | Le sfide tra utenti e il loro stato |
-| | `matches` | Il risultato della partita simulata, round per round |
+| Sfide e partite | `challenges` | Le sfide tra amici (partite rapide) e il loro stato |
+| | `matches` | Il risultato della partita simulata, rapida o classificata, round per round |
 | Crediti | `credit_transactions` | Ogni movimento di crediti, con il motivo |
+| Missioni e leghe | `missions` | Missione giornaliera e obiettivo settimanale, con il premio |
+| | `user_missions` | L'avanzamento di ogni giocatore nelle missioni, per giorno o settimana |
+| | `leagues` | Le leghe del rank, con il punteggio minimo e il premio |
+| | `user_league_rewards` | Le leghe raggiunte da ogni giocatore, per dare il premio una volta sola |
 | Modalità ed effetti | `game_modes` | Le modalità di gioco con i loro valori (punti vita, limite di round) |
 | | `effects` | Il catalogo degli effetti (lista di Nicolas), validi in ogni partita |
 | | `card_effects` | Quali effetti ha ogni carta, con il loro valore |
@@ -81,6 +85,8 @@ erDiagram
     card_sets ||--o{ cards : "contiene"
     factions ||--o{ faction_advantages : "forte contro"
     factions ||--o{ faction_advantages : "debole contro"
+    factions |o--o{ users : "set iniziale"
+    decks |o--o| users : "mazzo classificato"
 
     users {
         uuid id PK
@@ -90,6 +96,9 @@ erDiagram
         varchar role "PLAYER, ADMIN"
         int credits "saldo, mai negativo"
         int rating "rank, parte da 1000"
+        uuid starter_faction_id FK "NULL finché non sceglie"
+        uuid ranked_deck_id FK "mazzo classificato"
+        date last_daily_reward_on
         boolean is_enabled
         timestamptz privacy_accepted_at
         timestamptz terms_accepted_at
@@ -192,6 +201,7 @@ erDiagram
     packs ||--o{ pack_covers : "copertine"
     factions |o--o{ pack_covers : "Lord in copertina"
     card_sets |o--o{ packs : "da cui pesca"
+    factions |o--o{ packs : "solo questa fazione"
     users ||--o{ pack_openings : "apre"
     packs ||--o{ pack_openings : "aperto in"
     pack_covers |o--o{ pack_openings : "scelta"
@@ -207,7 +217,10 @@ erDiagram
         varchar pack_type "SHOP, STARTER, WELCOME"
         int price_credits "0 se non in vendita"
         uuid card_set_id FK "NULL = tutte le espansioni"
+        uuid faction_id FK "NULL = tutte le fazioni"
         numeric full_art_chance "percentuale"
+        timestamptz available_from "NULL = sempre"
+        timestamptz available_until "NULL = sempre"
         boolean is_active
     }
     pack_covers {
@@ -269,7 +282,9 @@ erDiagram
     users ||--o{ challenges : "viene sfidato"
     decks |o--o{ challenges : "usato in"
     game_modes ||--o{ challenges : "regole della partita"
-    challenges ||--o| matches : "produce"
+    challenges |o--o| matches : "produce (solo tra amici)"
+    users ||--o{ matches : "avvia"
+    users ||--o{ matches : "avversario"
     users |o--o{ matches : "vince"
 
     friendships {
@@ -305,7 +320,10 @@ erDiagram
     }
     matches {
         uuid id PK
-        uuid challenge_id FK, UK
+        varchar match_type "CASUAL, RANKED"
+        uuid challenge_id FK, UK "NULL = matchmaking"
+        uuid challenger_id FK "chi avvia"
+        uuid opponent_id FK
         uuid winner_id FK "NULL = pareggio"
         varchar end_reason "LIFE_POINTS, DECK_EXHAUSTED, ROUND_LIMIT"
         int total_rounds
@@ -342,6 +360,7 @@ erDiagram
         varchar name UK
         varchar description "testo per i giocatori, con {value}"
         varchar trigger_event "ON_PLAY, WHILE_IN_PLAY, END_OF_ROUND, ON_DEATH, ON_KILL"
+        boolean has_value "ha il valore X"
     }
     card_effects {
         uuid id PK
@@ -359,6 +378,51 @@ erDiagram
     }
 ```
 
+### Missioni e leghe
+
+```mermaid
+erDiagram
+    missions ||--o{ user_missions : "avanzamento"
+    users ||--o{ user_missions : "gioca"
+    credit_transactions |o--o| user_missions : "premio"
+    leagues ||--o{ user_league_rewards : "raggiunta"
+    users ||--o{ user_league_rewards : "raggiunge"
+    credit_transactions |o--o| user_league_rewards : "premio"
+
+    missions {
+        uuid id PK
+        varchar code UK "DAILY_PLAY, WEEKLY_WIN"
+        varchar period "DAILY, WEEKLY"
+        varchar goal_type "PLAY_MATCHES, WIN_MATCHES"
+        int goal_count
+        int reward_credits
+        boolean is_active
+    }
+    user_missions {
+        uuid id PK
+        uuid user_id FK
+        uuid mission_id FK
+        date period_start "giorno o lunedì, ora italiana"
+        int progress
+        timestamptz completed_at
+        uuid credit_transaction_id FK
+    }
+    leagues {
+        uuid id PK
+        varchar code UK
+        varchar name UK "Dormiente, Sognatore, Lucido, Dreamweaver"
+        int min_rating UK
+        int reward_credits
+    }
+    user_league_rewards {
+        uuid id PK
+        uuid user_id FK
+        uuid league_id FK
+        timestamptz reached_at
+        uuid credit_transaction_id FK
+    }
+```
+
 ---
 
 ## Scelte principali
@@ -370,7 +434,10 @@ erDiagram
 | **Ruolo come colonna** (`users.role`) invece di una tabella dei ruoli | Ci sono solo due ruoli, PLAYER e ADMIN. Con Spring si mappa con `@Enumerated(EnumType.STRING)`. |
 | **Saldo in `users.credits` + registro in `credit_transactions`** | Il saldo si legge subito senza calcoli. Il registro spiega ogni movimento e serve al marketing per le stime di redditività richieste dal brief. |
 | **Crediti come `INT`**, mai decimali | I crediti sono unità intere. Niente errori di arrotondamento. |
-| **Punteggio di rank già nello schema** (`users.rating`, `matches.*_rating_change`) | Il rank si fa dopo le funzionalità obbligatorie, ma le colonne ci sono già: quando si attiva non serve toccare le tabelle. Finché il rank è spento, `rating` resta 1000 e le variazioni restano `NULL`. Le leghe (Dormiente, Sognatore, Lucido, Dreamweaver) si calcolano dal punteggio, non si salvano. |
+| **Punteggio di rank** (`users.rating`, `matches.*_rating_change`) | Il rank fa parte della fase 1: il matchmaking delle partite classificate abbina giocatori con punteggio simile. Elo con K = 32, si parte da 1000. La lega attuale (Dormiente, Sognatore, Lucido, Dreamweaver) si calcola dal punteggio con la tabella `leagues`. |
+| **Fazione del set iniziale in `users`** (`starter_faction_id`) | Il giocatore la sceglie una volta sola nella pagina Benvenuto. Finché è `NULL` la pagina mostra la scelta; quando è valorizzata set iniziale e benvenuto sono già stati dati, quindi non si ricevono due volte. |
+| **Mazzo classificato in `users`** (`ranked_deck_id`) | Il matchmaking sceglie avversari anche non collegati: serve sapere con quale mazzo giocano. Se il mazzo si cancella la colonna diventa `NULL` e il giocatore non viene più scelto finché non ne indica un altro. |
+| **Ricompensa giornaliera con una colonna** (`users.last_daily_reward_on`) | Un `UPDATE ... WHERE last_daily_reward_on < :oggi` atomico dà la ricompensa una volta sola anche con due richieste nello stesso momento. Il giorno inizia a mezzanotte, ora italiana. |
 | **Consensi alla registrazione** (`privacy_accepted_at`, `terms_accepted_at`) | La registrazione ha la checkbox di Privacy Policy e Termini di servizio: si salva quando sono stati accettati. Un `CHECK` li rende obbligatori per i giocatori; l'admin, creato all'avvio, non passa dalla registrazione. |
 | **Messaggi dei contatti in tabella** (`contact_messages`) | Il form della pagina Contatti salva il messaggio e l'admin lo legge nel backoffice. Non serve configurare l'invio di email. |
 | **Accesso con token JWT** (`refresh_tokens`) | Il token di accesso dura poco e non si salva. Il refresh token serve a ottenerne uno nuovo: si salva come hash e si revoca al logout (`revoked_at`). Il frontend in HTML/CSS/JavaScript manda il token nell'header `Authorization`. |
@@ -385,12 +452,12 @@ erDiagram
 | **Lord di fazione** (`factions.lord_title`, `factions.lord_card_id`) | Ogni fazione è rappresentata da una sua Leggendaria: Dreams Lord, Nightmares Lord, Memories Lord. Sono solo titolo e immagine (pagina della fazione, copertine dei pacchetti), senza regole di gioco in più. |
 | **Limiti per TIER in `rarities`**: `max_per_deck` e `max_copies` | Il regolamento ha limiti per rarità (Leggendarie 2, Epiche 4, Rare 8, Comuni libere) e copie che dipendono dalla rarità (2, ma 1 per le Leggendarie). Stando in tabella si ribilanciano senza toccare il codice. |
 | **Codice stabile per ogni carta** (`cards.code`, es. `BASE-001`) | Le migration con i dati e i nomi dei file immagine usano il codice, che non cambia se si corregge il nome della carta. |
-| **La carta la monta il frontend** con un componente JavaScript (frontend in HTML, CSS e JavaScript, es. una funzione `drawCard`) | Il componente riceve i dati della carta e l'illustrazione e monta: illustrazione con il suo ritaglio, cornice della fazione e della rarità con la finestra trasparente, simbolo, nome, testi, ATT e DIF. Se cambia una statistica o un testo, la carta si aggiorna da sola: nessuna immagine da ricomporre. Le 15 carte del set di prova sono il riferimento visivo. |
+| **La carta la monta il frontend** con un componente React (`Card`, #81), usato nelle pagine HTML | Il componente riceve i dati della carta e l'illustrazione e monta: illustrazione con il suo ritaglio, cornice della fazione e della rarità con la finestra trasparente, simbolo, nome, testi, ATT e DIF. Se cambia una statistica o un testo, la carta si aggiorna da sola: nessuna immagine da ricomporre. Le 15 carte del set di prova sono il riferimento visivo. |
 | **Nel database solo illustrazione e ritaglio** (`illustration_url`, `illustration_thumb_url`, `illustration_focus_y` e le stesse per la full art) | L'illustrazione è l'unica parte diversa per ogni carta. Cornici, simboli, coordinate delle zone e font sono uguali per tutte e stanno nel frontend. Il ritaglio lo fa il JavaScript, ma solo il database sa dove sta il soggetto di ogni immagine: per questo il numero è nella carta (0,40 per quasi tutte, 0,27 per Il Sogno Lucido). Il ritaglio è lo stesso del compositore: niente zoom, solo spostamento verticale. |
 | **Originali intatti, al browser copie WebP** (`*_url` = grande, `*_thumb_url` = miniatura) | I PNG originali pesano 2,5–3,3 MB: con le 12 carte di oggi la prima visita alla collezione scaricherebbe circa 55 MB tra illustrazioni e cornici. L'originale resta com'è, con i suoi metadati, e non si serve al browser. Il backend serve due copie WebP: grande (larghezza 1024 px, circa 120–350 KB) per il dettaglio della carta e l'apertura dei pacchetti, miniatura (larghezza 400 px, circa 25–80 KB) per le griglie. Con le miniature la collezione scende sotto 1 MB. Due colonne in più evitano regole sul nome del file da ricordare nel frontend. |
 | **Immagini in cache per sempre** (versione nel nome del file) | Ogni file ha un numero di versione, es. `base-004-v1.webp`. Il backend serve `/images/**` con `Cache-Control: public, max-age=31536000, immutable`: il browser scarica ogni immagine una volta sola. Se un'illustrazione cambia, la nuova ha un nome nuovo (`base-004-v2.webp`) e il browser la scarica perché l'URL è diverso. La carta montata non si salva: il JavaScript la rimonta a ogni pagina in pochi millisecondi, con le immagini già in cache. |
 | **Illustrazioni servite dal backend** | Quelle del catalogo ufficiale stanno nel repository, quelle caricate dal backoffice in un volume Docker. Gli originali restano PNG senza conversioni, così i loro metadati non si perdono; le copie WebP sono file a parte. |
-| **Full art come copia rara della stessa carta** (`user_cards.full_art_quantity`) | Solo le Leggendarie hanno la full art. Quando esce una Leggendaria da un pacchetto c'è una piccola probabilità (`packs.full_art_chance`, es. 5%) che sia full art. In partita è la stessa carta: stesse statistiche, conta per gli stessi limiti di copie. Cambia solo l'immagine, in collezione e negli scambi. |
+| **Full art come copia rara della stessa carta** (`user_cards.full_art_quantity`) | Solo le Leggendarie hanno la full art. Quando esce una Leggendaria da un pacchetto c'è una piccola probabilità (`packs.full_art_chance`: 20% nel Dream Pack, cioè l'1% del pacchetto) che sia full art. In partita è la stessa carta: stesse statistiche, conta per gli stessi limiti di copie. Cambia solo l'immagine, in collezione e negli scambi. |
 | **Attacco e difesa almeno 1** (`CHECK`) | Con attacco almeno 1 ogni round toglie difesa; insieme al limite di round, la partita finisce sempre. |
 | **Espansioni** (`card_sets`) con pacchetti legati a un'espansione (`packs.card_set_id`) | Permette pacchetti che contengono solo le carte nuove. Con `card_set_id = NULL` il pacchetto pesca da tutte le espansioni. |
 | **Carte e pacchetti si disattivano, non si cancellano** (`is_active`) | Restano collegati a collezioni, mazzi e storico. |
@@ -400,8 +467,10 @@ erDiagram
 | Scelta | Perché |
 |--------|--------|
 | **Collezione con `quantity`** (una riga per utente e carta) | Più semplice di una riga per ogni copia. Con le transazioni basta per garantire che negli scambi nessuna carta venga persa o duplicata. `full_art_quantity` dice quante di quelle copie sono full art. |
-| **Tipi di pacchetto** (`packs.pack_type`: SHOP, STARTER, WELCOME) | Set iniziale e pacchetti di benvenuto sono pacchetti come gli altri, ma non si comprano: si regalano alla registrazione. Così si usa la stessa logica di estrazione. |
-| **Slot con rarità pesate** (`pack_slots` + `pack_slot_rarities`) | Uno slot può dare rarità diverse con probabilità diverse (es. Epica peso 90, Leggendaria peso 10). Uno slot con una sola rarità dà sempre quella: così si fa anche l'Epica garantita del benvenuto. Dentro una rarità la carta si estrae a caso tra quelle attive. |
+| **Tipi di pacchetto** (`packs.pack_type`: SHOP, STARTER, WELCOME) | Set iniziale e pacchetti di benvenuto sono pacchetti come gli altri, ma non si comprano: si regalano quando il giocatore sceglie la fazione. Così si usa la stessa logica di estrazione. |
+| **Pacchetti di una fazione** (`packs.faction_id`) | Il set iniziale è di una fazione scelta dal giocatore: ci sono tre pacchetti STARTER, uno per fazione. La stessa colonna permette in futuro pacchetti di fazione in vendita. |
+| **Più pacchetti in vendita, anche a tempo** (`price_credits`, slot, pesi, `full_art_chance`, `available_from`, `available_until`) | Il cliente vuole più tipi di pacchetti a prezzi diversi: un pacchetto più caro con carte più rare è solo una riga con prezzo e pesi diversi. Il periodo di vendita serve per i pacchetti di un evento. |
+| **Slot con rarità pesate** (`pack_slots` + `pack_slot_rarities`) | Uno slot può dare rarità diverse con probabilità diverse (es. slot speciale del Dream Pack: Rara 70, Epica 25, Leggendaria 5). Uno slot con una sola rarità dà sempre quella: così si fa anche l'Epica garantita del benvenuto. Dentro una rarità ogni carta attiva ha la stessa probabilità. |
 | **Copertine dei pacchetti** (`pack_covers`) | Stesso contenuto, immagine diversa: il pacchetto base ha tre copertine, una per ogni Lord. Il giocatore sceglie quella che preferisce e la scelta resta nell'apertura (`pack_openings.pack_cover_id`). |
 | **Apertura immediata** (`pack_openings`, con `source`) | L'utente compra e apre subito il pacchetto: un solo passaggio, un solo record. `source` distingue i pacchetti comprati da quelli regalati alla registrazione; `price_paid` conserva il prezzo anche se poi cambia. |
 | **Lista amici** (`friendships`) | A manda la richiesta, B la accetta. Una sola riga per coppia, in qualunque direzione (indice su `LEAST`/`GREATEST`). Un rifiuto o la rimozione dell'amicizia cancellano la riga. |
@@ -412,21 +481,26 @@ erDiagram
 
 | Scelta | Perché |
 |--------|--------|
-| **Modalità in tabella con i loro valori** (`game_modes`: `starting_life_points`, `round_limit`) | Oggi c'è una sola modalità, ma un formato futuro che cambia solo i numeri (es. più o meno punti vita) è una riga nuova, accesa e spenta dal backoffice con `is_active`. Carte per mazzo e copie restano uguali per tutte le modalità, così un mazzo valido si usa ovunque. |
+| **Modalità in tabella con i loro valori** (`game_modes`: `starting_life_points`, `round_limit`) | Oggi c'è una sola modalità (le partite rapide e classificate usano le stesse regole), ma un formato futuro che cambia solo i numeri (es. più o meno punti vita) è una riga nuova, accesa e spenta dal backoffice con `is_active`. Carte per mazzo e copie restano uguali per tutte le modalità, così un mazzo valido si usa ovunque. |
 | **Carte per mazzo fisse nella configurazione** (`game.deck-size=20`), non in tabella | Cambiarle renderebbe non validi tutti i mazzi salvati. La pagina Configurazione del backoffice le mostra in sola lettura, e la pagina pubblica del Regolamento le legge dalla stessa API. |
 | **Una sola modalità: BASE con gli effetti** | Il brief aggiornato permette di modificare la modalità Base: gli effetti delle carte ne fanno parte e valgono in ogni partita. BASE viene inserita insieme alla tabella e non si disattiva mai. |
+| **Partita rapida o classificata** (`matches.match_type`: CASUAL, RANKED) | Le regole sono le stesse (BASE); cambia solo cosa si vince. La rapida non dà rank né crediti, la classificata sì. Due `CHECK` lo garantiscono: le sfide tra amici sono solo rapide, e le rapide non hanno variazioni di rank. |
+| **Giocatori in `matches`** (`challenger_id`, `opponent_id`) e `challenge_id` facoltativo | Le partite del matchmaking non nascono da una sfida: i due giocatori stanno nella partita. `challenge_id` c'è solo per le sfide tra amici. |
+| **Missioni in tabella** (`missions`, `user_missions`) | Oggi ci sono solo la missione giornaliera e l'obiettivo settimanale fissi, ma una missione nuova è una riga in più. Il vincolo `UNIQUE` su giocatore, missione e periodo impedisce di prendere il premio due volte. |
+| **Leghe in tabella** (`leagues`, `user_league_rewards`) | Soglie e premi si cambiano dal backoffice. La riga in `user_league_rewards` resta anche se il giocatore scende: il premio arriva solo la prima volta. |
 | **Copia dei valori della partita in `matches`** (`starting_life_points`, `round_limit`) | Se i valori di una modalità cambiano, lo storico mostra comunque le regole con cui si è giocato. |
 | **Copie dei mazzi in `matches`** (JSONB) | Lo storico resta corretto anche se l'utente modifica o cancella il mazzo, o scambia le carte, dopo la partita. |
 | **Log round per round come JSONB** (`round_log`) | Si legge sempre tutto insieme, non serve interrogare i singoli round. Una tabella dei round si può aggiungere in futuro se servisse. |
 | **`random_seed` in `matches`** | Con lo stesso seed il motore rigioca la stessa identica partita: utile per verifiche e test. Decide anche il lancio della moneta per l'ordine degli effetti, che si legge nel log. |
 | **Stati e tipi come `VARCHAR` + `CHECK`** invece di `ENUM` | Si mappano facilmente su enum Java. Aggiungere un valore richiede solo una migration che aggiorna il `CHECK`. |
 | **Effetti separati dalle carte** (catalogo + tabella di collegamento) | Lo stesso effetto si riusa su più carte con valori diversi, come prevede la lista di keyword di Nicolas (es. Protezione X, Castigo X). |
+| **`effects.has_value`** | Il backoffice chiede il valore X solo per gli effetti che lo hanno; il service controlla che `card_effects.effect_value` ci sia solo per quelli. |
 | **Momenti degli effetti** (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) | Sono i momenti della lista di Nicolas: quando la carta viene giocata, finché resta in campo, alla fine di ogni round, quando viene uccisa, quando uccide. |
 | **Il comportamento dell'effetto sta nel codice Java**, il database salva solo `code`, momento e valore | Gli effetti sono molto diversi tra loro: descriverli tutti con colonne sarebbe rigido. Il motore associa ogni `code` alla sua classe Java. |
 | **`id UUID` v7 su ogni tabella**, anche quelle di relazione (`DEFAULT uuidv7()`) | Una regola sola per tutti. Gli id finiscono negli URL e nelle API (`/sfide/{id}`): un UUID non si indovina, un numero sì. La versione 7 è ordinata nel tempo, quindi gli indici restano efficienti. In Java il campo è `java.util.UUID`; con JPA evita le chiavi composte. L'unicità reale è garantita dai vincoli `UNIQUE`. |
 | **UUID generati da Hibernate** (Spring Boot 4, `@UuidGenerator(style = UuidGenerator.Style.VERSION_7)`) | L'id esiste già prima del salvataggio: niente riletture dopo l'insert, entità più semplici da testare. Il `DEFAULT uuidv7()` resta nel database per le migration con i dati e per chi scrive SQL a mano. |
 | **Indici sulle chiavi esterne usate nelle ricerche** | PostgreSQL non li crea da solo. Ci sono dove serve: es. `refresh_tokens.user_id` (logout ovunque) e `pack_opening_cards.pack_opening_id` (pagina dell'apertura). Le altre chiavi esterne sono già coperte da un vincolo `UNIQUE` che inizia con quella colonna, o stanno su tabelle piccole. |
-| **Date in `TIMESTAMPTZ`, in UTC** | Nessun dubbio sul fuso orario: conta per la ricompensa giornaliera e per le partite del giorno che valgono per il rank. |
+| **Date in `TIMESTAMPTZ`, in UTC** | Nessun dubbio sul fuso orario. Il "giorno" di ricompense, missioni e partite che contano per il rank inizia a mezzanotte, ora italiana (`Europe/Rome`); la settimana il lunedì. La conversione la fa il service. |
 | **`updated_at` aggiornato da JPA** (`@UpdateTimestamp`) | PostgreSQL non ha `ON UPDATE CURRENT_TIMESTAMP`: lo fa Hibernate a ogni salvataggio, senza trigger. |
 
 ---
@@ -439,13 +513,17 @@ Queste regole stanno nei **service** del backend, sempre dentro una transazione 
 
 Prima di tutto controlla che l'utente abbia accettato Privacy Policy e Termini di servizio e salva le due date (`privacy_accepted_at`, `terms_accepted_at`).
 
-Nella stessa transazione che crea l'utente:
-1. Apre il pacchetto **STARTER** (set iniziale: 14 Comuni e 6 Rare estratte a caso). Solo per questo pacchetto l'estrazione **non supera le copie massime per carta** (`rarities.max_copies`): una carta che ha già 2 copie si toglie dall'estrazione. Così le 20 carte formano sempre un mazzo valido. Il mazzo non si crea in automatico: lo compone il giocatore nell'editor.
-2. Apre i due pacchetti **WELCOME**: uno dei due ha uno slot con l'Epica garantita.
-3. Scrive le aperture con `source = 'SIGNUP'` e `price_paid = 0` e aggiorna `user_cards`. Nessun movimento di crediti.
-4. Se si decide un bonus di crediti iniziale, scrive anche `credit_transactions` con `type = 'SIGNUP_BONUS'`.
+Nella stessa transazione che crea l'utente dà il bonus di **500 DC**: `users.credits = 500` e una riga di `credit_transactions` con `type = 'SIGNUP_BONUS'`. Set iniziale e pacchetti di benvenuto arrivano dopo, nella pagina Benvenuto.
 
-Set iniziale e benvenuto si ricevono una sola volta, alla creazione dell'account.
+### Benvenuto: scelta della fazione
+
+Il giocatore sceglie una fazione (`POST /me/welcome`). In una sola transazione:
+1. Imposta `users.starter_faction_id` con un aggiornamento atomico che fallisce se è già valorizzato (`... WHERE starter_faction_id IS NULL`): se aggiorna 0 righe, la scelta è già stata fatta (`409`).
+2. Apre il pacchetto **STARTER** di quella fazione (`packs.faction_id`): 14 Comuni e 6 Rare estratte a caso. Solo per questo pacchetto l'estrazione **non supera le copie massime per carta** (`rarities.max_copies`): una carta che ha già 2 copie si toglie dall'estrazione. Così le 20 carte formano sempre un mazzo valido. Il mazzo non si crea in automatico: lo compone il giocatore nell'editor.
+3. Apre i due pacchetti **WELCOME**, con carte di tutte e tre le fazioni: uno dei due ha uno slot con l'Epica garantita.
+4. Scrive le aperture con `source = 'SIGNUP'` e `price_paid = 0` e aggiorna `user_cards`. Nessun movimento di crediti.
+
+Per funzionare, ogni fazione deve avere almeno 7 Comuni e 3 Rare attive.
 
 ### Mazzi
 
@@ -458,11 +536,13 @@ Al salvataggio di un mazzo il service verifica:
 
 La full art nel mazzo è solo una scelta di aspetto: si vede nell'editor, nella lista dei mazzi e in partita, e finisce nella copia del mazzo salvata in `matches` (`isFullArt`).
 
-Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavano dentro. Per questo il mazzo si **ricontrolla quando si invia o si accetta una sfida**.
+Si salvano **solo i mazzi validi**: niente bozze.
+
+Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavano dentro o se l'admin cambia una carta. Per questo il mazzo si **ricontrolla prima di ogni partita**. Se il mazzo classificato non è più valido, il matchmaking non sceglie quel giocatore finché non lo sistema.
 
 ### Acquisto di un pacchetto
 
-1. Controlla che il pacchetto sia di tipo SHOP e attivo, e che la copertina scelta (se c'è) sia di quel pacchetto.
+1. Controlla che il pacchetto sia di tipo SHOP, attivo e in vendita in questo momento (`available_from` e `available_until`), e che la copertina scelta (se c'è) sia di quel pacchetto.
 2. Scala i crediti con un aggiornamento atomico che fallisce se il saldo non basta:
    ```sql
    UPDATE users SET credits = credits - :price WHERE id = :userId AND credits >= :price;
@@ -470,13 +550,13 @@ Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavan
    Se aggiorna 0 righe, il saldo è insufficiente.
 3. Estrae le carte lato server. Per ogni slot e per ogni carta dello slot:
    - sceglie la rarità con i pesi di `pack_slot_rarities`;
-   - pesca a caso tra le carte attive di quella rarità (e dell'espansione, se il pacchetto ha `card_set_id`);
+   - pesca a caso, con la stessa probabilità per ogni carta, tra le carte attive di quella rarità (e dell'espansione e della fazione, se il pacchetto ha `card_set_id` o `faction_id`);
    - se la carta ha una full art, con probabilità `packs.full_art_chance` la copia è full art.
 4. Scrive `pack_openings`, `pack_opening_cards`, `credit_transactions` e aggiorna `user_cards` (`quantity` e, se serve, `full_art_quantity`).
 
 Tutto nella stessa transazione: o va a buon fine tutto, o niente.
 
-Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei suoi slot, esiste almeno una carta attiva (e dell'espansione, se indicata). Altrimenti l'apertura non saprebbe cosa estrarre.
+Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei suoi slot, esiste almeno una carta attiva (e dell'espansione e della fazione, se indicate). Altrimenti l'apertura non saprebbe cosa estrarre.
 
 ### Catalogo
 
@@ -485,6 +565,8 @@ Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei
 - Una nuova illustrazione per una carta che ne ha già una prende la versione successiva nel nome (`-v2`, `-v3`...). Un file già pubblicato non si sovrascrive mai, altrimenti i browser continuerebbero a mostrare quello vecchio dalla cache.
 - `factions.lord_card_id` deve essere una Leggendaria della stessa fazione.
 - Una carta ha al massimo un effetto, come prevede il regolamento attuale.
+- `card_effects.effect_value` c'è se e solo se l'effetto ha `has_value = TRUE`.
+- ATT e DIF di una carta già posseduta si possono cambiare: lo storico resta corretto grazie alle copie dei mazzi in `matches`, e i mazzi si ricontrollano quando si gioca.
 
 ### Amici
 
@@ -503,20 +585,56 @@ Quando il destinatario accetta:
 4. Sposta le carte: scala `quantity` (e `full_art_quantity` per le full art), cancella le righe che arrivano a 0, aggiunge o incrementa quelle del ricevente.
 5. Imposta `status = 'ACCEPTED'` e `resolved_at`.
 
-Se un controllo fallisce, la transazione si annulla e nessuna carta si muove. Ogni scambio deve avere almeno una carta per lato.
+Se un controllo fallisce, la transazione si annulla e nessuna carta si muove: lo scambio passa a `CANCELLED` e chi prova ad accettare riceve un messaggio. Lo stesso succede se l'amicizia è stata tolta. Ogni scambio deve avere almeno una carta per lato.
 
-### Sfide
+Le carte offerte **non si bloccano** mentre lo scambio è in attesa: restano usabili in altri scambi e nei mazzi. Gli scambi in attesa **non scadono**: chi propone può annullare quando vuole.
 
-Si può sfidare qualunque Dreamweaver, non solo gli amici. All'invio della sfida si controlla che la modalità sia attiva (`game_modes.is_active`).
+### Partite
 
-Quando lo sfidato accetta:
+Tutte le partite usano le regole BASE e vengono simulate subito dal server, senza interazione dei giocatori. Ci sono tre modi di giocare:
+
+| Modo | Avversario | `match_type` | Rank | Crediti |
+|------|------------|--------------|------|---------|
+| Sfida a un amico | Un amico, che accetta | `CASUAL` | No | No |
+| Partita rapida | Scelto a caso dal matchmaking | `CASUAL` | No | No |
+| Partita classificata | Scelto dal matchmaking con punteggio simile | `RANKED` | Sì | Sì, ma non contro un amico |
+
+**Sfida a un amico** (`challenges`): sfidante e sfidato devono essere amici, e tra loro ci può essere al massimo una sfida in attesa (`uq_challenges_pending_pair`). Le sfide non scadono: chi sfida può annullare. Quando lo sfidato accetta, il service ricontrolla i mazzi, gioca la partita (vedi sotto) e imposta `status = 'COMPLETED'`.
+
+**Matchmaking** (partita rapida e classificata): chi preme "Cerca partita" sceglie un suo mazzo valido. Il service cerca un avversario tra i giocatori attivi con un mazzo classificato valido (`users.ranked_deck_id`), escluso chi cerca. L'avversario non deve essere collegato: si gioca con il suo mazzo classificato.
+- Partita rapida: un avversario a caso.
+- Partita classificata: un avversario con punteggio vicino (es. ±100, poi la distanza si allarga), preferendo chi non si è già affrontato 3 volte oggi.
+
+Per ogni partita, nella stessa transazione:
 1. Ricontrolla la validità di entrambi i mazzi.
 2. Genera il seed e chiama il motore di gioco con i valori della modalità (punti vita, limite di round). Gli passa sempre anche gli effetti delle carte (`card_effects`).
-3. Salva il risultato in `matches`, con la copia dei valori della modalità.
-4. Se il rank è attivo e la partita conta (solo le prime partite del giorno contro lo stesso avversario), calcola le variazioni di punteggio, aggiorna `users.rating` e salva `*_rating_change`.
-5. Imposta `status = 'COMPLETED'`.
+3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi.
+4. Solo per le classificate:
+   - se i due giocatori non si sono già affrontati 3 volte oggi in classificata, calcola le variazioni di punteggio (Elo, K = 32), aggiorna `users.rating` di entrambi e salva `*_rating_change`; altrimenti restano `NULL`;
+   - se chi ha avviato la partita vince, non ha già 3 vittorie premiate oggi e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`);
+   - se un punteggio entra per la prima volta in una lega, dà il premio della lega (vedi sotto).
+5. Aggiorna le missioni dei due giocatori (vedi sotto).
 
-La simulazione avviene subito, lato server, senza interazione dei giocatori.
+### Missioni
+
+- Il periodo si calcola in ora italiana: `DAILY` = il giorno, `WEEKLY` = la settimana che inizia il lunedì. `period_start` è il primo giorno del periodo.
+- Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria).
+- Quando `progress` arriva a `goal_count` e `completed_at` è vuoto, salva `completed_at`, scrive `credit_transactions` con `type = 'MISSION_REWARD'` e ne salva l'id in `credit_transaction_id`. Il vincolo `UNIQUE` impedisce una seconda riga nello stesso periodo.
+
+### Leghe
+
+- Dopo ogni variazione del punteggio, il service cerca le leghe con `min_rating <= rating` che il giocatore non ha in `user_league_rewards`.
+- Per ognuna inserisce la riga e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
+
+### Ricompensa giornaliera
+
+Al primo accesso del giorno (ora italiana): `UPDATE users SET credits = credits + 50, last_daily_reward_on = :oggi WHERE id = :userId AND (last_daily_reward_on IS NULL OR last_daily_reward_on < :oggi)`. Se aggiorna una riga scrive `credit_transactions` con `type = 'DAILY_REWARD'`; se ne aggiorna 0 la ricompensa è già stata data.
+
+### Utenti
+
+- **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username ed email sostituiti da valori unici senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Lo storico di sfide, scambi e partite resta valido.
+- **Primo admin:** creato all'avvio da username e password letti da variabili d'ambiente.
+- **Email:** il portale invia solo l'email di recupero password, se c'è tempo di farla. Se non si fa, `password_reset_tokens` si toglie con una migration.
 
 ### Contatti
 
@@ -600,8 +718,10 @@ Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta no
 | `V6__create_game_modes_challenges_and_matches.sql` | `game_modes` (+ riga BASE), `challenges`, `matches` |
 | `V7__create_credit_transactions.sql` | `credit_transactions` |
 | `V8__create_contact_messages.sql` | `contact_messages` |
+| `V9__create_missions.sql` | `missions` (+ le due missioni fisse), `user_missions` |
+| `V10__create_leagues.sql` | `leagues`, `user_league_rewards` |
 
-L'ordine conta: ogni file crea tabelle che dipendono solo da quelle dei file precedenti. L'unico riferimento "all'indietro" è `factions.lord_card_id`: la colonna nasce con `factions` e la chiave esterna si aggiunge con un `ALTER TABLE` subito dopo la creazione di `cards`, nello stesso file.
+L'ordine conta: ogni file crea tabelle che dipendono solo da quelle dei file precedenti. I riferimenti "all'indietro" si aggiungono con un `ALTER TABLE` appena esiste la tabella di arrivo: `factions.lord_card_id` dopo `cards` (V2), `users.starter_faction_id` dopo `factions` (V2), `users.ranked_deck_id` dopo `decks` (V3).
 
 ### Dati iniziali
 
@@ -613,7 +733,7 @@ Con le 12 carte di prova non si forma un mazzo valido (al massimo 18 carte). Per
 
 | Cartella | Contenuto | Quando si esegue |
 |----------|-----------|------------------|
-| `db/migration/` | Tabelle (`V1`–`V8`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
+| `db/migration/` | Tabelle (`V1`–`V10`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
 | `db/testdata/` | Circa 30 carte finte (es. 12 Comuni, 9 Rare, 6 Epiche, 3 Leggendarie), pacchetti e qualche utente di prova | Solo nel profilo `dev` e nei test |
 
 - Numerazione da `V900` in su (es. `V900__seed_test_cards.sql`), così non si scontra mai con le migration vere.
@@ -653,8 +773,8 @@ Versioni: **Spring Boot 4** (con Hibernate 7, che genera gli UUID v7) e **Postgr
 |------|------------------|--------|
 | **Catalogo ufficiale**: fazioni e Lord, vantaggi, rarità, espansioni, carte, effetti, pacchetti | **Migration Flyway** con i dati | Partono da sole all'avvio, sono versionate su Git e revisionate in PR, sono uguali per tutti e finiscono nell'export di consegna |
 | **Gestione dal vivo**: attivare/disattivare carte e pacchetti, cambiare prezzi e pesi, correggere testi, pacchetti promozionali | **Backoffice** | Richiesto dal brief, non serve scrivere SQL |
-| **Dati di prova**: utenti finti, collezioni e mazzi di esempio | Migration in una cartella separata (`db/dev-data`), caricata **solo in sviluppo** con un profilo Spring | Non devono finire nel database di consegna |
-| **Primo admin** | Creato all'avvio da variabili d'ambiente (vedi [Punti aperti](#punti-aperti)) | Nessuna password nel repository |
+| **Dati di prova**: utenti finti, collezioni e mazzi di esempio | Migration in una cartella separata (`db/testdata`), caricata **solo in sviluppo** con un profilo Spring | Non devono finire nel database di consegna |
+| **Primo admin** | Creato all'avvio da variabili d'ambiente | Nessuna password nel repository |
 
 Non serve nessuno script esterno per avviare il progetto: Flyway carica tutto da solo. Uno script può servire solo a chi sviluppa, per trasformare il foglio delle carte (oggi `carte/compositore/carte.csv`) nel file SQL della migration. Si lancia una volta e si committa l'SQL generato.
 
@@ -725,40 +845,43 @@ UPDATE factions f SET lord_card_id = c.id FROM cards c WHERE c.code = 'BASE-012'
 ```sql
 -- V102__seed_packs.sql (estratto)
 
--- Pacchetto base in vendita, con tre copertine (una per Lord)
-INSERT INTO packs (name, pack_type, price_credits) VALUES ('Pacchetto base', 'SHOP', 100);
+-- Dream Pack in vendita: 5 carte, 500 DC, tre copertine (una per Lord).
+-- full_art_chance 20: una Leggendaria su cinque è full art, cioè l'1% del pacchetto.
+INSERT INTO packs (name, pack_type, price_credits, full_art_chance) VALUES ('Dream Pack', 'SHOP', 500, 20);
 
 INSERT INTO pack_covers (pack_id, faction_id, name, image_url, sort_order)
-SELECT p.id, f.id, f.lord_title, CONCAT('/images/packs/base-', LOWER(f.code), '-v1.webp'), f.id
-FROM packs p, factions f
-WHERE p.name = 'Pacchetto base';
+SELECT p.id, f.id, f.lord_title, CONCAT('/images/packs/dream-pack-', LOWER(f.code), '-v1.webp'), x.sort_order
+FROM packs p
+CROSS JOIN factions f
+JOIN (VALUES ('DREAMS', 1), ('NIGHTMARES', 2), ('MEMORIES', 3)) AS x (code, sort_order) ON x.code = f.code
+WHERE p.name = 'Dream Pack';
 
--- Slot del pacchetto base: 3 Comuni, 1 Rara, 1 Epica o Leggendaria
+-- Slot del Dream Pack: 3 Comuni, 1 Rara, 1 slot speciale (Rara 70, Epica 25, Leggendaria 5)
 INSERT INTO pack_slots (pack_id, sort_order, card_count)
 SELECT id, x.sort_order, x.card_count
-FROM packs, (SELECT 1 AS sort_order, 3 AS card_count UNION ALL SELECT 2, 1 UNION ALL SELECT 3, 1) x
-WHERE name = 'Pacchetto base';
+FROM packs, (VALUES (1, 3), (2, 1), (3, 1)) AS x (sort_order, card_count)
+WHERE name = 'Dream Pack';
 
 INSERT INTO pack_slot_rarities (pack_slot_id, rarity_id, weight)
 SELECT s.id, r.id, x.weight
 FROM pack_slots s
-JOIN packs p ON p.id = s.pack_id AND p.name = 'Pacchetto base'
-JOIN (SELECT 1 AS sort_order, 'COMMON' AS code, 100 AS weight
-      UNION ALL SELECT 2, 'RARE', 100
-      UNION ALL SELECT 3, 'EPIC', 90
-      UNION ALL SELECT 3, 'LEGENDARY', 10) x ON x.sort_order = s.sort_order
+JOIN packs p ON p.id = s.pack_id AND p.name = 'Dream Pack'
+JOIN (VALUES (1, 'COMMON', 100), (2, 'RARE', 100),
+             (3, 'RARE', 70), (3, 'EPIC', 25), (3, 'LEGENDARY', 5)) AS x (sort_order, code, weight)
+     ON x.sort_order = s.sort_order
 JOIN rarities r ON r.code = x.code;
 
--- Set iniziale: 14 Comuni e 6 Rare, regalato alla registrazione
-INSERT INTO packs (name, pack_type) VALUES ('Set iniziale', 'STARTER');
--- slot 1: 14 COMMON (peso 100); slot 2: 6 RARE (peso 100)
+-- Set iniziale: uno per fazione, 14 Comuni e 6 Rare di quella fazione
+INSERT INTO packs (name, pack_type, faction_id)
+SELECT CONCAT('Set iniziale ', f.name), 'STARTER', f.id FROM factions f;
+-- per ognuno: slot 1 = 14 COMMON (peso 100); slot 2 = 6 RARE (peso 100)
 
--- Pacchetti di benvenuto: uno con l'Epica garantita
+-- Pacchetti di benvenuto, con carte di tutte le fazioni: uno con l'Epica garantita
 INSERT INTO packs (name, pack_type) VALUES ('Benvenuto', 'WELCOME'), ('Benvenuto con Epica', 'WELCOME');
--- "Benvenuto con Epica" ha uno slot con la sola rarità EPIC
+-- "Benvenuto" ha gli slot del Dream Pack; "Benvenuto con Epica" ha lo slot speciale con la sola rarità EPIC
 ```
 
-I numeri (prezzo, carte per slot, pesi, `full_art_chance`) sono esempi: li decidono Maie e Nicolas.
+I numeri del Dream Pack sono quelli confermati il 31/10. Gli altri tipi di pacchetti in vendita (prezzi, slot, pesi) li decidono Maie e Nicolas e diventano righe in più, senza cambiare le tabelle.
 
 Al primo avvio dopo il merge, Flyway esegue i file una sola volta: le carte e i pacchetti compaiono nel negozio.
 
@@ -766,55 +889,18 @@ Al primo avvio dopo il merge, Flyway esegue i file una sola volta: le carte e i 
 
 ## Punti aperti
 
-Decisioni da prendere prima di trasformare la proposta in migration. La colonna "Proposta" è un suggerimento di partenza, non una decisione.
-
-### Gioco ed economia
+Quello che resta da decidere prima delle migration. Le decisioni già prese, con il perché, sono in [`docs/decisioni/`](../decisioni/README.md); l'elenco di quelle del 2 e del 3 novembre è in [Cosa è cambiato](#3-novembre-2026-decisioni-del-2-e-del-3-novembre).
 
 | Punto | Da decidere | Proposta | Chi |
 |-------|-------------|----------|-----|
-| Come si ottengono i crediti in fase 1 | Bonus di registrazione, ricompensa giornaliera, premi per le vittorie, vendita di carte doppie... Determina i valori di `credit_transactions.type` | Ricompensa giornaliera + premio vittoria; bonus di registrazione solo se set iniziale e benvenuto non bastano | DGS (Maie) |
-| Set iniziale e benvenuto: dettagli | Deciso: set iniziale casuale con il limite di copie, mazzo composto dal giocatore. Da decidere: fazioni del set iniziale (tutte e tre o una scelta dal giocatore) e contenuto dei pacchetti di benvenuto | Tutte e tre le fazioni; benvenuto come il pacchetto base | Maie + Nicolas |
-| Catalogo minimo | Quante carte servono in fase 1. Il set iniziale richiede almeno 7 Comuni e 3 Rare diverse; oggi le carte sono 12 (3 per rarità) | Circa 30 carte; nel frattempo si sviluppa con le carte finte di `db/testdata` | Maie + Nicolas + DGS |
-| Pesi e numeri dei pacchetti | Prezzo, carte per slot, peso delle Leggendarie nello slot Epica/Leggendaria, probabilità della full art | Pacchetto da 5 carte (3 Comuni, 1 Rara, 1 Epica o Leggendaria con peso 10), full art 5% | Maie + Nicolas |
-| Pesi per singola carta | Dentro una rarità ogni carta ha la stessa probabilità, oppure servono pesi per carta (`cards.drop_weight`)? | Stessa probabilità dentro la rarità | Maie + Nicolas |
-| Espansioni e mazzi | Se le carte di tutte le espansioni si possono usare insieme in un mazzo, o servono formati con solo alcune espansioni | Tutte insieme in fase 1 | Nicolas + DGS |
-| Pacchetti non aperti | Il pacchetto si apre subito all'acquisto, oppure l'utente può tenerlo e aprirlo dopo (servirebbe un inventario dei pacchetti) | Apertura immediata | DGS + WMD |
-| Punti vita e limite di round | Valori di `game_modes` dopo le simulazioni del motore: con 20 punti vita quasi tutte le partite finiscono a mazzo esaurito (vedi i punti da valutare del regolamento) | 20 punti vita e 60 round finché non si decide | Maie + Nicolas |
-| Regole del rank | Quante partite al giorno contro lo stesso avversario contano, quanto vale ogni partita (fattore K dell'Elo), premio in crediti | Prime 3 partite del giorno, K = 32 | Nicolas + Maie |
-| Modifica di carte già distribuite | Se l'admin può cambiare ATT/DIF di una carta che gli utenti già possiedono. Lo storico è protetto dalle copie dei mazzi in `matches` e la carta si rimonta da sola, ma i mazzi esistenti potrebbero diventare non validi | Permessa, con ricontrollo dei mazzi alla sfida | Tutti |
-| Mazzi non validi | Si possono salvare come bozza (servirebbe `decks.is_valid`) o si salvano solo i mazzi validi? | Solo mazzi validi; un mazzo che lo diventa dopo uno scambio viene segnalato alla sfida | SWD + WMD |
-| Carte impegnate in scambi in attesa | Se una carta offerta in uno scambio in attesa resta usabile (in altri scambi e nei mazzi) o viene bloccata finché lo scambio non si chiude | Non bloccata: tutto si ricontrolla quando lo scambio viene accettato | SWD |
-| Scadenza di scambi e sfide | Se una proposta in attesa scade dopo un certo tempo (servirebbe uno stato `EXPIRED`) | Nessuna scadenza in fase 1; chi propone può annullare | Tutti |
-| Catalogo degli effetti | Lista definitiva delle keyword di Nicolas, valori di X e quali carte li hanno (righe di `effects` e `card_effects`) | La lista di Nicolas, con l'abbinamento alle carte proposto nel regolamento | Nicolas + Maie |
-| Limiti della lista amici | Se c'è un numero massimo di amici o di richieste in sospeso | Nessun limite in fase 1 | SWD + DGS |
-| Carte non creatura (incantesimi, potenziamenti) | Seconda variante suggerita dal brief. Servirebbero `cards.card_type` e ATT/DIF facoltativi | Non in fase 1; si aggiunge con una migration solo se si decide di farla | Tutti |
-| Notifiche | Se servono avvisi per sfide e scambi ricevuti (tabella `notifications`) | Basta un contatore delle richieste in attesa, calcolato da `friendships`, `trades` e `challenges` | WMD + SWD |
-
-### Utenti, accesso e privacy
-
-| Punto | Da decidere | Proposta | Chi |
-|-------|-------------|----------|-----|
-| Durata e conservazione dei token | Accesso con JWT deciso. Da fissare: quanto durano token di accesso e refresh token, e dove li tiene il frontend | Token di accesso 15 minuti, in memoria; refresh token 7 giorni, in un cookie `HttpOnly` | SWD (con WMD) |
-| Invio di email | Se il portale invia email (recupero password, verifica dell'account). Senza invio di email `password_reset_tokens` non serve | Solo recupero password, se c'è tempo; altrimenti si toglie la tabella | SWD |
-| Dati alla registrazione | Se oltre a username, email e password si chiede altro (es. data di nascita per l'età minima). I consensi a Privacy e Termini sono già decisi | Solo username, email e password | DGS + SWD |
-| Cancellazione dell'account | Lo schema non cancella mai gli utenti, ma la privacy prevede il diritto alla cancellazione | Anonimizzare l'utente (username ed email sostituiti, `is_enabled = FALSE`) invece di cancellarlo | SWD |
-| Creazione del primo admin | Come nasce l'account admin senza scrivere una password nel repository | Creato all'avvio da username e password letti da variabili d'ambiente | SWD |
-
-### Tecniche
-
-| Punto | Da decidere | Proposta | Chi |
-|-------|-------------|----------|-----|
-| Caricamento delle immagini | Dove vanno illustrazioni e copertine caricate dal backoffice | Volume Docker del backend (deciso); nel database solo il percorso | SWD |
-| Creazione delle copie WebP | Chi crea copia grande e miniatura dagli originali | Catalogo ufficiale: uno script Python (Pillow, come il compositore) le crea una volta e si salvano nel repository. Backoffice: il backend le crea al caricamento con una libreria Java che scrive WebP (es. `webp-imageio`) | SWD |
-| Montaggio nel componente | Il componente della carta disegna su canvas oppure sovrappone livelli HTML/CSS | Canvas: stesso risultato delle carte di prova | WMD |
-| Ruolo del compositore Python | Se prepara cornici con finestra trasparente e coordinate delle zone per il frontend (e anteprime), oppure se tutto passa in JavaScript | Da scegliere | SWD + WMD |
-| Fuso orario delle date | In che fuso si salvano le date. Conta per la ricompensa giornaliera e per le partite del giorno che contano per il rank | Tutto in UTC nel database, conversione nel frontend | SWD |
-| Database per i test | Con cosa si testano repository e service: H2 in memoria o PostgreSQL vero (Testcontainers). H2 non supporta `JSONB` né gli indici su espressioni come `LOWER(email)` | PostgreSQL 18 vero con Testcontainers, con i dati finti di `db/testdata`; il motore di gioco si testa senza database | SWD |
-| Scambio non più valido | Cosa succede a uno scambio in attesa se l'amicizia viene tolta o se mancano le carte quando si accetta | Annullato in automatico (`CANCELLED`) e messaggio a chi prova ad accettare | SWD |
-| Ricompensa giornaliera chiesta due volte insieme | Due richieste nello stesso momento non devono dare due ricompense | Colonna `users.last_daily_reward_on` e un `UPDATE ... WHERE last_daily_reward_on < :oggi` atomico, quando DGS conferma la ricompensa | SWD |
-| Inizio del "giorno" | Per ricompensa giornaliera e partite del giorno che contano per il rank | Mezzanotte italiana (`Europe/Rome`); nel database le date restano in UTC | SWD + DGS |
-| Sfide in attesa tra le stesse persone | Se A può mandare più sfide in attesa a B | Al massimo una sfida in attesa per coppia | SWD |
-| Effetti con o senza X | Il backoffice deve sapere quando chiedere il valore dell'effetto | Colonna `effects.has_value` | SWD + Nicolas |
+| Nuovi pacchetti in vendita | Tipi, nomi, prezzi, slot e pesi dei pacchetti oltre al Dream Pack (richiesta del cliente) | Un pacchetto più caro con lo slot speciale più ricco; eventuali pacchetti di fazione o a tempo | Maie + Nicolas |
+| Numero di carte del catalogo | 99 o 102 (risposta del cliente) | 102, cioè 34 per fazione | Nicolas + Maie |
+| Punti vita e limite di round | 20 punti vita confermati dal cliente, da verificare con le simulazioni del motore (#87) | 20 punti vita e 60 round finché non si decide | Marco + Maie |
+| Leghe | Punteggio minimo di ogni lega e premio in DC | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500; premi da proporre | Maie |
+| Crediti a chi viene scelto dal matchmaking | Se vince il giocatore scelto come avversario (anche non collegato), riceve i 30 DC? | No: i DC della vittoria vanno solo a chi ha avviato la partita; il rank cambia per tutti e due | Maie + SWD |
+| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici | Maie + Nicolas |
+| Distanza del matchmaking | Quanto può essere lontano il punteggio dell'avversario in una classificata | ±100, poi si allarga di 100 alla volta fino a ±400, poi chiunque | SWD |
+| Skin e animazioni | Deciso: Backlog, lo schema non cambia. Da dire al cliente | Tabelle `cosmetics` e `user_cosmetics` quando si fanno | Sara + Gaia |
 
 ---
 
@@ -829,13 +915,13 @@ Decisioni da prendere prima di trasformare la proposta in migration. La colonna 
 | Collezione | `user_cards` |
 | Più mazzi per utente, con vincoli verificati | `decks`, `deck_cards`, `rarities.max_per_deck`, `rarities.max_copies` + service |
 | Scambi in quantità diverse, solo se il destinatario accetta (Dreamscape: solo tra amici) | `friendships`, `trades`, `trade_items` |
-| Sfide con scelta del mazzo, risultato turno per turno per entrambi | `challenges`, `matches.round_log` |
+| Sfide con scelta del mazzo, risultato turno per turno per entrambi | `challenges` (amici), matchmaking (`users.ranked_deck_id`), `matches.round_log` |
 | Storico delle sfide e dei risultati | `matches` |
 | Creature con attacco, difesa e fazione | `cards` |
 | Fazioni con vantaggi reciproci | `factions`, `faction_advantages` |
 | Fine partita per punti vita, mazzi esauriti o limite, con pareggio | `matches.end_reason`, `matches.winner_id = NULL` |
 | Backoffice per catalogo carte e pacchetti | `card_sets`, `cards`, `packs`, `pack_covers`, `pack_slots`, `pack_slot_rarities` (+ `users.role = 'ADMIN'`) |
-| Modalità di gioco (brief aggiornato: la Base si può modificare) | `game_modes` con la sola BASE, `challenges.game_mode_id` |
+| Modalità di gioco (brief aggiornato: la Base si può modificare) | `game_modes` con la sola BASE; partite rapide e classificate in `matches.match_type` |
 | Effetti delle creature, parte della modalità Base | `effects`, `card_effects` |
 | Pagine statiche (contatti, privacy, termini) | `contact_messages`, `users.privacy_accepted_at`, `users.terms_accepted_at` |
 | Acquisto crediti con denaro reale | **Escluso dalla fase 1**: nessuna tabella |
@@ -844,35 +930,55 @@ Decisioni da prendere prima di trasformare la proposta in migration. La colonna 
 
 ## Pagine del portale e tabelle
 
-Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026) e le tabelle di questo schema. Il feedback di SWD sulla sitemap è in `docs/riunioni/feedback-sitemap-portale.pdf`; la [guida ai dati per il frontend](../api/guida-frontend.md) spiega le stesse pagine dal punto di vista di chi sviluppa il frontend. Gli URL sono quelli della sitemap; le API seguono [naming.md](../naming.md) (`/api/v1/`, risorse in inglese al plurale) e l'elenco definitivo sarà in Swagger.
+Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggiornata con le decisioni del 3 novembre, e le tabelle di questo schema. Gli URL nuovi (`/gioca`, `/partite/{id}`, `/classifica`) sono una proposta: li conferma Alessandro nel SiteMap. Il feedback di SWD sulla sitemap è in `docs/riunioni/feedback-sitemap-portale.pdf`; la [guida ai dati per il frontend](../api/guida-frontend.md) spiega le stesse pagine dal punto di vista di chi sviluppa il frontend. Gli URL sono quelli della sitemap; le API seguono [naming.md](../naming.md) (`/api/v1/`, risorse in inglese al plurale) e l'elenco definitivo sarà in Swagger.
 
 | Pagina | URL | Tabelle |
 |--------|-----|---------|
 | Home, Il gioco / Lore | `/`, `/il-gioco` | `factions` (con Lord), `faction_advantages`, `cards` attive (galleria pubblica) |
 | Regolamento | `/regolamento` | `rarities`, `factions`, `faction_advantages`, `game_modes` + carte per mazzo dalla configurazione |
 | Contatti | `/contatti` | `contact_messages` |
-| Registrazione | `/registrazione` | `users` (con i consensi), `pack_openings` del set iniziale e del benvenuto, `user_cards` |
-| Benvenuto (nuova) | `/benvenuto` | `pack_openings` con `source = 'SIGNUP'`, `pack_opening_cards` |
-| Dashboard | `/dashboard` | `users.credits`, `pack_opening_cards` (ultime carte), `friendships`, `trades` e `challenges` in attesa |
+| Registrazione | `/registrazione` | `users` (con i consensi), `credit_transactions` (bonus di 500 DC) |
+| Benvenuto (nuova) | `/benvenuto` | `factions` (scelta), `users.starter_faction_id`, `pack_openings` con `source = 'SIGNUP'`, `pack_opening_cards`, `user_cards` |
+| Dashboard | `/dashboard` | `users.credits`, `users.rating` e `leagues`, `user_missions`, `pack_opening_cards` (ultime carte), `friendships`, `trades` e `challenges` in attesa |
 | Profilo | `/profilo` | `users` |
 | Crediti | `/crediti` | `users.credits`, `credit_transactions` |
 | Negozio | `/negozio` | `packs` (SHOP), `pack_covers`, `pack_slots`, `pack_slot_rarities` |
 | Apertura pacchetto | `/negozio/apertura/{aperturaId}` | `pack_openings`, `pack_opening_cards` |
 | Collezione, Dettaglio carta | `/collezione`, `/collezione/{id}` | `user_cards`, `cards`, `factions`, `rarities`, `faction_advantages`, `card_effects` |
-| Mazzi, Editor mazzo | `/mazzi`, `/mazzi/{id}/modifica` | `decks`, `deck_cards`, `user_cards`, `rarities` (limiti e copie) |
+| Mazzi, Editor mazzo | `/mazzi`, `/mazzi/{id}/modifica` | `decks`, `deck_cards`, `user_cards`, `rarities` (limiti e copie), `users.ranked_deck_id` (mazzo classificato) |
 | Amici (nuova) | `/amici` | `friendships`, `users` (ricerca per username) |
 | Scambi | `/scambi`, `/scambi/nuovo`, `/scambi/{id}` | `trades`, `trade_items`, `user_cards`, `friendships` (solo amici) |
-| Sfide | `/sfide`, `/sfide/nuova`, `/sfide/{id}` | `challenges`, `decks`, `game_modes`, `users` (tutti i Dreamweaver) |
-| Risultato partita, Storico | `/sfide/{id}/risultato`, `/storico` | `matches` (`round_log`, copie dei mazzi) |
+| Gioca: classificata e rapida | `/gioca` | `decks`, `users` (matchmaking per `rating` e `ranked_deck_id`), `matches` |
+| Sfide tra amici | `/sfide`, `/sfide/nuova`, `/sfide/{id}` | `challenges`, `decks`, `friendships` (solo amici) |
+| Risultato partita, Storico | `/partite/{id}`, `/storico` | `matches` (`round_log`, copie dei mazzi, `match_type`) |
+| Classifica (lega) | `/classifica` | `users.rating`, `leagues`, `user_league_rewards` |
 | Backoffice: statistiche | `/admin` | conteggi su `users`, `cards`, `packs`, `matches`, `credit_transactions` |
 | Backoffice: carte | `/admin/carte` | `cards`, `card_sets`, `card_effects`, `effects` |
 | Backoffice: pacchetti | `/admin/pacchetti` | `packs`, `pack_covers`, `pack_slots`, `pack_slot_rarities` |
-| Backoffice: configurazione | `/admin/configurazione` | `factions`, `faction_advantages`, `rarities`, `game_modes` |
+| Backoffice: configurazione | `/admin/configurazione` | `factions`, `faction_advantages`, `rarities`, `game_modes`, `missions`, `leagues` |
 | Backoffice: messaggi (nuova) | `/admin/messaggi` | `contact_messages` |
 
 ---
 
 ## Cosa è cambiato in questa versione
+
+### 3 novembre 2026: decisioni del 2 e del 3 novembre
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Bonus di registrazione | Da decidere | 500 DC alla registrazione (`SIGNUP_BONUS`) |
+| Set iniziale | Tutte e tre le fazioni, alla registrazione | Una fazione scelta nella pagina Benvenuto: `users.starter_faction_id`, tre pacchetti STARTER con `packs.faction_id` |
+| Pacchetti di benvenuto | Alla registrazione | Insieme al set iniziale, alla scelta della fazione; carte di tutte le fazioni |
+| Pacchetti in vendita | Solo il Dream Pack | Più tipi possibili: `packs.faction_id`, `available_from`, `available_until`; esempio con i numeri del Dream Pack (500 DC, slot speciale 70/25/5, full art 20%) |
+| Partite | Sfide aperte a tutti | Sfide solo tra amici (partite rapide); matchmaking per partite rapide e classificate; `matches.match_type`, `challenger_id`, `opponent_id`, `challenge_id` facoltativo; `users.ranked_deck_id` |
+| Rank | Dopo le funzioni obbligatorie | In fase 1: Elo con K = 32, stesso avversario al massimo 3 volte al giorno |
+| Crediti delle vittorie | 30 DC, massimo 3 al giorno | Solo nelle classificate e non contro un amico |
+| Missioni | Nessuna tabella | `missions` e `user_missions` (`V9`), con le due missioni fisse; tipo `MISSION_REWARD` |
+| Leghe | Calcolate dal punteggio | Tabella `leagues` con soglie e premi, `user_league_rewards` per il premio una volta sola (`V10`); tipo `LEAGUE_REWARD` |
+| Ricompensa giornaliera | Proposta | `users.last_daily_reward_on` con `UPDATE` atomico; il giorno inizia a mezzanotte, ora italiana |
+| Effetti | Il backoffice non sapeva quali hanno la X | `effects.has_value` |
+| Sfide in attesa | Nessun limite | Al massimo una per coppia (`uq_challenges_pending_pair`) |
+| Punti aperti chiusi | | Solo mazzi validi; carte negli scambi non bloccate; niente scadenze; pacchetto aperto subito; stessa probabilità per le carte della stessa rarità; espansioni tutte insieme; ATT e DIF modificabili; nessun limite di amici; un contatore al posto delle notifiche; niente carte non creatura; token 15 minuti e 7 giorni; email solo per il recupero password; niente altri dati alla registrazione; account anonimizzato; immagini dal backend in WebP; carta montata da un componente React con cornici e coordinate in JavaScript |
 
 ### 27 ottobre 2026: immagini leggere e cache
 

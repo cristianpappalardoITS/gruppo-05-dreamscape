@@ -107,7 +107,7 @@ private static final int DECK_SIZE = 20;
 
 ## Commenti in altri linguaggi
 
-> Gli esempi HTML, CSS e JavaScript sono indicativi: il team WMD li adatterà alle tecnologie scelte per il frontend.
+> Gli esempi HTML, CSS e JavaScript sono indicativi: il team WMD li adatterà a React, scelto per il frontend il 2/11.
 
 ```html
 <!-- Sezione: griglia della collezione (WMD-05) -->

@@ -21,15 +21,16 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 
 ## 1. Come funziona in breve
 
-- Il frontend è fatto di **pagine HTML** con **CSS** e **JavaScript**, senza framework.
-- Il JavaScript chiede i dati al backend con `fetch()` e riceve **JSON**. Poi riempie la pagina.
+- Il frontend è fatto di **pagine HTML** con **CSS** e **JavaScript**. I **componenti** che si ripetono, come la carta, sono in **React** (decisione del 2/11). Gli strumenti li sceglie Gaia nella #72.
+- Il JavaScript della pagina chiede i dati al backend tramite `api.js`, che usa `fetch()` e riceve **JSON**. Poi riempie la pagina e passa i dati ai componenti.
+- Sito e API hanno **lo stesso indirizzo**: il container del frontend serve il sito e manda `/api` al backend. In locale si avvia tutto con `docker compose up` (decisione 7 del 2/11).
 - Il backend fa tutti i conti e tutti i controlli: estrazione dei pacchetti, validità dei mazzi, partite, scambi. Il frontend **mostra** quello che riceve e **manda** quello che l'utente sceglie.
 - Il giocatore si chiama **Dreamweaver**. Le fazioni sono **Dreams**, **Nightmares** e **Memories**.
 
 ```
- Pagina HTML  ──fetch()──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
-      ▲                            │
-      └────────── JSON ────────────┘
+ Pagina HTML (+ componenti React)  ──api.js──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
+        ▲                                              │
+        └──────────────────── JSON ────────────────────┘
 ```
 
 ---
@@ -38,7 +39,7 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 
 | Cosa | Regola | Esempio |
 |------|--------|---------|
-| Indirizzo base | Tutte le API partono da `/api/v1` | `http://localhost:8080/api/v1` in sviluppo |
+| Indirizzo base | Tutte le API partono da `/api/v1`, sullo stesso indirizzo del sito: uguale in locale e alla consegna | `/api/v1/decks` |
 | Id | Ogni id è un **UUID**: un testo di 36 caratteri. Si usa così come arriva, anche negli URL; non si calcola e non si confronta come un numero | `"019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01"`, `/sfide/019a1f2e-…` |
 | Formato | JSON in entrata e in uscita, nomi in `camelCase` | `{ "totalCards": 20, "isFullArt": false }` |
 | Risorse | In inglese, al plurale, il verbo è il metodo HTTP | `GET /decks`, `POST /decks`, `DELETE /decks/{deckId}` |
@@ -89,8 +90,8 @@ Il backend usa i **token JWT**. Ci sono due token:
 
 | Token | A cosa serve | Quanto dura | Dove sta |
 |-------|--------------|-------------|----------|
-| **Token di accesso** (`accessToken`) | Va in **ogni** richiesta che richiede l'accesso | Poco (proposta: 15 minuti) | In una variabile JavaScript, **non** in `localStorage` |
-| **Refresh token** | Serve a ottenere un nuovo token di accesso | Più a lungo (proposta: 7 giorni) | In un **cookie `HttpOnly`** che il browser gestisce da solo: il JavaScript non lo vede e non lo tocca |
+| **Token di accesso** (`accessToken`) | Va in **ogni** richiesta che richiede l'accesso | **15 minuti** | In una variabile JavaScript, **non** in `localStorage` |
+| **Refresh token** | Serve a ottenere un nuovo token di accesso | **7 giorni** | In un **cookie `HttpOnly`** che il browser gestisce da solo: il JavaScript non lo vede e non lo tocca |
 
 Perché non `localStorage`: se una pagina avesse un bug di sicurezza (XSS), uno script estraneo potrebbe leggere il token. Il cookie `HttpOnly` non è leggibile dal JavaScript.
 
@@ -129,7 +130,7 @@ Esempio di risposta all'accesso:
 {
   "accessToken": "eyJhbGciOi...",
   "expiresIn": 900,
-  "user": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida", "role": "PLAYER", "credits": 0 }
+  "user": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida", "role": "PLAYER", "credits": 500 }
 }
 ```
 
@@ -141,11 +142,11 @@ Esempio di risposta all'accesso:
 
 ## 4. Il file api.js
 
-Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Le pagine non usano mai `fetch()` direttamente.
+Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Pagine e componenti non usano mai `fetch()` direttamente.
 
 ```js
 // api.js: unico punto da cui passano le chiamate al backend
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = "/api/v1"; // stesso indirizzo del sito, in locale e alla consegna
 
 // Token di accesso solo in memoria; il refresh token sta nel cookie HttpOnly.
 let accessToken = null;
@@ -198,6 +199,21 @@ import { api, refresh } from "./api.js";
 await refresh(); // all'apertura della pagina: recupera il token dal cookie
 const summary = await api("/me/summary");
 document.querySelector("#credits").textContent = summary.credits;
+```
+
+Una pagina che usa un componente React gli passa i dati arrivati da `api.js`:
+
+```jsx
+import { createRoot } from "react-dom/client";
+import { api, refresh } from "./api.js";
+import { Card } from "./components/Card.jsx";
+
+await refresh();
+const openingId = window.location.pathname.split("/").pop(); // /negozio/apertura/{openingId}
+const opening = await api(`/pack-openings/${openingId}`);
+createRoot(document.querySelector("#opened-cards")).render(
+  opening.cards.map((item, index) => <Card key={index} card={item.card} isFullArt={item.isFullArt} />)
+);
 ```
 
 ---
@@ -310,10 +326,16 @@ Risposta di `GET /rules`:
 
 #### Benvenuto (dopo la registrazione)
 
-`GET /me/welcome` → il set iniziale e i due pacchetti di benvenuto, già aperti dal backend alla registrazione.
+Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pagina (decisione 15 del 2/11). I 500 DC arrivano già alla registrazione.
+
+| Momento | Chiamata | Cosa succede |
+|---------|----------|--------------|
+| Apertura della pagina | `GET /me/welcome` | Se `starterFaction` è `null`, la fazione non è ancora scelta: si mostrano le tre fazioni con il loro Lord |
+| Scelta della fazione | `POST /me/welcome` con `{ "starterFaction": "DREAMS" }` | Il backend dà il set iniziale di quella fazione e apre i due pacchetti di benvenuto. Risponde come `GET /me/welcome`. La scelta si fa una volta sola: la seconda volta arriva `409` |
 
 ```json
 {
+  "starterFaction": "DREAMS",
   "starterCards": [ { "card": { "...": "..." }, "isFullArt": false } ],
   "welcomeOpenings": [
     { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Benvenuto", "cards": [ { "card": { "...": "..." }, "isFullArt": false } ] },
@@ -322,7 +344,7 @@ Risposta di `GET /rules`:
 }
 ```
 
-Il set iniziale ha 20 carte (14 Comuni e 6 Rare), estratte senza mai superare le copie massime: con queste 20 carte si compone sempre un mazzo valido. Il mazzo **non** viene creato in automatico: dalla pagina Benvenuto conviene un pulsante "Componi il tuo primo mazzo" che apre l'editor. Le carte si possono rivelare una alla volta come in un'apertura.
+Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte senza mai superare le copie massime: con queste 20 carte si compone sempre un mazzo valido. Il mazzo **non** viene creato in automatico: dalla pagina Benvenuto conviene un pulsante "Componi il tuo primo mazzo" che apre l'editor. Le carte si possono rivelare una alla volta come in un'apertura.
 
 #### Dashboard
 
@@ -331,13 +353,24 @@ Il set iniziale ha 20 carte (14 Comuni e 6 Rare), estratte senza mai superare le
 ```json
 {
   "username": "lucida",
-  "credits": 250,
+  "credits": 750,
+  "rating": 1040,
+  "league": { "code": "DORMANT", "name": "Dormiente", "nextLeagueName": "Sognatore", "nextLeagueMinRating": 1100 },
+  "hasRankedDeck": true,
+  "missions": [
+    { "code": "DAILY_PLAY", "name": "Missione giornaliera", "description": "Gioca una partita.", "progress": 0, "goalCount": 1, "rewardCredits": 100, "isCompleted": false, "resetsAt": "2026-11-03T23:00:00Z" },
+    { "code": "WEEKLY_WIN", "name": "Obiettivo settimanale", "description": "Vinci 5 partite.", "progress": 2, "goalCount": 5, "rewardCredits": 250, "isCompleted": false, "resetsAt": "2026-11-08T23:00:00Z" }
+  ],
   "pendingFriendRequests": 1,
   "pendingTrades": 2,
   "pendingChallenges": 0,
   "latestCards": [ { "card": { "...": "..." }, "isFullArt": false } ]
 }
 ```
+
+- `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
+- `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
+- Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 
 #### Profilo
 
@@ -346,8 +379,9 @@ Il set iniziale ha 20 carte (14 Comuni e 6 Rare), estratte senza mai superare le
 | Vedere i dati | `GET /me` → `username`, `email`, `createdAt` |
 | Cambiare email | `PUT /me` |
 | Cambiare password | `PUT /me/password` |
+| Cancellare l'account | `DELETE /me` con `{ "password": "…" }` → `204` |
 
-Lo username non si cambia (è il nome visibile agli amici).
+Lo username non si cambia (è il nome visibile agli amici). La cancellazione rende anonimo l'account: username ed email spariscono, lo storico di partite e scambi resta per gli altri giocatori. Chiedere conferma prima di mandarla.
 
 #### Crediti
 
@@ -356,14 +390,14 @@ Lo username non si cambia (è il nome visibile agli amici).
 ```json
 {
   "items": [
-    { "type": "PACK_PURCHASE", "amount": -100, "balanceAfter": 150, "createdAt": "2026-10-26T15:02:00Z" },
-    { "type": "DAILY_REWARD", "amount": 50, "balanceAfter": 250, "createdAt": "2026-10-26T09:00:00Z" }
+    { "type": "PACK_PURCHASE", "amount": -500, "balanceAfter": 50, "createdAt": "2026-10-26T15:02:00Z" },
+    { "type": "DAILY_REWARD", "amount": 50, "balanceAfter": 550, "createdAt": "2026-10-26T09:00:00Z" }
   ],
   "page": 0, "size": 20, "totalItems": 2, "totalPages": 1
 }
 ```
 
-Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`, `ADMIN_ADJUSTMENT` (il frontend li traduce in italiano). Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
+Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`, `MISSION_REWARD`, `LEAGUE_REWARD`, `ADMIN_ADJUSTMENT` (il frontend li traduce in italiano). Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
 
 #### Negozio e apertura dei pacchetti
 
@@ -373,10 +407,12 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 [
   {
     "id": "019a1f31-0000-7000-8000-000000000001",
-    "name": "Pacchetto base",
-    "description": "5 carte dal set base.",
-    "priceCredits": 100,
-    "fullArtChance": 5.0,
+    "name": "Dream Pack",
+    "description": "5 carte di tutte le fazioni.",
+    "priceCredits": 500,
+    "fullArtChance": 20.0,
+    "factionCode": null,
+    "availableUntil": null,
     "covers": [
       { "id": "019a1f31-0000-7000-8000-0000000000c1", "name": "Dreams Lord", "factionCode": "DREAMS", "imageUrl": "/images/packs/base-dreams-v1.webp" },
       { "id": "019a1f31-0000-7000-8000-0000000000c2", "name": "Nightmares Lord", "factionCode": "NIGHTMARES", "imageUrl": "/images/packs/base-nightmares-v1.webp" },
@@ -385,21 +421,22 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
     "slots": [
       { "cardCount": 3, "rarities": [ { "code": "COMMON", "chance": 100.0 } ] },
       { "cardCount": 1, "rarities": [ { "code": "RARE", "chance": 100.0 } ] },
-      { "cardCount": 1, "rarities": [ { "code": "EPIC", "chance": 90.0 }, { "code": "LEGENDARY", "chance": 10.0 } ] }
+      { "cardCount": 1, "rarities": [ { "code": "RARE", "chance": 70.0 }, { "code": "EPIC", "chance": 25.0 }, { "code": "LEGENDARY", "chance": 5.0 } ] }
     ]
   }
 ]
 ```
 
 - Il giocatore sceglie una delle tre copertine: il contenuto è lo stesso.
-- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 Epica (10% Leggendaria)".
+- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)".
+- Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione; `availableUntil` (UTC) se è in vendita solo fino a una data.
 
 Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }`:
 
 ```json
 {
   "openingId": "019a2b44-5c6d-7e8f-9a0b-1c2d3e4f5a6b",
-  "creditsAfter": 150,
+  "creditsAfter": 250,
   "cards": [
     { "card": { "...": "..." }, "isFullArt": false },
     { "card": { "...": "..." }, "isFullArt": true }
@@ -427,6 +464,7 @@ Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rule
 | Nuovo mazzo | `POST /decks` |
 | Modifica | `PUT /decks/{deckId}` |
 | Elimina | `DELETE /decks/{deckId}` |
+| Scegli il mazzo classificato | `PUT /me/ranked-deck` con `{ "deckId": "…" }` |
 
 Cosa si manda al salvataggio:
 
@@ -451,7 +489,9 @@ Cosa si riceve:
 
 - Se il mazzo non rispetta le regole il salvataggio risponde `400`, e `problems` dice cosa non va, es. `"Le Rare sono 9: il massimo è 8."`.
 - L'editor mostra i contatori in diretta (carte totali, copie, limiti per rarità) con i numeri di `GET /rules`, così l'utente vede l'errore prima di salvare. Il backend controlla comunque.
+- Si salvano **solo i mazzi validi**: niente bozze.
 - Un mazzo salvato può diventare non valido dopo uno scambio: `isValid: false` e `problems` lo dicono nella lista dei mazzi.
+- Il **mazzo classificato** (`isRanked: true` nella lista) è quello con cui si gioca quando il matchmaking ti sceglie come avversario, anche se non sei collegato. Se diventa non valido, nessuno ti sceglie finché non lo sistemi: conviene segnalarlo nella lista dei mazzi.
 
 #### Amici (pagina nuova)
 
@@ -498,26 +538,45 @@ Proposta di scambio:
 - Stati di uno scambio: `PENDING` (in attesa), `ACCEPTED`, `REJECTED`, `CANCELLED`.
 - Se all'accettazione qualcuno non ha più le carte, arriva un `409` e nessuna carta si muove.
 
-#### Sfide, risultato e storico
+#### Partite: classificata, rapida e sfide tra amici
 
-Le sfide sono **aperte a tutti i Dreamweaver**, non solo agli amici.
+Tutte le partite hanno le regole della Base e le gioca il server subito: non c'è niente da aspettare.
+
+| Tipo | Con chi | Rank | Dream Credits |
+|------|---------|------|---------------|
+| **Classificata** | Un avversario con punteggio simile, scelto dal matchmaking | Sì | 30 DC per vittoria, massimo 3 al giorno. Se il matchmaking sceglie un amico: rank sì, DC no |
+| **Rapida** | Un avversario a caso, scelto dal matchmaking | No | No |
+| **Sfida a un amico** | Un amico, che deve accettare (è una partita rapida) | No | No |
+
+L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con il suo mazzo classificato. Per questo ogni giocatore sceglie un mazzo classificato nella pagina Mazzi.
 
 | Azione | Chiamata |
 |--------|----------|
-| Ricevute / Inviate / Concluse | `GET /challenges?box=received`, `?box=sent`, `?box=completed` |
-| Lancia una sfida | `POST /challenges` con `{ "opponentId": "…", "deckId": "…" }` (solo mazzi validi) |
+| Cerca una partita classificata | `POST /matches/ranked` con `{ "deckId": "…" }` → il risultato della partita |
+| Cerca una partita rapida | `POST /matches/casual` con `{ "deckId": "…" }` → il risultato della partita |
+| Storico | `GET /me/matches?type=RANKED&page=0&size=20` (`type` facoltativo: `RANKED`, `CASUAL`) |
+| Risultato | `GET /matches/{matchId}` |
+| Sfide tra amici ricevute / inviate | `GET /challenges?box=received`, `?box=sent` |
+| Sfida un amico | `POST /challenges` con `{ "opponentId": "…", "deckId": "…" }` (solo amici, solo mazzi validi) |
 | Accetta e gioca | `POST /challenges/{challengeId}/accept` con `{ "deckId": "…" }` → `{ "matchId": "…" }` |
 | Rifiuta / Annulla | `POST /challenges/{challengeId}/reject`, `POST /challenges/{challengeId}/cancel` |
-| Risultato | `GET /matches/{matchId}` |
 
-La partita la gioca il server appena la sfida è accettata: non c'è niente da aspettare. Il risultato:
+- Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
+- Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
+- Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
+
+Il risultato:
 
 ```json
 {
   "id": "019a2c55-6d7e-7f80-9a1b-2c3d4e5f6a7b",
+  "matchType": "RANKED",
   "challenger": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida" },
   "opponent": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" },
   "winnerId": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12",
+  "ratingChange": { "challenger": -16, "opponent": 16 },
+  "creditsEarned": 0,
+  "leagueReached": null,
   "endReason": "LIFE_POINTS",
   "totalRounds": 24,
   "startingLifePoints": 20,
@@ -541,21 +600,27 @@ La partita la gioca il server appena la sfida è accettata: non c'è niente da a
 ```
 
 - `winnerId: null` = pareggio.
+- `challenger` è chi ha avviato la partita, `opponent` l'avversario.
+- `ratingChange` è `null` nelle partite rapide, e nelle classificate oltre la terza del giorno contro lo stesso avversario. `creditsEarned` sono i DC vinti da chi guarda. `leagueReached` dice se con questa partita si entra per la prima volta in una lega (`{ "name": "Sognatore", "rewardCredits": … }`): è il momento per un'animazione.
 - `endReason`: `LIFE_POINTS` (punti vita a 0), `DECK_EXHAUSTED` (mazzo finito), `ROUND_LIMIT` (60 round, pareggio).
 - `outcome`: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
 - Un **round** è un singolo scambio di colpi; uno **scontro** (`clash`) è la serie di round tra le stesse due creature. Nella cronaca si usa "round", non "turno".
 - `decks` contiene la copia dei due mazzi com'erano al momento della partita: serve per mostrare le carte anche se poi i mazzi sono cambiati.
-- **Storico:** è la scheda "Concluse" di `/sfide`. Basta una pagina sola.
+- **Storico:** `/storico`, con un filtro per tipo di partita.
+
+#### Classifica
+
+`GET /leagues` → le leghe con il punteggio minimo e il premio. La lega del giocatore e il suo punteggio sono in `GET /me/summary`. Una classifica con gli altri giocatori (solo username e punteggio) si aggiunge se c'è tempo.
 
 ### Backoffice 🛠️ (solo `role: ADMIN`)
 
 | Pagina | Chiamate | Note |
 |--------|----------|------|
 | Dashboard admin | `GET /admin/stats` | Numeri di utenti, carte, pacchetti, partite |
-| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore, illustrazione 3:2 e ritaglio, full art 2:3 e ritaglio (solo Leggendarie), attiva |
+| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore (solo per gli effetti con la X, `hasValue`), illustrazione 3:2 e ritaglio, full art 2:3 e ritaglio (solo Leggendarie), attiva. ATT e DIF si possono cambiare anche se la carta è già posseduta |
 | Caricamento illustrazioni | `POST /admin/images` (form `multipart/form-data` con il file, il codice della carta e il tipo: illustrazione, full art o copertina) → `{ "url": "/images/cards/base-013-v1.webp", "thumbUrl": "/images/cards/base-013-v1-thumb.webp" }` | Si carica il PNG originale: il backend lo conserva intatto e crea da solo le copie WebP. Una nuova immagine per la stessa carta diventa `-v2`. Le copertine hanno solo `url` |
-| Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
-| Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round. Le carte per mazzo (20) sono in sola lettura |
+| Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, fazione (facoltativa), periodo di vendita (facoltativo), slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
+| Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `/admin/missions`, `/admin/leagues` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round, premi delle missioni, soglie e premi delle leghe. Le carte per mazzo (20) sono in sola lettura |
 | Messaggi | `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | Messaggi del form Contatti: letto, archiviato |
 
 Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`).
@@ -564,7 +629,7 @@ Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`).
 
 ## 7. Come si monta una carta
 
-La carta la **monta il frontend in JavaScript**: il backend manda i dati e l'illustrazione, non l'immagine finita. Così, se cambia una statistica, la carta si aggiorna da sola.
+La carta la **monta il frontend** con un solo componente React (`Card`, #81): il backend manda i dati e l'illustrazione, non l'immagine finita. Così, se cambia una statistica, la carta si aggiorna da sola.
 
 Ingredienti:
 
@@ -573,30 +638,38 @@ Ingredienti:
 | Illustrazione (`illustrationUrl` o `illustrationThumbUrl`) e ritaglio verticale (`illustrationFocusY`, da 0 = in alto a 1 = in basso) | Backend, per ogni carta |
 | Cornice della fazione e della rarità, con la finestra trasparente | File del frontend: 12 cornici (3 fazioni × 4 rarità), anche queste in WebP grande e miniatura |
 | Simbolo della fazione: luna (Dreams), occhio (Nightmares), clessidra (Memories) | File del frontend |
-| Coordinate di nome, simbolo, testi, ATT e DIF sulla cornice | File del frontend (es. `zone.json`) |
+| Coordinate di nome, simbolo, testi, ATT e DIF sulla cornice | File JavaScript del frontend (es. `cardZones.js`) |
 | Nome, descrizione, effetto, ATT, DIF | Backend, per ogni carta |
 
-Ordine di disegno (es. su un `<canvas>` di 1024 × 1536 con le copie grandi, o di 400 × 600 con le miniature, poi adattato con il CSS):
+Il componente mette i livelli uno sopra l'altro, in elementi HTML e CSS (proporzioni 2:3, come la carta grande di 1024 × 1536):
 
 1. Illustrazione, ritagliata in verticale con `illustrationFocusY`, senza zoom.
 2. Cornice sopra (la finestra trasparente lascia vedere l'illustrazione).
 3. Simbolo della fazione, nome, descrizione ed effetto, ATT e DIF nelle loro coordinate.
 4. Full art: l'illustrazione copre tutta la carta e i testi stanno su pannelli scuri semitrasparenti.
 
-Il riferimento visivo sono le 15 carte del set di prova in `carte/carte-finali/`. Come preparare cornici trasparenti e coordinate (compositore Python o tutto in JavaScript) è ancora da decidere con SWD. Per l'accessibilità, ogni carta ha un testo alternativo con nome, fazione, rarità, attacco e difesa.
+```jsx
+// ✅ Una sola Card per tutte le pagine: riceve i dati dal backend
+<Card card={item.card} isFullArt={item.isFullArt} size="thumb" />
+```
+
+**Cornici e coordinate le prepara il frontend in JavaScript** (decisione 21 del 2/11): Web parte dalle 12 cornici di `carte/cornici/`, ne ricava le copie con la finestra trasparente e misura le coordinate delle zone. Il compositore Python non le prepara.
+
+Il riferimento visivo sono le 15 carte del set di prova in `carte/carte-finali/`. Per l'accessibilità, ogni carta ha un testo alternativo con nome, fazione, rarità, attacco e difesa.
 
 ### Il ritaglio
 
 L'immagine si adatta alla finestra della cornice senza deformarsi e senza zoom; quello che avanza si taglia. `illustrationFocusY` dice quanto tagliare sopra e quanto sotto. Esempio: avanzano 400 px in altezza e il focus è 0,40, quindi si tagliano 160 px sopra e 240 px sotto.
 
-Con livelli HTML/CSS:
+Nel componente:
 
-```js
-img.style.objectFit = "cover";
-img.style.objectPosition = `50% ${carta.illustrationFocusY * 100}%`;
+```jsx
+<img
+  src={card.illustrationThumbUrl}
+  alt=""
+  style={{ objectFit: "cover", objectPosition: `50% ${card.illustrationFocusY * 100}%` }}
+/>
 ```
-
-Con il canvas: `sy = (altezzaScalata - altezzaFinestra) * illustrationFocusY`.
 
 ### Grande o miniatura
 
@@ -607,7 +680,7 @@ Con il canvas: `sy = (altezzaScalata - altezzaFinestra) * illustrationFocusY`.
 
 Con le miniature la prima visita alla collezione pesa meno di 1 MB. Con i PNG originali sarebbero circa 55 MB.
 
-Le coordinate delle zone (es. `zone.json`) si scrivono una volta per la carta grande (1024 × 1536). Per la miniatura si moltiplicano per 400 / 1024.
+Le coordinate delle zone (es. `cardZones.js`) si scrivono una volta per la carta grande (1024 × 1536). Per la miniatura si moltiplicano per 400 / 1024, oppure si scrivono in percentuale e valgono per tutte e due.
 
 ### Cache: cosa resta nel browser
 
@@ -615,13 +688,14 @@ Le coordinate delle zone (es. `zone.json`) si scrivono una volta per la carta gr
 |------|-----------------|--------|
 | Illustrazioni e copertine (`/images/...`) | **Sì, per sempre** | Il backend le manda con `Cache-Control: public, max-age=31536000, immutable`. Se un'immagine cambia, il nome cambia (`-v1` → `-v2`), quindi non si vede mai una versione vecchia |
 | Cornici, simboli e font del frontend | **Sì**, se anche voi mettete la versione nel nome (es. `cornice-dreams-comune-v1.webp`) e configurate lo stesso `Cache-Control` | Stesso motivo |
-| Pagine HTML, `api.js`, CSS | Per poco, o con controllo a ogni visita | Così un aggiornamento del sito arriva subito |
+| Pagine HTML | Controllo a ogni visita | Così un aggiornamento del sito arriva subito |
+| `api.js`, componenti e CSS | **Sì, per sempre**, se lo strumento mette l'impronta nel nome (Vite lo fa da solo: `collezione-4f2a9c.js`). Altrimenti come le pagine | Ogni nuova versione del sito ha nomi nuovi |
 | Risposte delle API (JSON) | **No** | Contengono dati personali e cambiano spesso. Spring Security manda già `no-store` |
 | Carta montata | **No, non serve** | Montarla costa pochi millisecondi. A ogni pagina si rimonta con le immagini già in cache, ed è sempre aggiornata se cambiano statistiche o testi |
 
 In una prima sessione di un nuovo utente si montano circa 150–200 carte: benvenuto ~30, collezione ~30, editor del mazzo ~50, un pacchetto 5, una partita fino a 40. In tutto meno di un secondo. Ogni immagine si scarica solo la prima volta.
 
-Un consiglio: se nella stessa pagina la stessa carta compare più volte (es. due copie nel mazzo), si può montarla una volta e copiarla (`cloneNode(true)` con i livelli HTML, `drawImage` da un canvas già pronto).
+Se nella stessa pagina la stessa carta compare più volte (es. due copie nel mazzo), basta usare `Card` due volte: le immagini arrivano dalla cache e non si scaricano di nuovo.
 
 ---
 
@@ -633,10 +707,10 @@ Le pagine che il database permette, già con le decisioni di questi giorni.
 |------|--------|
 | 🔓 Pubblica | Home · Il gioco / Lore · Regolamento · Chi siamo · Contatti · FAQ · Glossario · Privacy Policy · Cookie · Termini di servizio · 404 |
 | 🔓 Accesso | Registrazione · Accesso · Password dimenticata (facoltativa) · Nuova password (facoltativa) |
-| 🔑 Dreamweaver | Benvenuto · Dashboard · Profilo (con cambio email e password) · Crediti · Negozio · Apertura pacchetto · Collezione · Dettaglio carta · Mazzi · Editor mazzo · **Amici** · Scambi · Nuovo scambio · Dettaglio scambio · Sfide (con la scheda Concluse = storico) · Nuova sfida · Accetta sfida · Risultato partita |
+| 🔑 Dreamweaver | Benvenuto (con la scelta della fazione) · Dashboard (con missioni e lega) · Profilo (con cambio email e password e cancellazione dell'account) · Crediti · Negozio · Apertura pacchetto · Collezione · Dettaglio carta · Mazzi · Editor mazzo · **Amici** · Scambi · Nuovo scambio · Dettaglio scambio · **Gioca** (classificata e rapida) · Sfide tra amici · Nuova sfida · Accetta sfida · Risultato partita · Storico · **Classifica** |
 | 🛠️ Backoffice | Dashboard admin · Carte · Pacchetti · Configurazione · Messaggi |
 
-Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** e **Messaggi**; tolto l'accesso admin separato (si entra dalla stessa pagina); Storico unito a Sfide; nessuna scelta della modalità nella Nuova sfida (c'è solo la Base).
+Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**, **Messaggi**, **Gioca** e **Classifica**; tolto l'accesso admin separato (si entra dalla stessa pagina); le sfide si mandano solo agli amici; nessuna scelta della modalità (le regole sono sempre quelle della Base, cambia solo il tipo di partita). Il SiteMap lo aggiorna Alessandro.
 
 ---
 
@@ -657,11 +731,9 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** 
 
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
-| Durata dei token | Accesso 15 minuti, refresh 7 giorni | SWD |
-| Recupero password in fase 1 | Solo se c'è tempo: richiede l'invio di email | SWD + WMD |
-| Come si ottengono i crediti (giornaliero, vittorie...) | Ricompensa giornaliera + premio vittoria | DGS |
-| Canvas o livelli HTML/CSS per la carta | Canvas: stesso risultato delle carte di prova | WMD |
-| Cornici trasparenti e coordinate: compositore Python o JavaScript | Da scegliere | SWD + WMD |
+| Strumenti del frontend e come si caricano i componenti React nelle pagine | Vite, con più pagine HTML, in JavaScript | Gaia (#72) |
+| DC a chi viene scelto dal matchmaking e vince | No: i DC della vittoria vanno solo a chi ha avviato la partita | Maie + SWD |
+| Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
+| Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
+| Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Il database prevede già più pacchetti (`packs`) | Maie, Nicolas |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |
-| Cancellazione dell'account dal profilo | Pulsante che rende anonimo l'account | SWD + WMD |
-| Classifica e rank | Dopo le funzioni obbligatorie; lasciare spazio nel menu | Tutti |

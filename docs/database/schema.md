@@ -578,16 +578,32 @@ Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei
 
 Quando si propone uno scambio, proponente e destinatario devono essere amici (`friendships` con `status = 'ACCEPTED'`). Quantità e rarità sono libere: si può offrire 1 Epica per 5 Comuni.
 
+**Copie bloccate negli scambi in attesa.** Le copie che un giocatore offre in uno scambio `PENDING` sono bloccate per gli **altri scambi**: non le può offrire due volte. Restano invece usabili nei mazzi. Non c'è una colonna in più: le copie disponibili per uno scambio si calcolano così, contando a parte le full art (`is_full_art`):
+
+```sql
+-- Copie di una carta già offerte dal giocatore negli scambi in attesa
+SELECT COALESCE(SUM(ti.quantity), 0)
+FROM trade_items ti
+JOIN trades t ON t.id = ti.trade_id
+WHERE t.proposer_id = :userId AND t.status = 'PENDING'
+  AND ti.side = 'OFFERED' AND ti.card_id = :cardId AND ti.is_full_art = :isFullArt;
+-- disponibili = copie possedute (quantity, o full_art_quantity per le full art) - copie già offerte
+```
+
+Alla proposta il service blocca le righe di `user_cards` delle carte offerte (`SELECT ... FOR UPDATE`), così due proposte nello stesso momento non offrono le stesse copie, e rifiuta lo scambio (`409`) se offre più copie di quelle disponibili. Le carte **richieste** all'amico non si bloccano: lui non ha ancora accettato. Il blocco finisce da solo quando lo scambio non è più `PENDING` (accettato, rifiutato o annullato).
+
+**Avviso sui mazzi.** Alla proposta e all'accettazione il service dice se una carta che esce sta in un mazzo del giocatore e se quel mazzo diventerà non valido (anche se è il mazzo classificato). Lo scambio si può fare lo stesso: il mazzo resta salvato, non valido, finché il giocatore non lo sistema.
+
 Quando il destinatario accetta:
 1. Ricontrolla che siano ancora amici.
 2. Blocca le righe di `user_cards` coinvolte (`SELECT ... FOR UPDATE`).
-3. Ricontrolla che entrambi abbiano ancora tutte le carte nelle quantità previste, contando a parte le copie full art (`is_full_art`).
+3. Ricontrolla che entrambi abbiano ancora tutte le carte nelle quantità previste, contando a parte le copie full art (`is_full_art`). Per il destinatario contano solo le copie disponibili: quelle che ha offerto in altri scambi in attesa sono bloccate.
 4. Sposta le carte: scala `quantity` (e `full_art_quantity` per le full art), cancella le righe che arrivano a 0, aggiunge o incrementa quelle del ricevente.
 5. Imposta `status = 'ACCEPTED'` e `resolved_at`.
 
 Se un controllo fallisce, la transazione si annulla e nessuna carta si muove: lo scambio passa a `CANCELLED` e chi prova ad accettare riceve un messaggio. Lo stesso succede se l'amicizia è stata tolta. Ogni scambio deve avere almeno una carta per lato.
 
-Le carte offerte **non si bloccano** mentre lo scambio è in attesa: restano usabili in altri scambi e nei mazzi. Gli scambi in attesa **non scadono**: chi propone può annullare quando vuole.
+Gli scambi in attesa **non scadono**: chi propone può annullare quando vuole, e le copie offerte tornano disponibili.
 
 ### Partite
 
@@ -962,6 +978,12 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 
 ## Cosa è cambiato in questa versione
 
+### 4 novembre 2026: copie bloccate negli scambi
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Carte offerte in uno scambio in attesa | Non bloccate, ricontrollate all'accettazione | Bloccate per gli altri scambi, calcolate dagli scambi `PENDING` (nessuna colonna nuova); restano usabili nei mazzi. Avviso se lo scambio rende non valido un mazzo ([decisione 024](../decisioni/024-copie-bloccate-negli-scambi.md)) |
+
 ### 3 novembre 2026: decisioni del 2 e del 3 novembre
 
 | Cosa | Prima | Ora |
@@ -978,7 +1000,7 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 | Ricompensa giornaliera | Proposta | `users.last_daily_reward_on` con `UPDATE` atomico; il giorno inizia a mezzanotte, ora italiana |
 | Effetti | Il backoffice non sapeva quali hanno la X | `effects.has_value` |
 | Sfide in attesa | Nessun limite | Al massimo una per coppia (`uq_challenges_pending_pair`) |
-| Punti aperti chiusi | | Solo mazzi validi; carte negli scambi non bloccate; niente scadenze; pacchetto aperto subito; stessa probabilità per le carte della stessa rarità; espansioni tutte insieme; ATT e DIF modificabili; nessun limite di amici; un contatore al posto delle notifiche; niente carte non creatura; token 15 minuti e 7 giorni; email solo per il recupero password; niente altri dati alla registrazione; account anonimizzato; immagini dal backend in WebP; carta montata da un componente React con cornici e coordinate in JavaScript |
+| Punti aperti chiusi | | Solo mazzi validi; niente scadenze; pacchetto aperto subito; stessa probabilità per le carte della stessa rarità; espansioni tutte insieme; ATT e DIF modificabili; nessun limite di amici; un contatore al posto delle notifiche; niente carte non creatura; token 15 minuti e 7 giorni; email solo per il recupero password; niente altri dati alla registrazione; account anonimizzato; immagini dal backend in WebP; carta montata da un componente React con cornici e coordinate in JavaScript |
 
 ### 27 ottobre 2026: immagini leggere e cache
 

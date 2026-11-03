@@ -536,6 +536,14 @@ Proposta di scambio:
 - `offered` = carte che do io; `requested` = carte che chiedo all'amico. Almeno una carta per lato.
 - Nella pagina "Nuovo scambio" il destinatario si sceglie **dalla lista amici** e le carte dalla propria collezione e da quella dell'amico (`GET /users/{userId}/cards`, visibile solo agli amici).
 - Stati di uno scambio: `PENDING` (in attesa), `ACCEPTED`, `REJECTED`, `CANCELLED`.
+- **Copie bloccate:** le copie che offri in uno scambio in attesa non le puoi offrire in un altro scambio finché il primo non si chiude (accettato, rifiutato o annullato). Restano usabili nei mazzi. Nella collezione per gli scambi conviene mostrare le copie disponibili (`availableForTrade`, come `quantity` ma senza quelle già offerte). Se offri più copie di quelle disponibili arriva un `409` con `code: "CARDS_LOCKED_IN_TRADE"`.
+- **Avviso sui mazzi:** prima di proporre o accettare, `POST /trades/preview` (stesso corpo della proposta) oppure `GET /trades/{tradeId}/deck-warnings` dicono quali mazzi diventeranno non validi:
+
+  ```json
+  { "deckWarnings": [ { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f6", "deckName": "Incubi veloci", "isRanked": true, "cardName": "Il Faro nella Nebbia" } ] }
+  ```
+
+  Si mostra "Il mazzo Incubi veloci diventerà non valido (è il tuo mazzo classificato)" e si chiede conferma. Lo scambio si può fare lo stesso; il mazzo va poi sistemato nell'editor.
 - Se all'accettazione qualcuno non ha più le carte, arriva un `409` e nessuna carta si muove.
 
 #### Partite: classificata, rapida e sfide tra amici

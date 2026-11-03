@@ -88,7 +88,7 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 - **Scambi solo tra amici**, quantità e rarità libere, niente crediti negli scambi.
 - **Partite:** regole della Base per tutte. **Classificata** con il matchmaking (avversario con punteggio simile, anche non collegato, con il suo mazzo classificato `users.ranked_deck_id`): rank e DC. **Rapida** con il matchmaking (avversario a caso) o sfidando un amico: niente rank né DC. Il motore non cambia: cambia solo cosa fa il service dopo la partita ([schema.md](../database/schema.md#partite)).
 - Il set iniziale è di **una fazione**, scelta dal Dreamweaver nella pagina Benvenuto, e si estrae senza superare le copie massime: con quelle 20 carte si compone sempre un mazzo valido. Il mazzo non si crea in automatico.
-- Le carte offerte in uno scambio **non si bloccano**: all'accettazione si ricontrolla tutto e, se mancano, lo scambio si annulla da solo con un messaggio.
+- Le copie offerte in uno scambio in attesa sono **bloccate per gli altri scambi** (si contano dagli scambi `PENDING`, con `SELECT ... FOR UPDATE` alla proposta), ma restano usabili nei mazzi. Alla proposta e all'accettazione si avvisa se un mazzo diventerà non valido. All'accettazione si ricontrolla tutto e, se mancano carte, lo scambio si annulla da solo con un messaggio.
 - Token di accesso **15 minuti**, refresh token **7 giorni**.
 - Lo storico delle partite usa le **copie dei mazzi** salvate in `matches` e il `random_seed`: con lo stesso seed il motore rigioca la stessa partita.
 

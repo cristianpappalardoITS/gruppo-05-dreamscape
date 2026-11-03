@@ -25,7 +25,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [017](017-mazzi.md) | Mazzi: solo validi, mazzo classificato | 26/10–3/11 | Approvata |
 | [018](018-utenti-e-privacy.md) | Utenti e privacy | 3/11 | Approvata |
 | [019](019-consegne-di-digital.md) | Consegne di Digital sul Drive | 2/11, 3/11 | Approvata |
-| [020](020-flusso-github.md) | Flusso su GitHub: `develop` ed `.editorconfig` | 2/11 | Approvata, Sara e Maie da decidere |
+| [020](020-flusso-github.md) | Flusso su GitHub: `develop` ed `.editorconfig` | 2/11, 3/11 | Approvata |
 | [021](021-skin-e-animazioni.md) | Skin e animazioni nel Backlog | 3/11 | Approvata |
 | [022](022-risposte-del-cliente.md) | Risposte del cliente al colloquio del 2/11 | 2/11 | Approvata |
 | [023](023-buyer-persona.md) | Una sola buyer persona | 2/11 | Approvata |
@@ -35,7 +35,6 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 
 | Cosa | Chi | Dove |
 |------|-----|------|
-| Come entrano Sara e Maie nel repository | Sara, Maie, Cristian | [020](020-flusso-github.md) |
 | Tipi, prezzi e pesi dei nuovi pacchetti | Maie, Nicolas | [012](012-pacchetti.md) |
 | Numero esatto di carte: 99 o 102 | Nicolas, Maie | [016](016-catalogo-fase-1.md) |
 | Soglie e premi delle leghe | Maie | [011](011-premi-di-lega.md) |

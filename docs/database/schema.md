@@ -715,7 +715,7 @@ Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta no
 
 ### Dove e come
 
-- Cartella: `backend/src/main/resources/db/migration/`
+- Cartella: `sviluppo/backend/src/main/resources/db/migration/`
 - Nome dei file: `V<numero>__<descrizione_in_snake_case>.sql`, con **due** underscore.
 - Una migration già applicata **non si modifica mai**. Per cambiare qualcosa se ne crea una nuova.
 

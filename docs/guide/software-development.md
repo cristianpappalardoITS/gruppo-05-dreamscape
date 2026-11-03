@@ -114,7 +114,7 @@ Collections.shuffle(cards);
 ### Struttura (proposta, da fissare nella #68)
 
 ```
-backend/src/main/java/it/gruppo5/tcg/
+sviluppo/backend/src/main/java/it/gruppo5/tcg/
 ├── user/        # registrazione, accesso, profilo, crediti
 ├── card/        # catalogo, fazioni, rarità, effetti, regole
 ├── pack/        # Dream Pack, aperture, set iniziale e benvenuto

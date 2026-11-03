@@ -2,11 +2,11 @@
 
 - **Data:** 2026-11-02
 - **Stato:** approvata
-- **Referenti:** Nicolas (note del colloquio), Marco, Cristian
+- **Referenti:** Gaia e Yuri (note del colloquio), Marco, Cristian
 - **Task:** #76 (COM-06), domanda 11 del 2/11
 
 ## Contesto
-Alla fine della presentazione abbiamo fatto al cliente quattro domande. Il note-taker ha segnato le risposte, riportate anche in [cose da decidere del 2/11](../riunioni/2026-11-02-cose-da-decidere.md#11-le-quattro-risposte-del-cliente).
+Alla fine della presentazione abbiamo fatto al cliente quattro domande. Gaia e Yuri hanno segnato le risposte, riportate anche in [cose da decidere del 2/11](../riunioni/2026-11-02-cose-da-decidere.md#11-le-quattro-risposte-del-cliente).
 
 ## Opzioni valutate
 | Domanda | Le nostre opzioni |

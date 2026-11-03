@@ -1,4 +1,4 @@
-package it.gruppo5.tcg;
+package it.somnia.dreamscape.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -95,7 +95,7 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Scambi | **Solo tra amici**, quantità e rarità libere, solo se l'altro accetta. Niente crediti negli scambi | Scambi con chiunque |
 | Sfide | Si mandano **solo agli amici**, che accettano: sono partite rapide. Al massimo una sfida in attesa tra due amici, senza scadenza | Sfide a chiunque |
 | Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie max 2, Epiche max 4, Rare max 8. Si salvano **solo i mazzi validi**. Ogni giocatore sceglie un mazzo classificato | Bozze, badge Valido / Non valido |
-| Carte in uno scambio | **Non bloccate** mentre lo scambio è in attesa: il server ricontrolla tutto all'accettazione e, se mancano, annulla lo scambio con un messaggio | Carte bloccate o nascoste |
+| Carte in uno scambio | Le copie offerte in uno scambio in attesa sono **bloccate per gli altri scambi**, ma restano usabili nei mazzi. Prima di proporre o accettare si avvisa se un mazzo diventerà non valido (anche il mazzo classificato). All'accettazione il server ricontrolla tutto | Bozze di mazzi, carte nascoste dalla collezione |
 | Missioni | Una missione giornaliera e un obiettivo settimanale fissi, nello **Sprint 6** (una issue per SWD e una per WMD). La settimana inizia il lunedì a mezzanotte, ora italiana | Pagina con un elenco di missioni |
 | Giorno delle ricompense | Inizia a **mezzanotte, ora italiana**. Le date arrivano in UTC e si mostrano nell'ora locale | |
 | Partita | 20 punti vita (confermati dal cliente, da verificare con le simulazioni), max 60 round, poi pareggio. Si dice **round**, non turni | "Turni" |

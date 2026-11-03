@@ -14,7 +14,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [006](006-avvio-locale-e-dati.md) | Sito e API sullo stesso indirizzo, niente dati finti | 2/11 | Approvata |
 | [007](007-montaggio-della-carta.md) | Carta montata dal frontend, cornici in JavaScript, immagini WebP dal backend | 26/10–3/11 | Approvata |
 | [008](008-regole-della-partita.md) | Regole della partita: una modalità Base con effetti, 20 punti vita, vantaggio di fazione | 26/10–2/11 | Approvata |
-| [009](009-amici-e-scambi.md) | Amici e scambi | 26/10–3/11 | Approvata (sfide: vedi 010) |
+| [009](009-amici-e-scambi.md) | Amici e scambi | 26/10–3/11 | Approvata (sfide: vedi 010; carte bloccate: vedi 024) |
 | [010](010-tipi-di-partita-e-rank.md) | Partite classificate e rapide, matchmaking e rank | 3/11 | Approvata |
 | [011](011-premi-di-lega.md) | Leghe e premi di lega | 3/11 | Approvata, importi da proporre |
 | [012](012-pacchetti.md) | Pacchetti: Dream Pack, apertura subito, più tipi | 31/10–3/11 | Approvata, nuovi tipi da decidere |
@@ -29,6 +29,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [021](021-skin-e-animazioni.md) | Skin e animazioni nel Backlog | 3/11 | Approvata |
 | [022](022-risposte-del-cliente.md) | Risposte del cliente al colloquio del 2/11 | 2/11 | Approvata |
 | [023](023-buyer-persona.md) | Una sola buyer persona | 2/11 | Approvata |
+| [024](024-copie-bloccate-negli-scambi.md) | Copie offerte bloccate negli altri scambi, avviso sui mazzi | 4/11 | Approvata, sostituisce una parte di 009 |
 
 ## Ancora da decidere
 

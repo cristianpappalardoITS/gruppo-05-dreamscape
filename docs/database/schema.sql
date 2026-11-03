@@ -525,11 +525,14 @@ CREATE TABLE trades (
 );
 
 CREATE INDEX idx_trades_recipient_status ON trades (recipient_id, status);
+-- Serve anche a contare le copie già offerte negli scambi in attesa (bloccate per gli altri scambi).
 CREATE INDEX idx_trades_proposer_status ON trades (proposer_id, status);
 
 -- Le carte dello scambio. side = OFFERED (le dà chi propone)
 -- oppure REQUESTED (le dà chi riceve). Permette scambi 3 contro 1, 1 contro 5...
 -- is_full_art distingue le copie full art da quelle normali della stessa carta.
+-- Le copie OFFERED di uno scambio PENDING sono bloccate per gli altri scambi di chi
+-- propone (le conta il service da qui), ma restano usabili nei mazzi.
 CREATE TABLE trade_items (
     id          UUID        NOT NULL DEFAULT uuidv7(),
     trade_id    UUID        NOT NULL,

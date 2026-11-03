@@ -8,7 +8,7 @@ Per **Gaia, Alessandro, Daniele e Yuri**. Raccoglie in un solo posto le regole e
 
 1. **Una issue, un branch, una pull request.** Niente lavoro direttamente su `main` o `develop`.
 2. **Il server decide tutto:** contenuto dei pacchetti, esito delle partite, validità dei mazzi, scambi. Il frontend mostra e manda, non calcola.
-3. **Tutte le chiamate passano da `api.js`.** Nessun componente usa `fetch()` direttamente e l'indirizzo delle API (`/api/v1`) è scritto solo lì.
+3. **Tutte le chiamate passano da `api.js`.** Nessuna pagina e nessun componente usa `fetch()` direttamente e l'indirizzo delle API (`/api/v1`) è scritto solo lì.
 4. **Le API sono quelle della [guida ai dati](../api/guida-frontend.md):** `/api/v1/...`, in inglese, al plurale, senza verbi nell'URL. Non quelle del SiteMap.
 5. **Gli id sono UUID**, cioè testi: mai `parseInt(id)`, mai confrontarli come numeri.
 6. **Il token non va mai in `localStorage`** né in `sessionStorage`: solo in memoria, come in `api.js`.
@@ -76,8 +76,8 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Tema | Decisione | ❌ Da non usare |
 |------|-----------|-----------------|
 | Database | PostgreSQL 18 con id UUID | MySQL, id numerici |
-| Frontend | **React**, con componenti in JavaScript (2/11, sostituisce "senza framework" del 26/10). Strumenti proposti: Vite e React Router, li conferma Gaia nella #72 | Pagine HTML separate senza framework, Vue, Angular, jQuery |
-| Avvio in locale | Sito e API sullo **stesso indirizzo**, con `docker compose up`: il container del frontend serve il sito e manda `/api` al backend | Live Server su un'altra porta, indirizzo `http://localhost:8080` scritto in `api.js` |
+| Frontend | Pagine **HTML, CSS e JavaScript**; i **componenti** che si ripetono (la carta, #81) in **React** (2/11). Strumenti proposti: Vite, li conferma Gaia nella #72 | Tutto il sito in React (applicazione a pagina unica), Vue, Angular, jQuery |
+| Avvio in locale | Sito e API sullo **stesso indirizzo**, con `docker compose up`: il container del frontend serve le pagine e manda `/api` al backend | Live Server su un'altra porta, indirizzo `http://localhost:8080` scritto in `api.js` |
 | Accesso | Token JWT: quello di accesso (15 minuti) in memoria, il refresh token (7 giorni) in un cookie `HttpOnly` che gestisce il backend | Token "salvato nel client" in `localStorage` |
 | Indirizzi delle API | `/api/v1/...` come in [guida-frontend.md](../api/guida-frontend.md) | `/api/decks/save`, `/api/trades/create`, `/api/challenges/create` |
 | Modalità di gioco | Una sola, la Base, con gli effetti | Scelta della modalità nella Nuova sfida |
@@ -147,16 +147,16 @@ async function caricaCollezione(f) { ... }
 
 ### Chiamate al backend
 
-- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#4-il-file-apijs). I componenti importano `api()` e non toccano mai token né `fetch()`.
+- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#4-il-file-apijs). Pagine e componenti importano `api()` e non toccano mai token né `fetch()`.
 - Gli errori arrivano sempre con `{ status, code, message, fieldErrors }`: mostrate `fieldErrors` accanto ai campi e `message` negli altri casi.
 - Con `401` ci pensa `api.js` (rinnovo del token o pagina di accesso). Con `403` si mostra "non hai i permessi".
 
 ```js
-// ✅ Il componente usa api.js
+// ✅ La pagina usa api.js
 import { api } from "./api.js";
 const decks = await api("/decks");
 
-// ❌ fetch nel componente, indirizzo scritto a mano, token in localStorage
+// ❌ fetch nella pagina, indirizzo scritto a mano, token in localStorage
 const res = await fetch("http://localhost:8080/api/decks", {
   headers: { Authorization: localStorage.getItem("token") }
 });
@@ -189,6 +189,10 @@ const res = await fetch("http://localhost:8080/api/decks", {
 
 ### Commenti
 
+```html
+<!-- Sezione: griglia della collezione (#83) -->
+```
+
 ```jsx
 /**
  * Griglia delle carte della collezione.
@@ -214,7 +218,7 @@ Niente codice commentato, niente `TODO` senza nome: `// TODO(daniele): aggiunger
 
 Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e accesso). **Niente dati finti** (decisione 9 del 2/11): le pagine che usano le API si collegano al backend vero, quindi quelle dello Sprint 3 dipendono da #68 e #71. Nel frattempo:
 
-- Si prepara quello che non ha bisogno di dati: progetto React (#72), layout comune (#113), design system in CSS, form di registrazione e accesso (#73) senza invio, wireframe (#112).
+- Si prepara quello che non ha bisogno di dati: progetto del frontend (#72), layout comune (#113), design system in CSS, form di registrazione e accesso (#73) senza invio, wireframe (#112).
 - Se un dato che vi serve non c'è nella guida, non inventate il nome del campo: chiedete a Marco o Cristian, che lo aggiungono.
 - Strumenti, struttura delle cartelle di `frontend/` e convenzione dei nomi CSS li decide Gaia nella #72 (decisione 8). Poi vanno scritti nelle sezioni "Frontend" di [naming.md](../naming.md) e [regole-codice.md](../regole-codice.md), dove oggi c'è solo la proposta.
 

@@ -93,7 +93,7 @@ public class UserCard {
 
 ## Frontend
 
-Tecnologie: **React**, con componenti in JavaScript (decisione del 2/11).
+Tecnologie: pagine HTML, CSS e JavaScript; componenti in **React** (decisione del 2/11).
 
 Proposta per i componenti, da confermare da Gaia nella #72: componente e file in `PascalCase`, un componente per file.
 
@@ -102,7 +102,7 @@ Proposta per i componenti, da confermare da Gaia nella #72: componente e file in
 | Componente | `Card`, `DeckEditor` | `card`, `Carta`, `deck_editor` |
 | File del componente | `Card.jsx`, `DeckEditor.jsx` | `card.js`, `deck-editor.jsx` |
 | Hook | `use` + nome: `useCollection` | `getCollection`, `collectionHook` |
-| Indirizzo della pagina | in italiano: `/collezione`, `/negozio/apertura/{openingId}` | `/collection.html`, `/Collezione` |
+| Pagina HTML | in italiano, come l'indirizzo: `collezione.html` | `collection.html`, `Collezione.html` |
 
 > 🚧 **Da completare a cura del team WMD.**
 >

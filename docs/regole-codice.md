@@ -148,17 +148,17 @@ public class DeckController {
 
 ## Frontend
 
-**Tecnologie scelte:** **React**, con componenti in JavaScript. Decisione del 2/11: sostituisce quella del 26/10 "HTML, CSS e JavaScript, senza framework". I dati arrivano dalle API del backend: vedi la [guida ai dati per il frontend](api/guida-frontend.md).
+**Tecnologie scelte:** pagine **HTML, CSS e JavaScript**; i **componenti** (es. la carta) si scrivono in **React**. Decisione del 2/11: cambia quella del 26/10 "HTML, CSS e JavaScript, senza framework" solo per i componenti. Le pagine non diventano un'applicazione React. I dati arrivano dalle API del backend: vedi la [guida ai dati per il frontend](api/guida-frontend.md).
 
-**Proposta di strumenti, da confermare da Gaia nella #72:** Vite per avviare e costruire il sito, JavaScript (non TypeScript), React Router per le pagine. È un'applicazione a pagina unica: il container del frontend serve i file costruiti e manda `/api` al backend, così sito e API hanno lo stesso indirizzo (decisione 7 del 2/11).
+**Proposta di strumenti, da confermare da Gaia nella #72:** Vite, che gestisce più pagine HTML e i componenti React, in JavaScript (non TypeScript). Il container del frontend serve le pagine e manda `/api` al backend, così sito e API hanno lo stesso indirizzo (decisione 7 del 2/11).
 
 > 🚧 **Da completare a cura del team WMD.**
 >
 > Da indicare:
-> - Strumenti confermati (Vite, React Router o altri), librerie e gestione degli stili (CSS o SCSS), con la motivazione
+> - Strumenti confermati (Vite o altri), come si caricano i componenti React nelle pagine, librerie e gestione degli stili (CSS o SCSS), con la motivazione
 > - Struttura delle cartelle in `frontend/`
 > - Come avviare il frontend in locale con Docker Compose
-> - Regole di codice specifiche (componenti, stato, stili, gestione delle chiamate alle API)
+> - Regole di codice specifiche (quali parti diventano componenti, stili, gestione delle chiamate alle API)
 > - Strumenti di formattazione e lint, se usati
 >
 > Riferimento: il brief del Laboratorio Integrato. La scelta va registrata anche in `docs/decisioni/`.
@@ -166,7 +166,7 @@ public class DeckController {
 Regole che valgono comunque, qualunque tecnologia si scelga:
 
 - Le statistiche delle carte (ATT, DIF, fazione, rarità) devono essere **leggibili anche su mobile**.
-- Le chiamate alle API passano da un unico punto (es. un file `api.js`), non sparse nei componenti: lì si aggiunge anche il token di accesso.
+- Le chiamate alle API passano da un unico punto (es. un file `api.js`), non sparse nelle pagine e nei componenti: lì si aggiunge anche il token di accesso.
 - Il frontend non decide mai l'esito di una partita né il contenuto di un pacchetto: mostra solo quello che restituisce il server.
 - La carta è **un solo componente React** (#81), usato in tutte le pagine. Le cornici con la finestra trasparente e le coordinate di testi, ATT e DIF le prepara il frontend in JavaScript (decisione 21 del 2/11).
 - Niente dati finti nel frontend: le pagine usano solo le API del backend (decisione 9 del 2/11).

@@ -21,16 +21,16 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 
 ## 1. Come funziona in breve
 
-- Il frontend è un'applicazione **React**, fatta di componenti in JavaScript (decisione del 2/11). Strumenti proposti: Vite e React Router, li conferma Gaia nella #72.
-- I componenti chiedono i dati al backend tramite `api.js`, che usa `fetch()` e riceve **JSON**. Poi mostrano i dati nella pagina.
+- Il frontend è fatto di **pagine HTML** con **CSS** e **JavaScript**. I **componenti** che si ripetono, come la carta, sono in **React** (decisione del 2/11). Gli strumenti li sceglie Gaia nella #72.
+- Il JavaScript della pagina chiede i dati al backend tramite `api.js`, che usa `fetch()` e riceve **JSON**. Poi riempie la pagina e passa i dati ai componenti.
 - Sito e API hanno **lo stesso indirizzo**: il container del frontend serve il sito e manda `/api` al backend. In locale si avvia tutto con `docker compose up` (decisione 7 del 2/11).
 - Il backend fa tutti i conti e tutti i controlli: estrazione dei pacchetti, validità dei mazzi, partite, scambi. Il frontend **mostra** quello che riceve e **manda** quello che l'utente sceglie.
 - Il giocatore si chiama **Dreamweaver**. Le fazioni sono **Dreams**, **Nightmares** e **Memories**.
 
 ```
- Componente React  ──api.js──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
-        ▲                              │
-        └──────────── JSON ────────────┘
+ Pagina HTML (+ componenti React)  ──api.js──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
+        ▲                                              │
+        └──────────────────── JSON ────────────────────┘
 ```
 
 ---
@@ -95,7 +95,7 @@ Il backend usa i **token JWT**. Ci sono due token:
 
 Perché non `localStorage`: se una pagina avesse un bug di sicurezza (XSS), uno script estraneo potrebbe leggere il token. Il cookie `HttpOnly` non è leggibile dal JavaScript.
 
-Il sito è un'applicazione a pagina unica: passando da una pagina all'altra la variabile resta. Si perde solo se si ricarica la pagina o si apre una scheda nuova. Non è un problema: all'avvio dell'applicazione `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 4](#4-il-file-apijs)).
+Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio pagina. Non è un problema: all'apertura di ogni pagina `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 4](#4-il-file-apijs)).
 
 ### Le chiamate dell'accesso
 
@@ -142,7 +142,7 @@ Esempio di risposta all'accesso:
 
 ## 4. Il file api.js
 
-Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. I componenti non usano mai `fetch()` direttamente.
+Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Pagine e componenti non usano mai `fetch()` direttamente.
 
 ```js
 // api.js: unico punto da cui passano le chiamate al backend
@@ -175,7 +175,7 @@ export async function api(path, { method = "GET", body } = {}) {
     response = await send(path, method, body); // riprova una volta con il token nuovo
   }
   if (response.status === 401) {
-    window.location.href = "/accesso";
+    window.location.href = "/accesso.html";
     return null;
   }
   if (response.status === 204) return null;
@@ -191,34 +191,29 @@ export async function login(loginName, password) {
 }
 ```
 
-All'avvio dell'applicazione (es. `main.jsx`), prima di mostrare le pagine:
+Uso in una pagina:
+
+```js
+import { api, refresh } from "./api.js";
+
+await refresh(); // all'apertura della pagina: recupera il token dal cookie
+const summary = await api("/me/summary");
+document.querySelector("#credits").textContent = summary.credits;
+```
+
+Una pagina che usa un componente React gli passa i dati arrivati da `api.js`:
 
 ```jsx
 import { createRoot } from "react-dom/client";
-import { refresh } from "./api.js";
-import App from "./App.jsx";
+import { api, refresh } from "./api.js";
+import { Card } from "./components/Card.jsx";
 
-// Recupera il token dal cookie, poi mostra l'applicazione
-refresh().then(() => {
-  createRoot(document.getElementById("root")).render(<App />);
-});
-```
-
-Uso in un componente:
-
-```jsx
-import { useEffect, useState } from "react";
-import { api } from "./api.js";
-
-export function CreditsBadge() {
-  const [credits, setCredits] = useState(null);
-
-  useEffect(() => {
-    api("/me/summary").then((summary) => setCredits(summary.credits));
-  }, []);
-
-  return <span className="credits">{credits ?? "…"} DC</span>;
-}
+await refresh();
+const openingId = window.location.pathname.split("/").pop(); // /negozio/apertura/{openingId}
+const opening = await api(`/pack-openings/${openingId}`);
+createRoot(document.querySelector("#opened-cards")).render(
+  opening.cards.map((item, index) => <Card key={index} card={item.card} isFullArt={item.isFullArt} />)
+);
 ```
 
 ---
@@ -650,8 +645,8 @@ Le coordinate delle zone (es. `cardZones.js`) si scrivono una volta per la carta
 |------|-----------------|--------|
 | Illustrazioni e copertine (`/images/...`) | **Sì, per sempre** | Il backend le manda con `Cache-Control: public, max-age=31536000, immutable`. Se un'immagine cambia, il nome cambia (`-v1` → `-v2`), quindi non si vede mai una versione vecchia |
 | Cornici, simboli e font del frontend | **Sì**, se anche voi mettete la versione nel nome (es. `cornice-dreams-comune-v1.webp`) e configurate lo stesso `Cache-Control` | Stesso motivo |
-| `index.html` | Controllo a ogni visita | Così un aggiornamento del sito arriva subito |
-| JavaScript e CSS costruiti | **Sì, per sempre**, se lo strumento mette l'impronta nel nome (Vite lo fa da solo: `index-4f2a9c.js`) | Ogni nuova versione del sito ha nomi nuovi |
+| Pagine HTML | Controllo a ogni visita | Così un aggiornamento del sito arriva subito |
+| `api.js`, componenti e CSS | **Sì, per sempre**, se lo strumento mette l'impronta nel nome (Vite lo fa da solo: `collezione-4f2a9c.js`). Altrimenti come le pagine | Ogni nuova versione del sito ha nomi nuovi |
 | Risposte delle API (JSON) | **No** | Contengono dati personali e cambiano spesso. Spring Security manda già `no-store` |
 | Carta montata | **No, non serve** | Montarla costa pochi millisecondi. A ogni pagina si rimonta con le immagini già in cache, ed è sempre aggiornata se cambiano statistiche o testi |
 
@@ -694,7 +689,7 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** 
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
 | Recupero password in fase 1 | Solo se c'è tempo: richiede l'invio di email | SWD + WMD |
-| Strumenti del frontend | Vite, JavaScript, React Router | Gaia (#72) |
+| Strumenti del frontend e come si caricano i componenti React nelle pagine | Vite, con più pagine HTML, in JavaScript | Gaia (#72) |
 | Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Il database prevede già più pacchetti (`packs`) | Maie, Nicolas |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |
 | Cancellazione dell'account dal profilo | Pulsante che rende anonimo l'account | SWD + WMD |

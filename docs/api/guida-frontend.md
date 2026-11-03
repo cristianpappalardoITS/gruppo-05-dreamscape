@@ -41,7 +41,7 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 |------|--------|---------|
 | Indirizzo base | Tutte le API partono da `/api/v1`, sullo stesso indirizzo del sito: uguale in locale e alla consegna | `/api/v1/decks` |
 | Id | Ogni id è un **UUID**: un testo di 36 caratteri. Si usa così come arriva, anche negli URL; non si calcola e non si confronta come un numero | `"019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01"`, `/sfide/019a1f2e-…` |
-| Formato | JSON in entrata e in uscita, nomi in `camelCase` | `{ "totalCards": 20, "isFullArt": false }` |
+| Formato | JSON in entrata e in uscita, nomi in `camelCase` | `{ "totalCards": 20, "isValid": true }` |
 | Risorse | In inglese, al plurale, il verbo è il metodo HTTP | `GET /decks`, `POST /decks`, `DELETE /decks/{deckId}` |
 | Date | Testo ISO 8601 in UTC: va convertito nell'ora locale per mostrarlo | `"2026-10-26T14:30:00Z"` |
 | Immagini | URL relativi al backend, in WebP: si mettono così come sono in `src` o si usano nel disegno della carta. Il browser le tiene in cache (vedi [capitolo 7](#7-come-si-monta-una-carta)) | `"/images/cards/base-004-v1.webp"` |
@@ -212,7 +212,7 @@ await refresh();
 const openingId = window.location.pathname.split("/").pop(); // /negozio/apertura/{openingId}
 const opening = await api(`/pack-openings/${openingId}`);
 createRoot(document.querySelector("#opened-cards")).render(
-  opening.cards.map((item, index) => <Card key={index} card={item.card} isFullArt={item.isFullArt} />)
+  opening.cards.map((item, index) => <Card key={index} card={item.card} />)
 );
 ```
 
@@ -228,6 +228,8 @@ Questi oggetti tornano in più pagine: conviene scrivere una sola funzione JavaS
 {
   "id": "019a1f30-0000-7000-8000-000000000004",
   "code": "BASE-004",
+  "baseCardId": null,
+  "variantType": null,
   "name": "Il Sogno Lucido",
   "faction": { "code": "DREAMS", "name": "Dreams" },
   "rarity": { "code": "LEGENDARY", "name": "Leggendaria" },
@@ -243,27 +245,24 @@ Questi oggetti tornano in più pagine: conviene scrivere una sola funzione JavaS
   "illustrationUrl": "/images/cards/base-004-v1.webp",
   "illustrationThumbUrl": "/images/cards/base-004-v1-thumb.webp",
   "illustrationFocusY": 0.27,
-  "fullArtIllustrationUrl": "/images/cards/base-004-fullart-v1.webp",
-  "fullArtThumbUrl": "/images/cards/base-004-fullart-v1-thumb.webp",
-  "fullArtFocusY": 0.40,
   "lordTitle": "Dreams Lord"
 }
 ```
 
 - `effect` è `null` se la carta non ha effetti; `value` è il numero X dell'effetto (es. `Protezione 1`), `null` se l'effetto non ha numero.
 - `illustrationUrl` è la copia **grande** (larghezza 1024 px), `illustrationThumbUrl` la **miniatura** (larghezza 400 px): quale usare è spiegato nel [capitolo 7](#7-come-si-monta-una-carta).
-- `illustrationFocusY` e `fullArtFocusY` dicono quale fascia dell'immagine resta visibile nel ritaglio: 0 = in alto, 1 = in basso (quasi sempre 0,40).
-- `fullArtIllustrationUrl` e `fullArtThumbUrl` ci sono solo per le Leggendarie.
+- `illustrationFocusY` dice quale fascia dell'immagine resta visibile nel ritaglio: 0 = in alto, 1 = in basso (quasi sempre 0,40).
+- **Full art:** è una carta a parte, con il suo `id` e il suo codice (`BASE-004-FA`): `variantType` è `"FULL_ART"` e `baseCardId` è l'id della carta normale. Nome, testi, ATT, DIF, fazione, rarità ed effetto sono quelli della carta normale (il backend li manda già compilati); cambiano solo `id`, `code` e l'illustrazione, verticale 2:3. Oggi solo le Leggendarie hanno la full art. Domani le skin arriveranno nello stesso modo, con un altro `variantType`.
 - `lordTitle` c'è solo per le tre carte Lord.
 - Codici delle rarità: `COMMON`, `RARE`, `EPIC`, `LEGENDARY`. Codici delle fazioni: `DREAMS`, `NIGHTMARES`, `MEMORIES`.
 
 ### Carta della collezione
 
 ```json
-{ "card": { "id": "019a1f30-0000-7000-8000-000000000004", "name": "Il Sogno Lucido", "...": "..." }, "quantity": 2, "fullArtQuantity": 1 }
+{ "card": { "id": "019a1f30-0000-7000-8000-000000000004", "name": "Il Sogno Lucido", "...": "..." }, "quantity": 1 }
 ```
 
-`quantity` conta tutte le copie, `fullArtQuantity` quante di queste sono full art.
+Ogni versione è una voce a parte: se l'utente ha anche la full art del Sogno Lucido, nella collezione c'è un'altra voce con `card.variantType: "FULL_ART"`, il suo `card.id` e le sue copie.
 
 ### Utente (in liste, amici, sfide)
 
@@ -336,10 +335,10 @@ Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pag
 ```json
 {
   "starterFaction": "DREAMS",
-  "starterCards": [ { "card": { "...": "..." }, "isFullArt": false } ],
+  "starterCards": [ { "card": { "...": "..." } } ],
   "welcomeOpenings": [
-    { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Benvenuto", "cards": [ { "card": { "...": "..." }, "isFullArt": false } ] },
-    { "openingId": "019a2b40-0000-7000-8000-000000000102", "packName": "Benvenuto con Epica", "cards": [ { "card": { "...": "..." }, "isFullArt": false } ] }
+    { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Benvenuto", "cards": [ { "card": { "...": "..." } } ] },
+    { "openingId": "019a2b40-0000-7000-8000-000000000102", "packName": "Benvenuto con Epica", "cards": [ { "card": { "...": "..." } } ] }
   ]
 }
 ```
@@ -364,7 +363,7 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
   "pendingFriendRequests": 1,
   "pendingTrades": 2,
   "pendingChallenges": 0,
-  "latestCards": [ { "card": { "...": "..." }, "isFullArt": false } ]
+  "latestCards": [ { "card": { "...": "..." } } ]
 }
 ```
 
@@ -438,8 +437,8 @@ Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000
   "openingId": "019a2b44-5c6d-7e8f-9a0b-1c2d3e4f5a6b",
   "creditsAfter": 250,
   "cards": [
-    { "card": { "...": "..." }, "isFullArt": false },
-    { "card": { "...": "..." }, "isFullArt": true }
+    { "card": { "...": "..." } },
+    { "card": { "code": "BASE-008-FA", "variantType": "FULL_ART", "...": "..." } }
   ]
 }
 ```
@@ -453,7 +452,7 @@ Poi si va su `/negozio/apertura/{openingId}`, che legge `GET /pack-openings/{ope
 | Collezione con filtri | `GET /me/cards?faction=DREAMS&rarity=RARE&search=sogno&fullArt=true&page=0&size=24` |
 | Dettaglio di una carta | `GET /cards/{cardId}` (dati della carta) + la riga della collezione (copie possedute) |
 
-Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rules`) e, se l'utente ha una copia full art, il passaggio alla versione full art.
+Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rules`) e le altre versioni della carta che l'utente possiede (es. la full art), con le loro copie.
 
 #### Mazzi
 
@@ -469,7 +468,7 @@ Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rule
 Cosa si manda al salvataggio:
 
 ```json
-{ "name": "Incubi veloci", "cards": [ { "cardId": "019a1f30-0000-7000-8000-000000000005", "quantity": 2, "isFullArt": false }, { "cardId": "019a1f30-0000-7000-8000-000000000008", "quantity": 1, "isFullArt": true } ] }
+{ "name": "Incubi veloci", "cards": [ { "cardId": "019a1f30-0000-7000-8000-000000000005", "quantity": 2 }, { "cardId": "019a1f30-0000-7000-8000-000000000108", "quantity": 1 } ] }
 ```
 
 Cosa si riceve:
@@ -481,16 +480,16 @@ Cosa si riceve:
   "totalCards": 20,
   "isValid": true,
   "problems": [],
-  "cards": [ { "card": { "...": "..." }, "quantity": 2, "isFullArt": false } ]
+  "cards": [ { "card": { "...": "..." }, "quantity": 2 } ]
 }
 ```
 
-- **Full art nel mazzo:** per una Leggendaria di cui l'utente possiede una copia full art (`fullArtQuantity` ≥ 1 nella collezione), l'editor mostra un interruttore "Usa la full art". Con `isFullArt: true` la carta si monta con `fullArtIllustrationUrl` nell'editor, nella lista dei mazzi e nel replay della partita. Non cambia le statistiche. Se l'utente non ha la full art, il backend risponde `400`.
+- **Full art nel mazzo:** la full art è una carta a parte (nell'esempio sopra `…0108` è la full art di `BASE-008`). Nell'editor è una voce della collezione come le altre: il giocatore mette nel mazzo la versione che vuole mostrare, e quella si vede nella lista dei mazzi e nel replay. Normale e full art della stessa carta **contano insieme** per le copie massime: una Leggendaria al massimo 1, normale o full art. Se ne mette tutte e due, il salvataggio risponde `400` con il problema.
 
 - Se il mazzo non rispetta le regole il salvataggio risponde `400`, e `problems` dice cosa non va, es. `"Le Rare sono 9: il massimo è 8."`.
 - L'editor mostra i contatori in diretta (carte totali, copie, limiti per rarità) con i numeri di `GET /rules`, così l'utente vede l'errore prima di salvare. Il backend controlla comunque.
 - Si salvano **solo i mazzi validi**: niente bozze.
-- Un mazzo salvato può diventare non valido dopo uno scambio: `isValid: false` e `problems` lo dicono nella lista dei mazzi.
+- Un mazzo salvato può diventare non valido dopo uno scambio o se l'admin **disattiva** una carta che contiene: `isValid: false` e `problems` lo dicono nella lista dei mazzi (es. `"La carta Il Faro nella Nebbia non è più disponibile."`). Conviene mostrarlo bene in vista: è l'avviso al giocatore.
 - Il **mazzo classificato** (`isRanked: true` nella lista) è quello con cui si gioca quando il matchmaking ti sceglie come avversario, anche se non sei collegato. Se diventa non valido, nessuno ti sceglie finché non lo sistemi: conviene segnalarlo nella lista dei mazzi.
 
 #### Amici (pagina nuova)
@@ -503,7 +502,7 @@ Cosa si riceve:
 | Richieste ricevute / inviate | `GET /friend-requests?direction=received` / `?direction=sent` |
 | Accetta | `POST /friend-requests/{requestId}/accept` |
 | Rifiuta (ricevuta) o annulla (inviata) | `DELETE /friend-requests/{requestId}` |
-| Togli un amico | `DELETE /friends/{userId}` |
+| Togli un amico | `DELETE /friends/{userId}`: annulla anche gli scambi e le sfide in attesa tra voi due |
 
 ```json
 GET /api/v1/friends
@@ -528,22 +527,25 @@ Proposta di scambio:
 {
   "recipientId": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12",
   "message": "Ti va?",
-  "offered":   [ { "cardId": "019a1f30-0000-7000-8000-000000000007", "quantity": 1, "isFullArt": false } ],
-  "requested": [ { "cardId": "019a1f30-0000-7000-8000-000000000001", "quantity": 5, "isFullArt": false } ]
+  "offered":   [ { "cardId": "019a1f30-0000-7000-8000-000000000007", "quantity": 1 } ],
+  "requested": [ { "cardId": "019a1f30-0000-7000-8000-000000000001", "quantity": 5 } ]
 }
 ```
 
-- `offered` = carte che do io; `requested` = carte che chiedo all'amico. Almeno una carta per lato.
+- `offered` = carte che do io; `requested` = carte che chiedo all'amico. Almeno una carta per lato. La full art si offre o si chiede con il suo `cardId`, come ogni altra carta.
 - Nella pagina "Nuovo scambio" il destinatario si sceglie **dalla lista amici** e le carte dalla propria collezione e da quella dell'amico (`GET /users/{userId}/cards`, visibile solo agli amici).
 - Stati di uno scambio: `PENDING` (in attesa), `ACCEPTED`, `REJECTED`, `CANCELLED`.
 - **Copie bloccate:** le copie che offri in uno scambio in attesa non le puoi offrire in un altro scambio finché il primo non si chiude (accettato, rifiutato o annullato). Restano usabili nei mazzi. Nella collezione per gli scambi conviene mostrare le copie disponibili (`availableForTrade`, come `quantity` ma senza quelle già offerte). Se offri più copie di quelle disponibili arriva un `409` con `code: "CARDS_LOCKED_IN_TRADE"`.
-- **Avviso sui mazzi:** prima di proporre o accettare, `POST /trades/preview` (stesso corpo della proposta) oppure `GET /trades/{tradeId}/deck-warnings` dicono quali mazzi diventeranno non validi:
+- **Avviso sui mazzi:** prima di proporre o accettare, `POST /trades/preview` (stesso corpo della proposta) oppure `GET /trades/{tradeId}/deck-warnings` dicono quali mazzi cambiano:
 
   ```json
-  { "deckWarnings": [ { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f6", "deckName": "Incubi veloci", "isRanked": true, "cardName": "Il Faro nella Nebbia" } ] }
+  { "deckWarnings": [
+      { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f6", "deckName": "Incubi veloci", "isRanked": true, "cardName": "Il Faro nella Nebbia", "outcome": "INVALID" },
+      { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f7", "deckName": "Lord e amici", "isRanked": false, "cardName": "L'Uomo Senza Volto", "outcome": "NORMAL_VERSION" }
+  ] }
   ```
 
-  Si mostra "Il mazzo Incubi veloci diventerà non valido (è il tuo mazzo classificato)" e si chiede conferma. Lo scambio si può fare lo stesso; il mazzo va poi sistemato nell'editor.
+  `INVALID`: si mostra "Il mazzo Incubi veloci diventerà non valido (è il tuo mazzo classificato)". `NORMAL_VERSION`: cedi una full art che usi nel mazzo, ma hai una copia della versione normale, quindi si mostra "Il mazzo Lord e amici userà la versione normale di L'Uomo Senza Volto". Se la versione normale non ce l'hai, l'avviso è `INVALID`. In tutti i casi si chiede conferma; lo scambio si può fare lo stesso e un mazzo non valido va poi sistemato nell'editor.
 - Se all'accettazione qualcuno non ha più le carte, arriva un `409` e nessuna carta si muove.
 
 #### Partite: classificata, rapida e sfide tra amici
@@ -625,7 +627,7 @@ Il risultato:
 | Pagina | Chiamate | Note |
 |--------|----------|------|
 | Dashboard admin | `GET /admin/stats` | Numeri di utenti, carte, pacchetti, partite |
-| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore (solo per gli effetti con la X, `hasValue`), illustrazione 3:2 e ritaglio, full art 2:3 e ritaglio (solo Leggendarie), attiva. ATT e DIF si possono cambiare anche se la carta è già posseduta |
+| Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore (solo per gli effetti con la X, `hasValue`), illustrazione 3:2 e ritaglio, attiva. La full art si crea come versione della carta (codice `-FA`, solo illustrazione 2:3 e ritaglio; oggi solo per le Leggendarie). ATT e DIF si possono cambiare anche se la carta è già posseduta e valgono anche per la full art. Disattivare una carta rende non validi i mazzi che la usano: conviene chiedere conferma dicendo quanti mazzi tocca |
 | Caricamento illustrazioni | `POST /admin/images` (form `multipart/form-data` con il file, il codice della carta e il tipo: illustrazione, full art o copertina) → `{ "url": "/images/cards/base-013-v1.webp", "thumbUrl": "/images/cards/base-013-v1-thumb.webp" }` | Si carica il PNG originale: il backend lo conserva intatto e crea da solo le copie WebP. Una nuova immagine per la stessa carta diventa `-v2`. Le copertine hanno solo `url` |
 | Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, fazione (facoltativa), periodo di vendita (facoltativo), slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
 | Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `/admin/missions`, `/admin/leagues` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round, premi delle missioni, soglie e premi delle leghe. Le carte per mazzo (20) sono in sola lettura |
@@ -654,11 +656,11 @@ Il componente mette i livelli uno sopra l'altro, in elementi HTML e CSS (proporz
 1. Illustrazione, ritagliata in verticale con `illustrationFocusY`, senza zoom.
 2. Cornice sopra (la finestra trasparente lascia vedere l'illustrazione).
 3. Simbolo della fazione, nome, descrizione ed effetto, ATT e DIF nelle loro coordinate.
-4. Full art: l'illustrazione copre tutta la carta e i testi stanno su pannelli scuri semitrasparenti.
+4. Full art (`variantType: "FULL_ART"`): l'illustrazione copre tutta la carta, senza cornice, e i testi stanno su pannelli scuri semitrasparenti.
 
 ```jsx
 // ✅ Una sola Card per tutte le pagine: riceve i dati dal backend
-<Card card={item.card} isFullArt={item.isFullArt} size="thumb" />
+<Card card={item.card} size="thumb" />
 ```
 
 **Cornici e coordinate le prepara il frontend in JavaScript** (decisione 21 del 2/11): Web parte dalle 12 cornici di `carte/cornici/`, ne ricava le copie con la finestra trasparente e misura le coordinate delle zone. Il compositore Python non le prepara.

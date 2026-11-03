@@ -46,7 +46,7 @@ Le cartelle segnate "proposta" le sceglie chi porta i file nel repository: a voi
 | **Dreams**, **Nightmares**, **Memories** | Sogni, Incubi, Ricordi | Le fazioni. Restano in inglese anche nei testi (decisione del 2/11) |
 | **Lord** | Boss, Re | La Leggendaria più iconica di ogni fazione |
 | **Comune, Rara, Epica, Leggendaria** | Mitica, Ultra Rara, TIER | Le quattro rarità |
-| **full art** | alternate art, versione oro | Copia rara di una Leggendaria, con l'illustrazione su tutta la carta |
+| **full art** | alternate art, versione oro | Versione rara di una Leggendaria, con l'illustrazione su tutta la carta. È una carta a parte (codice `-FA`, es. `BASE-004-FA`) con le stesse statistiche |
 | **Dream Pack** | Pack Base, Pack Elite, bustina premium | Il pacchetto da 500 DC. Il cliente vuole anche altri tipi di pacchetti: nomi e prezzi li decidono Maie e Nicolas |
 | **Dream Credits (DC)** | crediti oro, gemme, CR | La moneta del gioco |
 | **creatura** | mostro, unità | Come nella lista degli effetti |

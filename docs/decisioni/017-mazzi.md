@@ -13,9 +13,9 @@ Il SiteMap salvava un mazzo non valido come bozza; lo schema prevedeva solo mazz
 
 ## Decisione
 - **20 carte**, al massimo 2 copie per carta (1 per le Leggendarie). Limiti per rarità: Leggendarie 2, Epiche 4, Rare 8, Comuni libere.
-- Si salvano **solo i mazzi validi**. Un mazzo che diventa non valido dopo uno scambio viene segnalato e ricontrollato prima di ogni partita.
+- Si salvano **solo i mazzi validi**. Un mazzo che diventa non valido dopo uno scambio viene segnalato e ricontrollato prima di ogni partita. *Anche le carte disattivate rendono il mazzo non valido: completato il 4/11 da [026](026-carte-disattivate-e-amicizie-tolte.md).*
 - Ogni giocatore sceglie un **mazzo classificato**, usato quando il matchmaking lo sceglie come avversario ([010](010-tipi-di-partita-e-rank.md)).
-- La full art nel mazzo è solo una scelta di aspetto.
+- La full art nel mazzo è solo una scelta di aspetto. *Sostituito il 4/11 da [025](025-versioni-delle-carte.md): la full art è una carta a parte, che conta insieme alla normale per le copie massime.*
 
 ## Motivazione
 Meno stati da gestire: niente colonna `is_valid` né badge Valido / Non valido.

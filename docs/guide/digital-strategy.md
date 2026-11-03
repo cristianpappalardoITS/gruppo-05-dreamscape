@@ -8,7 +8,7 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 
 1. **Si usano le parole del glossario** (sezione 2): Dreamweaver, Dream Pack, Dream Credits, Leggendaria, round. Sempre le stesse, in tutti i testi.
 2. **I numeri del gioco sono quelli della sezione 3.** Se volete cambiarne uno, si decide prima con Marco, Cristian e Nicolas, poi si cambia ovunque.
-3. **Il catalogo si consegna nel file `carte.csv`**, una riga per carta, con le colonne del compositore (sezione 4).
+3. **Il catalogo si consegna nel file `carte.csv`**, una riga per carta, con le colonne del compositore (sezione 4). Si consegna sul Drive del gruppo.
 4. **Gli effetti si prendono solo dalla [lista di Nicolas](../../carte/effetti/Effetti%20Keyword%20Descrizioni.txt)**: niente effetti nuovi senza parlarne con lui.
 5. **Le illustrazioni si chiamano come il codice della carta** (`base-013.png`), in PNG con i metadati originali.
 6. **I colori sono quelli del design system di Gaia**: nessun colore nuovo senza dirlo a Web.
@@ -19,16 +19,13 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 
 ## 1. Account GitHub e consegne
 
-- Nel repository oggi c'è solo Valerio (`decosm`). **Sara e Maie** devono mandare il loro username a Cristian e accettare l'invito, altrimenti non si possono assegnare le loro issue.
-- Le consegne vanno nel repository con una **pull request**. Non serve installare niente: si fa dal sito di GitHub.
-  1. Aprite la cartella giusta nel repository (vedi la tabella qui sotto).
-  2. **Add file → Upload files** e trascinate i file.
-  3. In basso scegliete **Create a new branch** e chiamatelo `docs/numero-issue-descrizione`, es. `docs/74-catalogo-fase-1`.
-  4. Messaggio: `docs(card): aggiunge il catalogo della fase 1 (#74)`.
-  5. **Propose changes**, poi **Create pull request**, con `Closes #74` nella descrizione.
-- Se non avete ancora l'account, mandate i file a Marco o Cristian, che li caricano per voi.
+- Nel repository oggi c'è solo Valerio (`decosm`). Come entrano **Sara e Maie** è ancora da decidere (domanda 3 del 2/11): l'account serve per assegnare le loro issue.
+- **Le consegne vanno sul Drive del gruppo** (decisione 10 del 2/11), con i nomi dei file della tabella qui sotto. Non serve GitHub.
+  1. Caricate i file sul Drive, nella cartella della consegna.
+  2. Avvisate Marco o Cristian, con il numero della issue.
+  3. Marco o Cristian li portano nel repository con una pull request e vi dicono se qualcosa non torna (es. una colonna di `carte.csv` scritta male).
 
-| Cosa | Dove va | Issue |
+| Cosa | Dove va nel repository | Issue |
 |------|---------|-------|
 | Catalogo delle carte | `carte/compositore/carte.csv` | #74 |
 | Illustrazioni | `carte/illustrazioni/` | #84 |
@@ -37,7 +34,7 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 | Testi delle pagine pubbliche | `docs/testi-sito/`, un file `.md` per pagina (proposta) | #85 |
 | Identità visiva definitiva | `docs/identita/` (proposta) | #75 |
 
-Le cartelle segnate "proposta" si confermano il 2/11.
+Le cartelle segnate "proposta" le sceglie chi porta i file nel repository: a voi basta il Drive.
 
 ## 2. Glossario: parole fisse
 
@@ -46,11 +43,11 @@ Le cartelle segnate "proposta" si confermano il 2/11.
 | **Dreamscape** | Dream Scape, DreamScape | Il gioco |
 | **Somnia** | | Il nostro gruppo |
 | **Dreamweaver** | giocatore (nei testi per i giocatori), Dream Weaver | Chi gioca |
-| **Dreams**, **Nightmares**, **Memories** | Sogni, Incubi, Ricordi (per ora) | Le fazioni. I nomi italiani sono ancora da decidere |
+| **Dreams**, **Nightmares**, **Memories** | Sogni, Incubi, Ricordi | Le fazioni. Restano in inglese anche nei testi (decisione del 2/11) |
 | **Lord** | Boss, Re | La Leggendaria più iconica di ogni fazione |
 | **Comune, Rara, Epica, Leggendaria** | Mitica, Ultra Rara, TIER | Le quattro rarità |
 | **full art** | alternate art, versione oro | Copia rara di una Leggendaria, con l'illustrazione su tutta la carta |
-| **Dream Pack** | Pack Base, Pack Elite, bustina premium | L'unico pacchetto in vendita |
+| **Dream Pack** | Pack Base, Pack Elite, bustina premium | Il pacchetto da 500 DC. Il cliente vuole anche altri tipi di pacchetti: nomi e prezzi li decidono Maie e Nicolas |
 | **Dream Credits (DC)** | crediti oro, gemme, CR | La moneta del gioco |
 | **creatura** | mostro, unità | Come nella lista degli effetti |
 | **mazzo** | deck | |
@@ -93,7 +90,7 @@ Sono quelli della presentazione al cliente e del documento di Sara confermato il
 
 ### Dotazione iniziale
 
-Alla registrazione il Dreamweaver riceve un **set iniziale di 20 carte** (14 Comuni e 6 Rare) e **2 pacchetti di benvenuto**, uno con un'Epica garantita.
+Alla registrazione il Dreamweaver riceve **500 DC**. Poi, nella pagina Benvenuto, **sceglie una fazione** e riceve un **set iniziale di 20 carte di quella fazione** (14 Comuni e 6 Rare) e **2 pacchetti di benvenuto**, uno con un'Epica garantita.
 
 ### Regole del mazzo e della partita
 
@@ -102,7 +99,7 @@ Alla registrazione il Dreamweaver riceve un **set iniziale di 20 carte** (14 Com
 | Carte nel mazzo | 20 |
 | Copie della stessa carta | Massimo 2 (1 per le Leggendarie) |
 | Limiti per rarità | Leggendarie 2 · Epiche 4 · Rare 8 · Comuni libere |
-| Punti vita | 20 (da verificare con le simulazioni) |
+| Punti vita | 20 (confermati dal cliente, da verificare con le simulazioni) |
 | Fine della partita | Punti vita a 0, mazzo esaurito o 60 round (pareggio) |
 | Effetti | 23, dalla lista di Nicolas |
 
@@ -125,8 +122,9 @@ Il catalogo si scrive in [`carte/compositore/carte.csv`](../../carte/compositore
 
 Regole del catalogo:
 
-- **Circa 30 carte**, il numero preciso lo chiediamo al cliente il 2/11.
-- **Almeno 7 Comuni e 3 Rare diverse**: servono per il set iniziale di 14 Comuni e 6 Rare con al massimo 2 copie per carta.
+- **99 o 102 carte** (risposta del cliente del 2/11), cioè 33 o 34 per fazione. Il numero esatto si sceglie con Nicolas.
+- **In ogni fazione almeno 7 Comuni e 3 Rare diverse**: il set iniziale è di una sola fazione, con 14 Comuni e 6 Rare e al massimo 2 copie per carta.
+- Le carte più rare sono più forti: **ATT + DIF cresce con la rarità**, e nel bilanciamento contano anche gli effetti (decisione 14 del 2/11).
 - Le tre fazioni con un numero simile di carte per rarità.
 - Una sola Leggendaria per fazione è il Lord: le altre Leggendarie no.
 - Ogni Leggendaria ha anche la sua full art.
@@ -148,7 +146,7 @@ Regole del catalogo:
 
 Pagine: Home, Il gioco e lore, Regolamento per i giocatori, FAQ, Glossario.
 
-- Un file Markdown per pagina, es. `docs/testi-sito/home.md`, con titoli e paragrafi già nell'ordine della pagina. Web li copia nell'HTML.
+- Un file Markdown per pagina, es. `docs/testi-sito/home.md`, con titoli e paragrafi già nell'ordine della pagina. Web li copia nelle pagine del sito.
 - Si parla al Dreamweaver con il **tu**, in modo semplice (proposta, da confermare il 2/11).
 - Il regolamento per i giocatori usa **gli stessi numeri** della sezione 3 e del [regolamento](../proposte/proposta-regolamento-dreamscape.pdf). Se un valore cambia, cambia in entrambi.
 - Sotto ogni titolo, una frase breve per i motori di ricerca (meta description, massimo ~155 caratteri).

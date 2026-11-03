@@ -35,7 +35,7 @@ I dettagli sono nella [proposta di regolamento](docs/proposte/proposta-regolamen
 | Motore di gioco | Java, modulo isolato, test **JUnit** |
 | Backend / portale | Java + **Spring Boot 4**, Spring Data **JPA** (Hibernate 7), accesso con token **JWT** |
 | Database | **PostgreSQL 18**, chiavi **UUID v7**, migration con **Flyway**, test con **Testcontainers** |
-| Frontend | **HTML, CSS e JavaScript** |
+| Frontend | **React**, con componenti in JavaScript (decisione del 2/11). Strumenti proposti: Vite e React Router, li conferma Gaia nella #72 |
 | Gestione progetto | **GitHub Projects** |
 
 Il pagamento con denaro reale non fa parte della fase 1: i crediti sono solo virtuali.
@@ -56,7 +56,7 @@ Il pagamento con denaro reale non fa parte della fase 1: i crediti sono solo vir
 gruppo-05-dreamscape/
 ├── engine/      # Motore di gioco Java + test JUnit
 ├── backend/     # Applicazione Spring Boot (portale + API REST)
-├── frontend/    # Frontend in HTML, CSS e JavaScript
+├── frontend/    # Frontend in React
 ├── database/    # Script SQL, migrazioni, dati di prova
 ├── carte/       # Set di carte di prova: cornici, illustrazioni, carte finite, script, effetti
 ├── docs/        # Documentazione e linee guida

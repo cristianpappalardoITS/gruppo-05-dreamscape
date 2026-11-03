@@ -21,15 +21,16 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 
 ## 1. Come funziona in breve
 
-- Il frontend è fatto di **pagine HTML** con **CSS** e **JavaScript**, senza framework.
-- Il JavaScript chiede i dati al backend con `fetch()` e riceve **JSON**. Poi riempie la pagina.
+- Il frontend è un'applicazione **React**, fatta di componenti in JavaScript (decisione del 2/11). Strumenti proposti: Vite e React Router, li conferma Gaia nella #72.
+- I componenti chiedono i dati al backend tramite `api.js`, che usa `fetch()` e riceve **JSON**. Poi mostrano i dati nella pagina.
+- Sito e API hanno **lo stesso indirizzo**: il container del frontend serve il sito e manda `/api` al backend. In locale si avvia tutto con `docker compose up` (decisione 7 del 2/11).
 - Il backend fa tutti i conti e tutti i controlli: estrazione dei pacchetti, validità dei mazzi, partite, scambi. Il frontend **mostra** quello che riceve e **manda** quello che l'utente sceglie.
 - Il giocatore si chiama **Dreamweaver**. Le fazioni sono **Dreams**, **Nightmares** e **Memories**.
 
 ```
- Pagina HTML  ──fetch()──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
-      ▲                            │
-      └────────── JSON ────────────┘
+ Componente React  ──api.js──▶  Backend (Spring Boot)  ──▶  Database (PostgreSQL)
+        ▲                              │
+        └──────────── JSON ────────────┘
 ```
 
 ---
@@ -38,7 +39,7 @@ Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e co
 
 | Cosa | Regola | Esempio |
 |------|--------|---------|
-| Indirizzo base | Tutte le API partono da `/api/v1` | `http://localhost:8080/api/v1` in sviluppo |
+| Indirizzo base | Tutte le API partono da `/api/v1`, sullo stesso indirizzo del sito: uguale in locale e alla consegna | `/api/v1/decks` |
 | Id | Ogni id è un **UUID**: un testo di 36 caratteri. Si usa così come arriva, anche negli URL; non si calcola e non si confronta come un numero | `"019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01"`, `/sfide/019a1f2e-…` |
 | Formato | JSON in entrata e in uscita, nomi in `camelCase` | `{ "totalCards": 20, "isFullArt": false }` |
 | Risorse | In inglese, al plurale, il verbo è il metodo HTTP | `GET /decks`, `POST /decks`, `DELETE /decks/{deckId}` |
@@ -89,12 +90,12 @@ Il backend usa i **token JWT**. Ci sono due token:
 
 | Token | A cosa serve | Quanto dura | Dove sta |
 |-------|--------------|-------------|----------|
-| **Token di accesso** (`accessToken`) | Va in **ogni** richiesta che richiede l'accesso | Poco (proposta: 15 minuti) | In una variabile JavaScript, **non** in `localStorage` |
-| **Refresh token** | Serve a ottenere un nuovo token di accesso | Più a lungo (proposta: 7 giorni) | In un **cookie `HttpOnly`** che il browser gestisce da solo: il JavaScript non lo vede e non lo tocca |
+| **Token di accesso** (`accessToken`) | Va in **ogni** richiesta che richiede l'accesso | **15 minuti** | In una variabile JavaScript, **non** in `localStorage` |
+| **Refresh token** | Serve a ottenere un nuovo token di accesso | **7 giorni** | In un **cookie `HttpOnly`** che il browser gestisce da solo: il JavaScript non lo vede e non lo tocca |
 
 Perché non `localStorage`: se una pagina avesse un bug di sicurezza (XSS), uno script estraneo potrebbe leggere il token. Il cookie `HttpOnly` non è leggibile dal JavaScript.
 
-Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio pagina. Non è un problema: all'apertura di ogni pagina `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 4](#4-il-file-apijs)).
+Il sito è un'applicazione a pagina unica: passando da una pagina all'altra la variabile resta. Si perde solo se si ricarica la pagina o si apre una scheda nuova. Non è un problema: all'avvio dell'applicazione `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 4](#4-il-file-apijs)).
 
 ### Le chiamate dell'accesso
 
@@ -141,11 +142,11 @@ Esempio di risposta all'accesso:
 
 ## 4. Il file api.js
 
-Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Le pagine non usano mai `fetch()` direttamente.
+Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. I componenti non usano mai `fetch()` direttamente.
 
 ```js
 // api.js: unico punto da cui passano le chiamate al backend
-const API_BASE = "http://localhost:8080/api/v1";
+const API_BASE = "/api/v1"; // stesso indirizzo del sito, in locale e alla consegna
 
 // Token di accesso solo in memoria; il refresh token sta nel cookie HttpOnly.
 let accessToken = null;
@@ -174,7 +175,7 @@ export async function api(path, { method = "GET", body } = {}) {
     response = await send(path, method, body); // riprova una volta con il token nuovo
   }
   if (response.status === 401) {
-    window.location.href = "/accesso.html";
+    window.location.href = "/accesso";
     return null;
   }
   if (response.status === 204) return null;
@@ -190,14 +191,34 @@ export async function login(loginName, password) {
 }
 ```
 
-Uso in una pagina:
+All'avvio dell'applicazione (es. `main.jsx`), prima di mostrare le pagine:
 
-```js
-import { api, refresh } from "./api.js";
+```jsx
+import { createRoot } from "react-dom/client";
+import { refresh } from "./api.js";
+import App from "./App.jsx";
 
-await refresh(); // all'apertura della pagina: recupera il token dal cookie
-const summary = await api("/me/summary");
-document.querySelector("#credits").textContent = summary.credits;
+// Recupera il token dal cookie, poi mostra l'applicazione
+refresh().then(() => {
+  createRoot(document.getElementById("root")).render(<App />);
+});
+```
+
+Uso in un componente:
+
+```jsx
+import { useEffect, useState } from "react";
+import { api } from "./api.js";
+
+export function CreditsBadge() {
+  const [credits, setCredits] = useState(null);
+
+  useEffect(() => {
+    api("/me/summary").then((summary) => setCredits(summary.credits));
+  }, []);
+
+  return <span className="credits">{credits ?? "…"} DC</span>;
+}
 ```
 
 ---
@@ -310,10 +331,16 @@ Risposta di `GET /rules`:
 
 #### Benvenuto (dopo la registrazione)
 
-`GET /me/welcome` → il set iniziale e i due pacchetti di benvenuto, già aperti dal backend alla registrazione.
+Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pagina (decisione 15 del 2/11). I 500 DC arrivano già alla registrazione.
+
+| Momento | Chiamata | Cosa succede |
+|---------|----------|--------------|
+| Apertura della pagina | `GET /me/welcome` | Se `starterFaction` è `null`, la fazione non è ancora scelta: si mostrano le tre fazioni con il loro Lord |
+| Scelta della fazione | `POST /me/welcome` con `{ "starterFaction": "DREAMS" }` | Il backend dà il set iniziale di quella fazione e apre i due pacchetti di benvenuto. Risponde come `GET /me/welcome`. La scelta si fa una volta sola: la seconda volta arriva `409` |
 
 ```json
 {
+  "starterFaction": "DREAMS",
   "starterCards": [ { "card": { "...": "..." }, "isFullArt": false } ],
   "welcomeOpenings": [
     { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Benvenuto", "cards": [ { "card": { "...": "..." }, "isFullArt": false } ] },
@@ -322,7 +349,7 @@ Risposta di `GET /rules`:
 }
 ```
 
-Il set iniziale ha 20 carte (14 Comuni e 6 Rare), estratte senza mai superare le copie massime: con queste 20 carte si compone sempre un mazzo valido. Il mazzo **non** viene creato in automatico: dalla pagina Benvenuto conviene un pulsante "Componi il tuo primo mazzo" che apre l'editor. Le carte si possono rivelare una alla volta come in un'apertura.
+Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte senza mai superare le copie massime: con queste 20 carte si compone sempre un mazzo valido. Il mazzo **non** viene creato in automatico: dalla pagina Benvenuto conviene un pulsante "Componi il tuo primo mazzo" che apre l'editor. Le carte si possono rivelare una alla volta come in un'apertura.
 
 #### Dashboard
 
@@ -564,7 +591,7 @@ Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`).
 
 ## 7. Come si monta una carta
 
-La carta la **monta il frontend in JavaScript**: il backend manda i dati e l'illustrazione, non l'immagine finita. Così, se cambia una statistica, la carta si aggiorna da sola.
+La carta la **monta il frontend** con un solo componente React (`Card`, #81): il backend manda i dati e l'illustrazione, non l'immagine finita. Così, se cambia una statistica, la carta si aggiorna da sola.
 
 Ingredienti:
 
@@ -573,30 +600,38 @@ Ingredienti:
 | Illustrazione (`illustrationUrl` o `illustrationThumbUrl`) e ritaglio verticale (`illustrationFocusY`, da 0 = in alto a 1 = in basso) | Backend, per ogni carta |
 | Cornice della fazione e della rarità, con la finestra trasparente | File del frontend: 12 cornici (3 fazioni × 4 rarità), anche queste in WebP grande e miniatura |
 | Simbolo della fazione: luna (Dreams), occhio (Nightmares), clessidra (Memories) | File del frontend |
-| Coordinate di nome, simbolo, testi, ATT e DIF sulla cornice | File del frontend (es. `zone.json`) |
+| Coordinate di nome, simbolo, testi, ATT e DIF sulla cornice | File JavaScript del frontend (es. `cardZones.js`) |
 | Nome, descrizione, effetto, ATT, DIF | Backend, per ogni carta |
 
-Ordine di disegno (es. su un `<canvas>` di 1024 × 1536 con le copie grandi, o di 400 × 600 con le miniature, poi adattato con il CSS):
+Il componente mette i livelli uno sopra l'altro, in elementi HTML e CSS (proporzioni 2:3, come la carta grande di 1024 × 1536):
 
 1. Illustrazione, ritagliata in verticale con `illustrationFocusY`, senza zoom.
 2. Cornice sopra (la finestra trasparente lascia vedere l'illustrazione).
 3. Simbolo della fazione, nome, descrizione ed effetto, ATT e DIF nelle loro coordinate.
 4. Full art: l'illustrazione copre tutta la carta e i testi stanno su pannelli scuri semitrasparenti.
 
-Il riferimento visivo sono le 15 carte del set di prova in `carte/carte-finali/`. Come preparare cornici trasparenti e coordinate (compositore Python o tutto in JavaScript) è ancora da decidere con SWD. Per l'accessibilità, ogni carta ha un testo alternativo con nome, fazione, rarità, attacco e difesa.
+```jsx
+// ✅ Una sola Card per tutte le pagine: riceve i dati dal backend
+<Card card={item.card} isFullArt={item.isFullArt} size="thumb" />
+```
+
+**Cornici e coordinate le prepara il frontend in JavaScript** (decisione 21 del 2/11): Web parte dalle 12 cornici di `carte/cornici/`, ne ricava le copie con la finestra trasparente e misura le coordinate delle zone. Il compositore Python non le prepara.
+
+Il riferimento visivo sono le 15 carte del set di prova in `carte/carte-finali/`. Per l'accessibilità, ogni carta ha un testo alternativo con nome, fazione, rarità, attacco e difesa.
 
 ### Il ritaglio
 
 L'immagine si adatta alla finestra della cornice senza deformarsi e senza zoom; quello che avanza si taglia. `illustrationFocusY` dice quanto tagliare sopra e quanto sotto. Esempio: avanzano 400 px in altezza e il focus è 0,40, quindi si tagliano 160 px sopra e 240 px sotto.
 
-Con livelli HTML/CSS:
+Nel componente:
 
-```js
-img.style.objectFit = "cover";
-img.style.objectPosition = `50% ${carta.illustrationFocusY * 100}%`;
+```jsx
+<img
+  src={card.illustrationThumbUrl}
+  alt=""
+  style={{ objectFit: "cover", objectPosition: `50% ${card.illustrationFocusY * 100}%` }}
+/>
 ```
-
-Con il canvas: `sy = (altezzaScalata - altezzaFinestra) * illustrationFocusY`.
 
 ### Grande o miniatura
 
@@ -607,7 +642,7 @@ Con il canvas: `sy = (altezzaScalata - altezzaFinestra) * illustrationFocusY`.
 
 Con le miniature la prima visita alla collezione pesa meno di 1 MB. Con i PNG originali sarebbero circa 55 MB.
 
-Le coordinate delle zone (es. `zone.json`) si scrivono una volta per la carta grande (1024 × 1536). Per la miniatura si moltiplicano per 400 / 1024.
+Le coordinate delle zone (es. `cardZones.js`) si scrivono una volta per la carta grande (1024 × 1536). Per la miniatura si moltiplicano per 400 / 1024, oppure si scrivono in percentuale e valgono per tutte e due.
 
 ### Cache: cosa resta nel browser
 
@@ -615,13 +650,14 @@ Le coordinate delle zone (es. `zone.json`) si scrivono una volta per la carta gr
 |------|-----------------|--------|
 | Illustrazioni e copertine (`/images/...`) | **Sì, per sempre** | Il backend le manda con `Cache-Control: public, max-age=31536000, immutable`. Se un'immagine cambia, il nome cambia (`-v1` → `-v2`), quindi non si vede mai una versione vecchia |
 | Cornici, simboli e font del frontend | **Sì**, se anche voi mettete la versione nel nome (es. `cornice-dreams-comune-v1.webp`) e configurate lo stesso `Cache-Control` | Stesso motivo |
-| Pagine HTML, `api.js`, CSS | Per poco, o con controllo a ogni visita | Così un aggiornamento del sito arriva subito |
+| `index.html` | Controllo a ogni visita | Così un aggiornamento del sito arriva subito |
+| JavaScript e CSS costruiti | **Sì, per sempre**, se lo strumento mette l'impronta nel nome (Vite lo fa da solo: `index-4f2a9c.js`) | Ogni nuova versione del sito ha nomi nuovi |
 | Risposte delle API (JSON) | **No** | Contengono dati personali e cambiano spesso. Spring Security manda già `no-store` |
 | Carta montata | **No, non serve** | Montarla costa pochi millisecondi. A ogni pagina si rimonta con le immagini già in cache, ed è sempre aggiornata se cambiano statistiche o testi |
 
 In una prima sessione di un nuovo utente si montano circa 150–200 carte: benvenuto ~30, collezione ~30, editor del mazzo ~50, un pacchetto 5, una partita fino a 40. In tutto meno di un secondo. Ogni immagine si scarica solo la prima volta.
 
-Un consiglio: se nella stessa pagina la stessa carta compare più volte (es. due copie nel mazzo), si può montarla una volta e copiarla (`cloneNode(true)` con i livelli HTML, `drawImage` da un canvas già pronto).
+Se nella stessa pagina la stessa carta compare più volte (es. due copie nel mazzo), basta usare `Card` due volte: le immagini arrivano dalla cache e non si scaricano di nuovo.
 
 ---
 
@@ -657,11 +693,9 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password** 
 
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
-| Durata dei token | Accesso 15 minuti, refresh 7 giorni | SWD |
 | Recupero password in fase 1 | Solo se c'è tempo: richiede l'invio di email | SWD + WMD |
-| Come si ottengono i crediti (giornaliero, vittorie...) | Ricompensa giornaliera + premio vittoria | DGS |
-| Canvas o livelli HTML/CSS per la carta | Canvas: stesso risultato delle carte di prova | WMD |
-| Cornici trasparenti e coordinate: compositore Python o JavaScript | Da scegliere | SWD + WMD |
+| Strumenti del frontend | Vite, JavaScript, React Router | Gaia (#72) |
+| Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Il database prevede già più pacchetti (`packs`) | Maie, Nicolas |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |
 | Cancellazione dell'account dal profilo | Pulsante che rende anonimo l'account | SWD + WMD |
 | Classifica e rank | Dopo le funzioni obbligatorie; lasciare spazio nel menu | Tutti |

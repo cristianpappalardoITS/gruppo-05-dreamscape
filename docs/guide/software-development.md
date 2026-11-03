@@ -66,15 +66,16 @@ Gli esempi in [schema.md](../database/schema.md#esempio-pacchetti) e in [guida-f
 
 | Cosa | Valore | Dove sta |
 |------|--------|----------|
-| Dream Pack | 5 carte, **500 DC**, tre copertine (una per Lord) | `packs`, `pack_covers` |
+| Dream Pack | 5 carte, **500 DC**, tre copertine (una per Lord). Si apre subito, all'acquisto | `packs`, `pack_covers` |
+| Altri pacchetti | Il cliente ne vuole di più tipi, a prezzi diversi: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il codice non dà per scontato un solo pacchetto | `packs`, `pack_slots` |
 | Slot del Dream Pack | 3 Comuni · 1 Rara · 1 slot speciale: Rara 70, Epica 25, Leggendaria 5 | `pack_slots`, `pack_slot_rarities` |
 | Full art | 20% delle Leggendarie, cioè 1% del Dream Pack | `packs.full_art_chance` |
-| Registrazione | 500 DC + set iniziale (14 Comuni, 6 Rare) + 2 pacchetti di benvenuto (uno con Epica garantita) | Da confermare il 2/11 (domanda 13) |
-| Accesso giornaliero | 50 DC | `credit_transactions` (`DAILY_REWARD`) |
+| Registrazione | 500 DC alla registrazione. Nella pagina Benvenuto il Dreamweaver sceglie una fazione e riceve il set iniziale di quella fazione (14 Comuni, 6 Rare) + 2 pacchetti di benvenuto (uno con Epica garantita) | `POST /me/welcome` ([guida](../api/guida-frontend.md#benvenuto-dopo-la-registrazione)) |
+| Accesso giornaliero | 50 DC. Il giorno inizia a mezzanotte, ora italiana (`Europe/Rome`); nel database le date restano in UTC | `credit_transactions` (`DAILY_REWARD`) |
 | Vittoria | 30 DC, massimo 3 al giorno | `credit_transactions` (`MATCH_REWARD`) |
-| Missione giornaliera, obiettivo settimanale | 100 DC, 250 DC | Nessuna issue: domanda 12 del 2/11 |
-| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie 2, Epiche 4, Rare 8 | `GameRules`, `rarities` |
-| Partita | 20 punti vita (da verificare con #87), max 60 round, poi pareggio | `game_modes`, copiati in `matches` |
+| Missione giornaliera, obiettivo settimanale | 100 DC, 250 DC. Versione semplice, fissa, nello Sprint 6 | Issue da aprire (una SWD, una WMD) |
+| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie 2, Epiche 4, Rare 8. Si salvano solo i mazzi validi | `GameRules`, `rarities` |
+| Partita | 20 punti vita (confermati dal cliente, da verificare con #87), max 60 round, poi pareggio | `game_modes`, copiati in `matches` |
 | Vantaggio di fazione | Dreams → Memories → Nightmares → Dreams, **+1 ATT** | `faction_advantages` |
 | Effetti | I 23 della [lista di Nicolas](../../carte/effetti/Effetti%20Keyword%20Descrizioni.txt), al massimo uno per carta | `effects`, `card_effects` |
 
@@ -82,7 +83,9 @@ Gli esempi in [schema.md](../database/schema.md#esempio-pacchetti) e in [guida-f
 
 - Una sola modalità, la **Base**, con gli effetti.
 - **Scambi solo tra amici**, quantità e rarità libere, niente crediti negli scambi. **Sfide** aperte a tutti.
-- Il set iniziale si estrae senza superare le copie massime: con quelle 20 carte si compone sempre un mazzo valido. Il mazzo non si crea in automatico.
+- Il set iniziale è di **una fazione**, scelta dal Dreamweaver nella pagina Benvenuto, e si estrae senza superare le copie massime: con quelle 20 carte si compone sempre un mazzo valido. Il mazzo non si crea in automatico.
+- Le carte offerte in uno scambio **non si bloccano**: all'accettazione si ricontrolla tutto e, se mancano, lo scambio si annulla da solo con un messaggio.
+- Token di accesso **15 minuti**, refresh token **7 giorni**.
 - Lo storico delle partite usa le **copie dei mazzi** salvate in `matches` e il `random_seed`: con lo stesso seed il motore rigioca la stessa partita.
 
 ## 4. Il motore di gioco (`engine/`)
@@ -161,11 +164,10 @@ La proposta è in `docs/proposte/rilascio-aws.md`, sul branch `docs/rilascio-aws
 
 | Team | Cosa si aspetta da noi | Entro |
 |------|------------------------|-------|
-| Web | Backend avviabile con `docker compose up` e `/auth/*` funzionanti, come nella guida (#68, #71) | Sprint 3 |
+| Web | Backend avviabile con `docker compose up` e `/auth/*` funzionanti, come nella guida (#68, #71). Sito e API sullo stesso indirizzo: il container del frontend manda `/api` al backend. Web non usa dati finti, quindi aspetta questi due | Sprint 3 |
 | Web | API del catalogo, `GET /rules`, Dream Pack, collezione e mazzi (#77, #78, #80) | Sprint 4 |
-| Web | Cornici con la finestra trasparente e `zone.json` per il componente della carta, se si sceglie il compositore Python (domanda 21) | Sprint 4 |
 | Web | Guida ai dati aggiornata con i numeri nuovi | Dopo il 2/11 |
-| Digital | Un controllo veloce di `carte.csv` quando arriva la PR del catalogo (#74): codici, fazioni, rarità ed effetti scritti come vuole lo script | Sprint 3 |
+| Digital | Portare nel repository i file che Digital consegna sul Drive (Marco o Cristian, con una PR) e controllare `carte.csv` (#74): codici, fazioni, rarità ed effetti scritti come vuole lo script | Sprint 3 |
 | Digital | Le copie WebP di illustrazioni e copertine, create dallo script dai PNG originali | Sprint 4–5 |
 
 ## 7. Le nostre issue dei primi sprint

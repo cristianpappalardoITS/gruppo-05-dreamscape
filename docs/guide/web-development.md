@@ -8,11 +8,11 @@ Per **Gaia, Alessandro, Daniele e Yuri**. Raccoglie in un solo posto le regole e
 
 1. **Una issue, un branch, una pull request.** Niente lavoro direttamente su `main` o `develop`.
 2. **Il server decide tutto:** contenuto dei pacchetti, esito delle partite, validità dei mazzi, scambi. Il frontend mostra e manda, non calcola.
-3. **Tutte le chiamate passano da `api.js`.** Nessuna pagina usa `fetch()` direttamente e l'indirizzo del backend è scritto solo lì.
+3. **Tutte le chiamate passano da `api.js`.** Nessun componente usa `fetch()` direttamente e l'indirizzo delle API (`/api/v1`) è scritto solo lì.
 4. **Le API sono quelle della [guida ai dati](../api/guida-frontend.md):** `/api/v1/...`, in inglese, al plurale, senza verbi nell'URL. Non quelle del SiteMap.
 5. **Gli id sono UUID**, cioè testi: mai `parseInt(id)`, mai confrontarli come numeri.
 6. **Il token non va mai in `localStorage`** né in `sessionStorage`: solo in memoria, come in `api.js`.
-7. **La carta la monta il JavaScript** con dati e illustrazione: mai immagini di carte già pronte.
+7. **La carta è un solo componente React** (`Card`), montato con dati e illustrazione: mai immagini di carte già pronte.
 8. **Prima lo smartphone:** ATT, DIF, fazione e rarità leggibili anche su un telefono.
 9. **Nomi in inglese, commenti e testi in italiano.** Gli URL delle pagine sono in italiano (`/collezione`), quelli delle API in inglese (`/api/v1/me/cards`).
 10. **Si usano i numeri e le parole di questa guida** (Dream Pack, 500 DC, Leggendaria...). Se un documento più vecchio dice altro, vale questa guida.
@@ -27,7 +27,7 @@ Per **Gaia, Alessandro, Daniele e Yuri**. Raccoglie in un solo posto le regole e
 | Documento | Perché |
 |-----------|--------|
 | [workflow-github.md](../workflow-github.md) | Issue, branch, commit, pull request |
-| [regole-codice.md](../regole-codice.md) | Formattazione (2 spazi per HTML, CSS, JS), sicurezza, file da non caricare |
+| [regole-codice.md](../regole-codice.md) | React, formattazione (2 spazi per HTML, CSS, JS), sicurezza, file da non caricare |
 | [guida-frontend.md](../api/guida-frontend.md) | Le API pagina per pagina, `api.js`, come si monta la carta |
 | [naming.md](../naming.md) e [commenti.md](../commenti.md) | Nomi e commenti |
 | [checklist-pr.md](../checklist-pr.md) | Da rileggere prima di ogni pull request |
@@ -76,28 +76,32 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Tema | Decisione | ❌ Da non usare |
 |------|-----------|-----------------|
 | Database | PostgreSQL 18 con id UUID | MySQL, id numerici |
-| Frontend | HTML, CSS e JavaScript, senza framework | React, Vue, jQuery |
-| Accesso | Token JWT: quello di accesso in memoria, il refresh token in un cookie `HttpOnly` che gestisce il backend | Token "salvato nel client" in `localStorage` |
+| Frontend | **React**, con componenti in JavaScript (2/11, sostituisce "senza framework" del 26/10). Strumenti proposti: Vite e React Router, li conferma Gaia nella #72 | Pagine HTML separate senza framework, Vue, Angular, jQuery |
+| Avvio in locale | Sito e API sullo **stesso indirizzo**, con `docker compose up`: il container del frontend serve il sito e manda `/api` al backend | Live Server su un'altra porta, indirizzo `http://localhost:8080` scritto in `api.js` |
+| Accesso | Token JWT: quello di accesso (15 minuti) in memoria, il refresh token (7 giorni) in un cookie `HttpOnly` che gestisce il backend | Token "salvato nel client" in `localStorage` |
 | Indirizzi delle API | `/api/v1/...` come in [guida-frontend.md](../api/guida-frontend.md) | `/api/decks/save`, `/api/trades/create`, `/api/challenges/create` |
 | Modalità di gioco | Una sola, la Base, con gli effetti | Scelta della modalità nella Nuova sfida |
-| Fazioni | Dreams, Nightmares, Memories. Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams | Altri cicli |
+| Fazioni | Dreams, Nightmares, Memories, in inglese anche nei testi. Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams | Altri cicli, Sogni / Incubi / Ricordi |
 | Vantaggio di fazione | **+1 ATT** a chi è in vantaggio | "+1 Attacco/Difesa", malus |
 | Rarità | Comune, Rara, Epica, Leggendaria. Le Leggendarie hanno una copia rara **full art** | "Mitica", "TIER" mostrato all'utente |
 | Lord | Il Sogno Lucido (Dreams), L'Uomo Senza Volto (Nightmares), La Custode del Tempo Fermo (Memories): sono anche le copertine | |
-| Pacchetto | Un solo pacchetto in vendita, il **Dream Pack**: 5 carte, **500 DC**, con tre copertine (una per Lord) e lo stesso contenuto | Pack Base 200, Pack Fazione 350, Pack Elite 500 |
+| Pacchetto | Oggi c'è il **Dream Pack**: 5 carte, **500 DC**, con tre copertine (una per Lord) e lo stesso contenuto. Si apre subito, all'acquisto. Il cliente vuole **più tipi di pacchetti a prezzi diversi**: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il negozio va pensato per più pacchetti | Pack Base 200, Pack Fazione 350, Pack Elite 500 (nomi e prezzi vecchi), inventario dei pacchetti chiusi |
 | Contenuto del Dream Pack | 3 Comuni, 1 Rara, 1 slot speciale: Rara 70%, Epica 25%, Leggendaria 4%, Leggendaria full art 1% | |
 | Moneta | **Dream Credits (DC)**, numeri interi | "CR", decimali, prezzi in euro |
 | Ricompense | Registrazione 500 · accesso giornaliero 50 · missione giornaliera 100 · vittoria 30 (max 3 al giorno) · obiettivo settimanale 250 | Bonus di 1.000, vittoria +150 |
 | Denaro reale | Non c'è in fase 1: il riquadro "Acquista crediti" si mostra solo come "in arrivo" | Pagamenti, prezzi in euro |
-| Dopo la registrazione | Si va alla pagina **Benvenuto**: set iniziale di 20 carte (14 Comuni, 6 Rare) e 2 pacchetti di benvenuto, uno con un'Epica garantita | Ritorno al form di accesso |
+| Dopo la registrazione | 500 DC subito. Poi la pagina **Benvenuto**: il Dreamweaver **sceglie una fazione** e riceve il set iniziale di 20 carte di quella fazione (14 Comuni, 6 Rare) e 2 pacchetti di benvenuto, uno con un'Epica garantita | Ritorno al form di accesso, set con tutte e tre le fazioni |
 | Scambi | **Solo tra amici**, quantità e rarità libere, solo se l'altro accetta. Niente crediti negli scambi | Scambi con chiunque |
 | Sfide | Aperte a tutti i Dreamweaver, con un mazzo valido | |
-| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie max 2, Epiche max 4, Rare max 8 | |
-| Partita | 20 punti vita (da verificare), max 60 round, poi pareggio. Si dice **round**, non turni | "Turni" |
+| Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie max 2, Epiche max 4, Rare max 8. Si salvano **solo i mazzi validi** | Bozze, badge Valido / Non valido |
+| Carte in uno scambio | **Non bloccate** mentre lo scambio è in attesa: il server ricontrolla tutto all'accettazione e, se mancano, annulla lo scambio con un messaggio | Carte bloccate o nascoste |
+| Missioni | Una missione giornaliera e un obiettivo settimanale fissi, nello **Sprint 6** (una issue per SWD e una per WMD) | Elenco di missioni configurabili |
+| Giorno delle ricompense | Inizia a **mezzanotte, ora italiana**. Le date arrivano in UTC e si mostrano nell'ora locale | |
+| Partita | 20 punti vita (confermati dal cliente, da verificare con le simulazioni), max 60 round, poi pareggio. Si dice **round**, non turni | "Turni" |
 
 > I numeri negli esempi JSON di [guida-frontend.md](../api/guida-frontend.md) sono ancora quelli vecchi ("Pacchetto base", 100 crediti, full art 5%). Valgono i numeri di questa tabella. La guida si aggiorna dopo il 2/11.
 
-Ancora da decidere, quindi da non dare per scontato: se un mazzo non valido si salva come bozza, se le carte offerte in uno scambio restano bloccate, come funzionano missione giornaliera e obiettivo settimanale. Fino alla decisione, chiedete prima di costruire queste parti.
+Ancora da decidere, quindi da non dare per scontato: tipi e prezzi dei nuovi pacchetti, e se skin e animazioni per il retro e per le carte (altra richiesta del cliente) sono in fase 1. Fino alla decisione, chiedete prima di costruire queste parti.
 
 ## 4. Il design system
 
@@ -143,16 +147,16 @@ async function caricaCollezione(f) { ... }
 
 ### Chiamate al backend
 
-- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#4-il-file-apijs). Le pagine importano `api()` e non toccano mai token né `fetch()`.
+- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#4-il-file-apijs). I componenti importano `api()` e non toccano mai token né `fetch()`.
 - Gli errori arrivano sempre con `{ status, code, message, fieldErrors }`: mostrate `fieldErrors` accanto ai campi e `message` negli altri casi.
 - Con `401` ci pensa `api.js` (rinnovo del token o pagina di accesso). Con `403` si mostra "non hai i permessi".
 
 ```js
-// ✅ La pagina usa api.js
+// ✅ Il componente usa api.js
 import { api } from "./api.js";
 const decks = await api("/decks");
 
-// ❌ fetch nella pagina, indirizzo scritto a mano, token in localStorage
+// ❌ fetch nel componente, indirizzo scritto a mano, token in localStorage
 const res = await fetch("http://localhost:8080/api/decks", {
   headers: { Authorization: localStorage.getItem("token") }
 });
@@ -169,7 +173,8 @@ const res = await fetch("http://localhost:8080/api/decks", {
 
 ### Le carte
 
-- Si montano con **un solo componente** (#81), usato in tutte le pagine: collezione, mazzi, aperture, scambi, risultato della partita.
+- Si montano con **un solo componente React**, `Card` (#81), usato in tutte le pagine: collezione, mazzi, aperture, scambi, risultato della partita.
+- **Cornici con la finestra trasparente e coordinate le preparate voi in JavaScript** (decisione 21), partendo dalle 12 cornici di [carte/cornici/](../../carte/cornici/). Software non le prepara.
 - **Miniatura** (`illustrationThumbUrl`) in griglie e liste, **copia grande** (`illustrationUrl`) solo per la carta da sola.
 - Ogni carta ha un testo alternativo con nome, fazione, rarità, ATT e DIF.
 - Il riferimento visivo sono le 15 carte di [carte/carte-finali/](../../carte/carte-finali/).
@@ -184,31 +189,34 @@ const res = await fetch("http://localhost:8080/api/decks", {
 
 ### Commenti
 
-```html
-<!-- Sezione: griglia della collezione (#83) -->
-```
-
-```js
+```jsx
 /**
- * Mostra le carte della collezione nella griglia.
+ * Griglia delle carte della collezione.
  * @param {Array} items - le carte arrivate da GET /me/cards
  */
-function renderCollection(items) { ... }
+export function CollectionGrid({ items }) {
+  return (
+    <section className="collection">
+      {/* Una carta per ogni elemento, in miniatura (#83) */}
+      {items.map((item) => <Card key={item.card.id} card={item.card} size="thumb" />)}
+    </section>
+  );
+}
 ```
 
 Niente codice commentato, niente `TODO` senza nome: `// TODO(daniele): aggiungere il filtro full art (#83)`.
 
 ### File da non caricare
 
-`node_modules/`, `.vscode/`, `.idea/`, `.DS_Store`, file con password o token. Le immagini delle carte non si copiano nel frontend: arrivano dal backend.
+`node_modules/`, `dist/`, `.vscode/`, `.idea/`, `.DS_Store`, file con password o token. Le immagini delle carte non si copiano nel frontend: arrivano dal backend.
 
 ## 6. Finché il backend non è pronto
 
-Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e accesso). Nel frattempo:
+Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e accesso). **Niente dati finti** (decisione 9 del 2/11): le pagine che usano le API si collegano al backend vero, quindi quelle dello Sprint 3 dipendono da #68 e #71. Nel frattempo:
 
-- Si lavora con **dati finti uguali agli esempi JSON** di [guida-frontend.md](../api/guida-frontend.md), tenuti in file separati e mai scritti dentro le pagine. Quando il backend è pronto si cambia solo `api.js`.
+- Si prepara quello che non ha bisogno di dati: progetto React (#72), layout comune (#113), design system in CSS, form di registrazione e accesso (#73) senza invio, wireframe (#112).
 - Se un dato che vi serve non c'è nella guida, non inventate il nome del campo: chiedete a Marco o Cristian, che lo aggiungono.
-- Struttura delle cartelle di `frontend/`, convenzione dei nomi CSS e avvio in locale li decide Gaia nella #72. Poi vanno scritti nelle sezioni "Frontend" di [naming.md](../naming.md) e [regole-codice.md](../regole-codice.md), oggi vuote.
+- Strumenti, struttura delle cartelle di `frontend/` e convenzione dei nomi CSS li decide Gaia nella #72 (decisione 8). Poi vanno scritti nelle sezioni "Frontend" di [naming.md](../naming.md) e [regole-codice.md](../regole-codice.md), dove oggi c'è solo la proposta.
 
 ## 7. Le vostre issue dei primi due sprint
 
@@ -216,7 +224,7 @@ Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e access
 |-------|-----|--------|------------------|
 | #72 Progetto frontend | Gaia | 3 | Questa guida, [`api.js`](../api/guida-frontend.md#4-il-file-apijs) |
 | #113 Layout comune | Gaia, Yuri | 3 | Design system (sezione 4), menu diverso per visitatore, Dreamweaver e admin |
-| #73 Registrazione e accesso | Alessandro | 3 | [Accesso con JWT](../api/guida-frontend.md#3-accesso-con-jwt): consensi, errori, pagina Benvenuto dopo la registrazione |
+| #73 Registrazione e accesso | Alessandro | 3 | [Accesso con JWT](../api/guida-frontend.md#3-accesso-con-jwt): consensi, errori, pagina Benvenuto con la scelta della fazione |
 | #112 Wireframe Amici, Benvenuto, Profilo, backoffice | Daniele | 3 | [Pagine e chiamate](../api/guida-frontend.md#6-pagine-e-chiamate) |
 | #81 Componente della carta | Yuri, Gaia | 4 | [Come si monta una carta](../api/guida-frontend.md#7-come-si-monta-una-carta) |
 | #82 Negozio e apertura | Daniele | 4 | Dream Pack (sezione 3), apertura con l'id nell'URL |

@@ -4,7 +4,7 @@ Regole valide per tutto il codice del progetto. Per i nomi vedi [naming.md](nami
 
 ## Organizzazione dei package del backend
 
-Il package base è `it.gruppo5.tcg`. Il nome è neutro (come `Card`, `Faction`, `Deck`) e non va cambiato se cambia il tema del gioco.
+Il package base del backend è `it.somnia.dreamscape.api`; quello del motore di gioco è `it.somnia.dreamscape.engine`.
 
 I package del backend sono divisi **per funzionalità** (`deck/`, `trade/`...), non per tipo (`controllers/`, `services/`...). Dentro ogni package ci sono controller, service, repository, entità e DTO di quella funzionalità.
 

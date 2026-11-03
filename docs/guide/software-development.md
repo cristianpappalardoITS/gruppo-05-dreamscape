@@ -52,7 +52,7 @@ Tre cose da fare prima del primo branch di codice (domande 1, 2 e 7 del [2/11](.
 | Backend | Java + Spring Boot 4, Spring Data JPA (Hibernate 7), Spring Security con JWT |
 | Database | PostgreSQL 18, UUID v7, migration Flyway, test con Testcontainers su PostgreSQL vero (non H2) |
 | Avvio | Un solo `docker compose up` per backend, database e frontend (#68, #100) |
-| Package base | `it.gruppo5.tcg`, diviso per funzionalità (`deck/`, `trade/`...) |
+| Package base | `it.somnia.dreamscape.api` (motore: `it.somnia.dreamscape.engine`), diviso per funzionalità (`deck/`, `trade/`...) |
 
 ### Accesso
 
@@ -114,7 +114,7 @@ Collections.shuffle(cards);
 ### Struttura (proposta, da fissare nella #68)
 
 ```
-sviluppo/backend/src/main/java/it/gruppo5/tcg/
+sviluppo/backend/src/main/java/it/somnia/dreamscape/api/
 ├── user/        # registrazione, accesso, profilo, crediti
 ├── card/        # catalogo, fazioni, rarità, effetti, regole
 ├── pack/        # Dream Pack, aperture, set iniziale e benvenuto

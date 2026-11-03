@@ -105,7 +105,7 @@ di COM-04 senza toccare il motore.
 ## Template: Classe del motore di gioco
 
 ```java
-package it.gruppo5.tcg.engine;
+package it.somnia.dreamscape.engine;
 
 import java.util.Objects;
 
@@ -145,10 +145,10 @@ public class DamageCalculator {
 ## Template: Service Spring
 
 ```java
-package it.gruppo5.tcg.deck;
+package it.somnia.dreamscape.api.deck;
 
-import it.gruppo5.tcg.deck.dto.DeckRequest;
-import it.gruppo5.tcg.deck.dto.DeckResponse;
+import it.somnia.dreamscape.api.deck.dto.DeckRequest;
+import it.somnia.dreamscape.api.deck.dto.DeckResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -181,7 +181,7 @@ public class DeckService {
 ## Template: Test JUnit
 
 ```java
-package it.gruppo5.tcg.engine;
+package it.somnia.dreamscape.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

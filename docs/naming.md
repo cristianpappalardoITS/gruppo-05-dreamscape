@@ -4,7 +4,7 @@
 
 | Elemento | Convenzione | ✅ Esempio | ❌ Da evitare |
 |----------|-------------|-----------|---------------|
-| Package | minuscolo, una parola | `it.gruppo5.tcg.deck` | `it.Gruppo5.TCG.Deck_Manager` |
+| Package | minuscolo, una parola | `it.somnia.dreamscape.api.deck` | `it.Somnia.Dreamscape.Deck_Manager` |
 | Classe | `PascalCase`, sostantivo | `DeckService`, `BattleEngine` | `deckservice`, `GestisciMazzi` |
 | Interfaccia | `PascalCase`, senza prefisso `I` | `CardRepository` | `ICardRepository` |
 | Metodo | `camelCase`, verbo | `calculateDamage()`, `openPack()` | `damage()`, `Calcola()` |

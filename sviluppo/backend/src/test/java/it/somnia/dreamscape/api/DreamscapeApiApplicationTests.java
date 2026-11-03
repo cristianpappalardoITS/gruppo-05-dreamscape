@@ -1,4 +1,4 @@
-package it.gruppo5.tcg;
+package it.somnia.dreamscape.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

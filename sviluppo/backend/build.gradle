@@ -4,7 +4,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
-group = 'it.gruppo5'
+group = 'it.somnia'
 version = '0.0.1-SNAPSHOT'
 description = 'dreamscape-api'
 

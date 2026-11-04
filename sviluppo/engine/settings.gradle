@@ -1,0 +1,5 @@
+// Motore di gioco: un microservizio con due parti (decisione 029).
+// engine-core: le regole in Java puro. engine-service arriva in un passo successivo.
+rootProject.name = 'dreamscape-engine'
+
+include 'engine-core'

@@ -83,6 +83,29 @@ class MatchSetupTest {
         assertTrue(challengerWins > 450 && challengerWins < 550, "CHALLENGER ha vinto " + challengerWins + " volte");
     }
 
+    // Le due copie della stessa carta partono vicine (expandCopies) ma vengono mescolate ognuna per conto suo
+    @Test
+    void prepare_twoCopiesOfSameCard_endUpInRandomPositions() {
+        // Given: la carta 0 ha due copie, una dopo l'altra, come le restituisce DeckSnapshot.expandCopies()
+        List<Integer> deckWithTwoCopies = List.of(0, 0, 1, 2, 3, 4, 5, 6, 7, 8);
+        int games = 1000;
+        int stillNextToEachOther = 0;
+
+        // When
+        for (long seed = 0; seed < games; seed++) {
+            List<Integer> shuffled = MatchSetup.prepare(deckWithTwoCopies, TEN_CARDS, seed).challengerDeck();
+            int first = shuffled.indexOf(0);
+            int last = shuffled.lastIndexOf(0);
+            if (last - first == 1) {
+                stillNextToEachOther++;
+            }
+        }
+
+        // Then: con 10 carte mescolate a caso, due copie restano vicine 2 volte su 10
+        assertTrue(stillNextToEachOther > 150 && stillNextToEachOther < 250,
+                "Copie vicine in " + stillNextToEachOther + " partite su " + games);
+    }
+
     @Test
     void prepare_emptyChallengerDeck_throwsIllegalArgumentException() {
         // When / Then

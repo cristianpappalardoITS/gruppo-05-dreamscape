@@ -24,8 +24,14 @@ public record SecurityProperties(
     private static final int MIN_SECRET_LENGTH = 32;
 
     public SecurityProperties {
-        if (jwtSecret == null || jwtSecret.length() < MIN_SECRET_LENGTH) {
-            throw new IllegalStateException("JWT_SECRET deve avere almeno " + MIN_SECRET_LENGTH + " caratteri.");
+        // Senza la variabile, Spring lascia il testo "${JWT_SECRET}" così com'è
+        if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.startsWith("${")) {
+            throw new IllegalStateException("Manca JWT_SECRET: impostala come variabile d'ambiente, "
+                    + "oppure avvia con il profilo dev (./gradlew bootRun).");
+        }
+        if (jwtSecret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException("JWT_SECRET è troppo corta: servono almeno " + MIN_SECRET_LENGTH
+                    + " caratteri (es. openssl rand -base64 48).");
         }
     }
 }

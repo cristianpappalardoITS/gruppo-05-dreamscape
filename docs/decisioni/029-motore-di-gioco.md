@@ -1,25 +1,33 @@
-# 029 · Motore di gioco: ingresso, seed, log a eventi
+# 029 · Motore di gioco: microservizio, seed, log a eventi
 
 - **Data:** 2026-11-04
 - **Stato:** approvata; le regole del round (punti a–f) sono una **proposta** da confermare con Nicolas e Maie e da verificare con le simulazioni
 - **Referenti:** Marco; Nicolas e Maie per le regole del round
-- **Task:** #44, #70, #79, #86, #87, #97
+- **Task:** #44, #70, #79, #86, #87, #97, #100
 
 ## Contesto
 Prima di scrivere il motore (#70, #79, #86) serviva fissare cosa riceve, cosa restituisce e com'è fatto il log che Web usa per il replay (#97). Il formato di `round_log` in [schema.md](../database/schema.md#formato-dei-campi-json-di-matches) aveva un solo oggetto per round: non diceva quando una carta entra in campo, in che ordine scattano gli effetti, né i danni ai giocatori causati dagli effetti. La [proposta di regolamento](../proposte/proposta-regolamento-dreamscape.pdf) lasciava aperti alcuni casi (sezione 11) che il catalogo della [028](028-catalogo-degli-effetti.md) rende più importanti.
 
 ## Opzioni valutate
-1. Dove sta il motore: sottoprogetto Gradle `sviluppo/engine`, oppure package `it.somnia.dreamscape.engine` dentro il backend.
-2. Formato del log: lista di eventi in ordine dentro ogni round, oppure un oggetto per round come in schema.md.
-3. Testi della cronaca ("Indebolimento 2: l'attacco scende da 4 a 2"): li compone il frontend dai dati, oppure li scrive il motore in italiano.
-4. Regole del round lasciate aperte dal regolamento: decise ora una per una, oppure scritte come proposta da confermare.
+1. Come il backend usa il motore: libreria dentro il backend, oppure **microservizio** a parte chiamato via HTTP.
+2. Com'è fatto il microservizio: nucleo in Java puro più un piccolo servizio che lo espone; un solo progetto Spring Boot; un servizio senza Spring con il server HTTP del JDK.
+3. Chi può chiamarlo: solo il backend, con una chiave condivisa e senza porta pubblica; oppure chiunque sia nella rete interna.
+4. Formato del log: lista di eventi in ordine dentro ogni round, oppure un oggetto per round come in schema.md.
+5. Testi della cronaca ("Indebolimento 2: l'attacco scende da 4 a 2"): li compone il frontend dai dati, oppure li scrive il motore in italiano.
+6. Regole del round lasciate aperte dal regolamento: decise ora una per una, oppure scritte come proposta da confermare.
 
 ## Decisione
 
-### Dove sta
-- **Sottoprogetto Gradle `sviluppo/engine`**, package `it.somnia.dreamscape.engine`, usato dal backend come dipendenza. Spring non è nel suo classpath, quindi la regola "Java puro" la controlla la build. Come collegare i due progetti (build composita o un `settings.gradle` in `sviluppo/`) si sceglie nella #70.
+### Dove sta: un microservizio
+- Il motore è un **microservizio separato dal backend**, in `sviluppo/engine`, con il suo progetto Gradle e due parti:
+  - **`engine-core`**, package `it.somnia.dreamscape.engine`: le regole del gioco in **Java puro**, senza Spring, database né HTTP. Ha tutti i test JUnit ed è usato anche dalle simulazioni (#87).
+  - **`engine-service`**, package `it.somnia.dreamscape.engine.server`: un piccolo Spring Boot che espone il nucleo con `POST /api/v1/simulations`. Non ha logica di gioco: riceve il JSON, chiama il nucleo, restituisce il risultato.
+- Il **backend chiama il motore via HTTP**, dietro un'interfaccia (`BattleSimulator`). Il frontend non parla mai con il motore: chiede la partita al backend e ne legge il risultato.
+- **Solo il backend può chiamare il motore:** il servizio sta nella rete interna di Docker, senza porta pubblica, e accetta solo le richieste con la chiave condivisa (intestazione `X-Engine-Key`, valore dalla variabile d'ambiente `ENGINE_API_KEY`, mai nel repository). Il backend legge l'indirizzo da `ENGINE_URL`.
+- **Se il motore non risponde** (spento o oltre il tempo massimo), il backend non salva niente, non dà crediti né punti e risponde `503` con `code: "ENGINE_UNAVAILABLE"`.
 
 ### Cosa riceve
+- Tutto in un'unica richiesta JSON: i due mazzi, le regole, il seed e se serve il log.
 - Le **copie dei due mazzi** già pronte, le stesse che il backend salva in `matches.*_deck_snapshot`: per ogni carta id, nome, ATT, DIF, fazione, rarità, quantità ed effetto (codice e valore X).
 - Le **regole** (`GameRules`): punti vita, limite di round e vantaggi di fazione, letti dal backend da `game_modes` e `faction_advantages`. Nessun numero di gioco nel codice del motore.
 - Il **seed** (`long`), scelto dal backend e salvato in `matches.random_seed`.
@@ -57,11 +65,12 @@ Prima di scrivere il motore (#70, #79, #86) serviva fissare cosa riceve, cosa re
 - Restano come nel regolamento: i due colpi sono contemporanei; con una sola creatura morta c'è il danno al giocatore, con due no; i punti vita non scendono sotto 0 e possono superare quelli iniziali; il mazzo esaurito si controlla a fine round, per chi ha la creatura morta e nessuna carta da giocare.
 
 ## Motivazione
-Un modulo a parte rende il motore riusabile dalle simulazioni e impedisce di legarlo a Spring per sbaglio. Con un solo `Random` usato in un ordine fisso, seed e log bastano per rigiocare e verificare una partita. Gli eventi in ordine permettono al replay di mostrare ogni passaggio, anche quelli che un oggetto per round nasconde (Castigo prima del colpo, Barriera, Culla). Senza testi il motore non dipende dalla lingua e il log pesa meno. Le regole a–f servono per scrivere il motore subito: i valori e i casi si correggono con le simulazioni.
+Il motore è separato dal backend: si avvia, si aggiorna e si prova da solo, e su AWS può diventare una Lambda senza cambiare il nucleo ([rilascio-aws.md](../proposte/rilascio-aws.md)). Tenere le regole in un nucleo Java puro le rende testabili senza server e riusabili dalle simulazioni; il servizio resta un involucro sottile. La chiave condivisa e la rete interna impediscono che qualcuno giochi partite saltando il backend. Con un solo `Random` usato in un ordine fisso, seed e log bastano per rigiocare e verificare una partita. Gli eventi in ordine permettono al replay di mostrare ogni passaggio, anche quelli che un oggetto per round nasconde (Castigo prima del colpo, Barriera, Culla). Senza testi il motore non dipende dalla lingua e il log pesa meno. Le regole a–f servono per scrivere il motore subito: i valori e i casi si correggono con le simulazioni.
 
 ## Conseguenze
+- Un container in più in `docker compose` (`engine`), che il backend aspetta all'avvio. Guida SWD, regole del codice, README e [rilascio-aws.md](../proposte/rilascio-aws.md) parlano del microservizio.
 - [schema.md](../database/schema.md#formato-dei-campi-json-di-matches) e la [guida per il frontend](../api/guida-frontend.md) hanno il nuovo formato di `round_log` e del risultato della partita. **Nessuna migration:** `round_log` resta JSONB, cambia solo il contenuto.
 - Da dire a Gaia e a Yuri (#97): il replay legge gli eventi e compone le frasi.
-- Da dire a Cristian: #44 (progettazione), #70 (modulo in `sviluppo/engine`) e #86 (che dice ancora "23 effetti": ora sono i 19 della 028).
+- Da dire a Cristian, referente dell'architettura: il motore è un microservizio; #44 (progettazione), #70 (progetto in `sviluppo/engine`) e #86 (che dice ancora "23 effetti": ora sono i 19 della 028).
 - Da confermare con Nicolas e Maie i punti a–f; da aggiornare la proposta di regolamento (sezione 4).
 - `engineVersion` nel log cambia a ogni modifica delle regole del motore: una partita si rigioca uguale solo con la stessa versione.

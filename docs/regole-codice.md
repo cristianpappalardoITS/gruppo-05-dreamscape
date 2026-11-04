@@ -69,7 +69,8 @@ Il file `.editorconfig` (vedi [template.md](template.md#editorconfig)) applica q
 
 ## Motore di gioco (`sviluppo/engine/`)
 
-- È **Java puro**: nessuna dipendenza da Spring, JPA, PostgreSQL o HTTP. Il backend lo usa, non il contrario.
+- È un **microservizio** con due parti ([decisione 029](decisioni/029-motore-di-gioco.md)): `engine-core` con le regole ed `engine-service` che le espone via HTTP al solo backend.
+- `engine-core` è **Java puro**: nessuna dipendenza da Spring, JPA, PostgreSQL o HTTP. `engine-service` non contiene logica di gioco.
 - Riceve dati in ingresso (mazzi, carte, configurazione) e restituisce un risultato (vincitore, round e log della partita). Non legge né scrive sul database.
 - **Deterministico e testabile:** il mescolamento usa un `Random` passato dall'esterno, così nei test si usa un seed fisso e il risultato è sempre lo stesso.
 - I valori di gioco (punti vita, carte per mazzo, copie massime, bonus di fazione) stanno in **una sola classe di configurazione**, non sparsi nel codice. Sono ancora in discussione e cambieranno.

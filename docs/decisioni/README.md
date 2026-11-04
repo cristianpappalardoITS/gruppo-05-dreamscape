@@ -34,7 +34,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [026](026-carte-disattivate-e-amicizie-tolte.md) | Carte disattivate fuori dai mazzi, scambi e sfide annullati se si toglie l'amicizia | 4/11 | Approvata |
 | [027](027-effetto-non-sequitur.md) | Effetto "Non Sequitur" senza valore | 4/11 | Approvata (catalogo: vedi 028) |
 | [028](028-catalogo-degli-effetti.md) | Catalogo degli effetti: 19 effetti, versione provvisoria | 4/11 | Approvata come provvisoria: da bilanciare, effetti da aggiungere o togliere in corso d'opera |
-| [029](029-motore-di-gioco.md) | Motore di gioco: modulo `sviluppo/engine`, seed, log a eventi | 4/11 | Approvata; regole del round da confermare |
+| [029](029-motore-di-gioco.md) | Motore di gioco: microservizio in `sviluppo/engine`, seed, log a eventi | 4/11 | Approvata; regole del round da confermare |
 
 ## Ancora da decidere
 

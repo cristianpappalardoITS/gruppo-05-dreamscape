@@ -81,6 +81,7 @@ Ogni errore ha lo stesso formato, così si mostra il messaggio senza logica spec
 | `403` | Accesso non permesso (es. un giocatore nel backoffice) | Mostra "non hai i permessi" |
 | `404` | Non esiste (carta, mazzo, scambio...) | Pagina o messaggio "non trovato" |
 | `409` | Conflitto (username già usato, crediti insufficienti, carte non più possedute) | Mostra `message` |
+| `503` | Servizio momentaneamente non disponibile (es. il motore di gioco non risponde) | Mostra `message` e invita a riprovare |
 
 ---
 
@@ -590,6 +591,7 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 | Rifiuta / Annulla | `POST /challenges/{challengeId}/reject`, `POST /challenges/{challengeId}/cancel` |
 
 - Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
+- Se il motore di gioco non risponde, `POST /matches/...` e `POST /challenges/{challengeId}/accept` rispondono `503` con `code: "ENGINE_UNAVAILABLE"`: la partita non si gioca, niente crediti né punti, la sfida resta in attesa. Si mostra "Partita non disponibile, riprova tra poco".
 - Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
 - Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
 

@@ -57,7 +57,7 @@
 | | `leagues` | Le leghe del rank, con il punteggio minimo e il premio |
 | | `user_league_rewards` | Le leghe raggiunte da ogni giocatore, per dare il premio una volta sola |
 | Modalità ed effetti | `game_modes` | Le modalità di gioco con i loro valori (punti vita, limite di round) |
-| | `effects` | Il catalogo degli effetti (lista di Nicolas), validi in ogni partita |
+| | `effects` | Il catalogo degli effetti (provvisorio, [decisione 028](../decisioni/028-catalogo-degli-effetti.md)), validi in ogni partita |
 | | `card_effects` | Quali effetti ha ogni carta, con il loro valore |
 | Contatti | `contact_messages` | I messaggi inviati dal form della pagina Contatti |
 
@@ -491,9 +491,9 @@ erDiagram
 | **Log round per round come JSONB** (`round_log`) | Si legge sempre tutto insieme, non serve interrogare i singoli round. Una tabella dei round si può aggiungere in futuro se servisse. |
 | **`random_seed` in `matches`** | Con lo stesso seed il motore rigioca la stessa identica partita: utile per verifiche e test. Decide anche il lancio della moneta per l'ordine degli effetti, che si legge nel log. |
 | **Stati e tipi come `VARCHAR` + `CHECK`** invece di `ENUM` | Si mappano facilmente su enum Java. Aggiungere un valore richiede solo una migration che aggiorna il `CHECK`. |
-| **Effetti separati dalle carte** (catalogo + tabella di collegamento) | Lo stesso effetto si riusa su più carte con valori diversi, come prevede la lista di keyword di Nicolas (es. Protezione X, Castigo X). |
+| **Effetti separati dalle carte** (catalogo + tabella di collegamento) | Lo stesso effetto si riusa su più carte con valori diversi, come prevede il catalogo degli effetti (es. Castigo X, Miasma X). Il catalogo è provvisorio ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)): effetti nuovi o tolti sono righe, non colonne. |
 | **`effects.has_value`** | Il backoffice chiede il valore X solo per gli effetti che lo hanno; il service controlla che `card_effects.effect_value` ci sia solo per quelli. |
-| **Momenti degli effetti** (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) | Sono i momenti della lista di Nicolas: quando la carta viene giocata, finché resta in campo, alla fine di ogni round, quando viene uccisa, quando uccide. |
+| **Momenti degli effetti** (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) | Sono i momenti del catalogo degli effetti: quando la carta viene giocata, finché resta in campo, alla fine di ogni round, quando viene uccisa, quando uccide. |
 | **Il comportamento dell'effetto sta nel codice Java**, il database salva solo `code`, momento e valore | Gli effetti sono molto diversi tra loro: descriverli tutti con colonne sarebbe rigido. Il motore associa ogni `code` alla sua classe Java. |
 | **`id UUID` v7 su ogni tabella**, anche quelle di relazione (`DEFAULT uuidv7()`) | Una regola sola per tutti. Gli id finiscono negli URL e nelle API (`/sfide/{id}`): un UUID non si indovina, un numero sì. La versione 7 è ordinata nel tempo, quindi gli indici restano efficienti. In Java il campo è `java.util.UUID`; con JPA evita le chiavi composte. L'unicità reale è garantita dai vincoli `UNIQUE`. |
 | **UUID generati da Hibernate** (Spring Boot 4, `@UuidGenerator(style = UuidGenerator.Style.VERSION_7)`) | L'id esiste già prima del salvataggio: niente riletture dopo l'insert, entità più semplici da testare. Il `DEFAULT uuidv7()` resta nel database per le migration con i dati e per chi scrive SQL a mano. |
@@ -996,6 +996,7 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 | Carte disattivate | Nessuna regola | Non si usano nei mazzi: mazzo non valido e avviso al giocatore ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
 | Amicizia tolta o account cancellato | Scambi e sfide in attesa restavano aperti | Si annullano da soli ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
 | Effetto "Non Sequitur" | "Non Sequitur X" | Senza valore (`has_value = FALSE`) ([decisione 027](../decisioni/027-effetto-non-sequitur.md)) |
+| Catalogo degli effetti | I 23 della lista di Nicolas | 19 effetti, versione provvisoria da bilanciare: 9 tolti, alcuni cambiati, 5 nuovi; lo schema non cambia ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)) |
 
 ### 4 novembre 2026: copie bloccate negli scambi
 

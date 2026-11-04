@@ -255,12 +255,13 @@ ALTER TABLE users ADD CONSTRAINT fk_users_starter_faction FOREIGN KEY (starter_f
 ALTER TABLE factions
     ADD CONSTRAINT fk_factions_lord_card FOREIGN KEY (lord_card_id) REFERENCES cards (id);
 
--- Catalogo degli effetti (lista proposta da Nicolas). Gli effetti fanno parte della
--- modalità Base: valgono in ogni partita.
+-- Catalogo degli effetti (decisione 028: catalogo provvisorio, da bilanciare; gli effetti
+-- si aggiungono o tolgono con migration di dati). Fanno parte della modalità Base:
+-- valgono in ogni partita.
 -- code collega la riga all'implementazione Java nel motore di gioco.
 -- trigger_event dice quando agisce l'effetto:
 --   ON_PLAY      quando la carta viene giocata (fase iniziale)
---   WHILE_IN_PLAY finché la carta resta in campo (es. Protezione, Indebolimento)
+--   WHILE_IN_PLAY finché la carta resta in campo (es. Barriera, Culla)
 --   END_OF_ROUND alla fine di ogni round, se la carta è ancora in campo
 --   ON_DEATH     quando la carta viene uccisa
 --   ON_KILL      quando la carta uccide una creatura avversaria
@@ -283,7 +284,7 @@ CREATE TABLE effects (
 );
 
 -- Gli effetti di ogni carta. Lo stesso effetto può avere valori diversi
--- su carte diverse (es. "Protezione {value}": 1 su una carta, 2 su un'altra).
+-- su carte diverse (es. "Castigo {value}": 1 su una carta, 2 su un'altra).
 -- effect_value è NULL per gli effetti che non hanno un numero (es. Neutralità).
 -- Il regolamento attuale prevede un solo effetto per carta: lo controlla il service,
 -- così lo schema resta pronto se in futuro se ne vorranno di più.

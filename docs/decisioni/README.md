@@ -13,7 +13,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [005](005-frontend-componenti-react.md) | Frontend: pagine HTML e componenti React | 2/11, 3/11 | Approvata |
 | [006](006-avvio-locale-e-dati.md) | Sito e API sullo stesso indirizzo, niente dati finti | 2/11 | Approvata |
 | [007](007-montaggio-della-carta.md) | Carta montata dal frontend, cornici in JavaScript, immagini WebP dal backend | 26/10–3/11 | Approvata |
-| [008](008-regole-della-partita.md) | Regole della partita: una modalità Base con effetti, 20 punti vita, vantaggio di fazione | 26/10–2/11 | Approvata |
+| [008](008-regole-della-partita.md) | Regole della partita: una modalità Base con effetti, 20 punti vita, vantaggio di fazione | 26/10–2/11 | Approvata (effetti: vedi 028) |
 | [009](009-amici-e-scambi.md) | Amici e scambi | 26/10–3/11 | Approvata (sfide: vedi 010; carte bloccate: vedi 024; amicizia tolta: vedi 026) |
 | [010](010-tipi-di-partita-e-rank.md) | Partite classificate e rapide, matchmaking e rank | 3/11 | Approvata |
 | [011](011-premi-di-lega.md) | Leghe e premi di lega | 3/11 | Approvata, importi da proporre |
@@ -32,7 +32,8 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [024](024-copie-bloccate-negli-scambi.md) | Copie offerte bloccate negli altri scambi, avviso sui mazzi | 4/11 | Approvata, sostituisce una parte di 009 |
 | [025](025-versioni-delle-carte.md) | Versioni delle carte: la full art è una carta con il suo id | 4/11 | Approvata, sostituisce una parte di 017 |
 | [026](026-carte-disattivate-e-amicizie-tolte.md) | Carte disattivate fuori dai mazzi, scambi e sfide annullati se si toglie l'amicizia | 4/11 | Approvata |
-| [027](027-effetto-non-sequitur.md) | Effetto "Non Sequitur" senza valore | 4/11 | Approvata |
+| [027](027-effetto-non-sequitur.md) | Effetto "Non Sequitur" senza valore | 4/11 | Approvata (catalogo: vedi 028) |
+| [028](028-catalogo-degli-effetti.md) | Catalogo degli effetti: 19 effetti, versione provvisoria | 4/11 | Approvata come provvisoria: da bilanciare, effetti da aggiungere o togliere in corso d'opera |
 
 ## Ancora da decidere
 
@@ -44,5 +45,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | DC a chi viene scelto dal matchmaking e vince | Maie, SWD | [010](010-tipi-di-partita-e-rank.md) |
 | Partite che contano per le missioni | Maie, Nicolas | [015](015-missioni.md) |
 | Punti vita dopo le simulazioni | Marco, Maie | [008](008-regole-della-partita.md) |
+| Bilanciamento degli effetti: valori di X, effetti da aggiungere o togliere | Nicolas, Maie | [028](028-catalogo-degli-effetti.md) |
+| Effetti unici per i tre Lord | Tutto il gruppo | [028](028-catalogo-degli-effetti.md) (cambierebbe [001](001-tema-e-nomi.md)) |
 
 Le proposte di partenza sono nei [punti aperti dello schema](../database/schema.md#punti-aperti).

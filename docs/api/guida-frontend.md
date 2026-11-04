@@ -249,7 +249,7 @@ Questi oggetti tornano in più pagine: conviene scrivere una sola funzione JavaS
 }
 ```
 
-- `effect` è `null` se la carta non ha effetti; `value` è il numero X dell'effetto (es. `Protezione 1`), `null` se l'effetto non ha numero.
+- `effect` è `null` se la carta non ha effetti; `value` è il numero X dell'effetto (es. `Castigo 2`), `null` se l'effetto non ha numero.
 - `illustrationUrl` è la copia **grande** (larghezza 1024 px), `illustrationThumbUrl` la **miniatura** (larghezza 400 px): quale usare è spiegato nel [capitolo 7](#7-come-si-monta-una-carta).
 - `illustrationFocusY` dice quale fascia dell'immagine resta visibile nel ritaglio: 0 = in alto, 1 = in basso (quasi sempre 0,40).
 - **Full art:** è una carta a parte, con il suo `id` e il suo codice (`BASE-004-FA`): `variantType` è `"FULL_ART"` e `baseCardId` è l'id della carta normale. Nome, testi, ATT, DIF, fazione, rarità ed effetto sono quelli della carta normale (il backend li manda già compilati); cambiano solo `id`, `code` e l'illustrazione, verticale 2:3. Oggi solo le Leggendarie hanno la full art. Domani le skin arriveranno nello stesso modo, con un altro `variantType`.

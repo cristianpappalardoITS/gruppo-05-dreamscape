@@ -9,7 +9,7 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 1. **Si usano le parole del glossario** (sezione 2): Dreamweaver, Dream Pack, Dream Credits, Leggendaria, round. Sempre le stesse, in tutti i testi.
 2. **I numeri del gioco sono quelli della sezione 3.** Se volete cambiarne uno, si decide prima con Marco, Cristian e Nicolas, poi si cambia ovunque.
 3. **Il catalogo si consegna nel file `carte.csv`**, una riga per carta, con le colonne del compositore (sezione 4). Si consegna sul Drive del gruppo.
-4. **Gli effetti si prendono solo dalla [lista di Nicolas](../../carte/effetti/Effetti%20Keyword%20Descrizioni.txt)**: niente effetti nuovi senza parlarne con lui.
+4. **Gli effetti si prendono solo dal [catalogo degli effetti](../decisioni/028-catalogo-degli-effetti.md)** (19, versione provvisoria da bilanciare): niente effetti nuovi senza parlarne con Nicolas.
 5. **Le illustrazioni si chiamano come il codice della carta** (`base-013.png`), in PNG con i metadati originali.
 6. **I colori sono quelli del design system di Gaia**: nessun colore nuovo senza dirlo a Web.
 7. **Niente denaro reale in fase 1**: nei testi non si promettono acquisti, prezzi in euro o offerte.
@@ -106,7 +106,7 @@ Alla registrazione il Dreamweaver riceve **500 DC**. Poi, nella pagina Benvenuto
 | Limiti per rarità | Leggendarie 2 · Epiche 4 · Rare 8 · Comuni libere |
 | Punti vita | 20 (confermati dal cliente, da verificare con le simulazioni) |
 | Fine della partita | Punti vita a 0, mazzo esaurito o 60 round (pareggio) |
-| Effetti | 23, dalla lista di Nicolas |
+| Effetti | 19, [catalogo provvisorio](../decisioni/028-catalogo-degli-effetti.md): da bilanciare, si possono aggiungere o togliere |
 
 ## 4. Il catalogo delle carte (#74)
 
@@ -120,7 +120,7 @@ Il catalogo si scrive in [`carte/compositore/carte.csv`](../../carte/compositore
 | `rarita` | Esattamente `Comune`, `Rara`, `Epica` o `Leggendaria` | `Rara` |
 | `attacco`, `difesa` | Numeri interi | `4`, `5` |
 | `descrizione` | Una frase breve di lore, in corsivo sulla carta | `Una luce lontana che indica sempre la strada di casa.` |
-| `effetto` | Keyword della lista di Nicolas, con il valore X se serve, poi due punti e la spiegazione. Vuoto se la carta non ha effetti | `Indebolimento 2: la creatura avversaria ha 2 attacco in meno.` |
+| `effetto` | Keyword del catalogo degli effetti, con il valore X se serve, poi due punti e la spiegazione. Vuoto se la carta non ha effetti | `Indebolimento 2: la creatura avversaria ha 2 attacco in meno.` |
 | `illustrazione` | Il codice in minuscolo, `.png` | `base-013.png` |
 | `zoom` | Vuoto | |
 | `centro_y` | Vuoto, oppure da 0 (alto) a 1 (basso) per spostare il ritaglio | `0,27` |
@@ -133,7 +133,7 @@ Regole del catalogo:
 - Le tre fazioni con un numero simile di carte per rarità.
 - Una sola Leggendaria per fazione è il Lord: le altre Leggendarie no.
 - Ogni Leggendaria ha anche la sua full art.
-- Gli effetti stampati oggi sulle carte di prova (es. "Guscio", "Slancio onirico") vengono dal primo catalogo: vanno sostituiti con quelli della lista di Nicolas, come indica il regolamento.
+- Gli effetti stampati oggi sulle carte di prova (es. "Guscio", "Slancio onirico") vengono dal primo catalogo: vanno sostituiti con quelli del [catalogo degli effetti](../decisioni/028-catalogo-degli-effetti.md), che è provvisorio e può ancora cambiare.
 - Se un testo è troppo lungo, lo script lo rimpicciolisce: accorciatelo finché si legge bene anche sul telefono.
 - Il bilanciamento di ATT e DIF lo fate con Nicolas (#66, poi #103): i numeri si confermano con le simulazioni del motore.
 

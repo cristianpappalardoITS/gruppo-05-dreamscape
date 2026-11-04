@@ -22,3 +22,4 @@ Nella lista degli effetti di Nicolas (`carte/effetti/`) c'è "Non Sequitur X": *
 - Nel catalogo degli effetti (migration di dati) "Non Sequitur" non ha valore.
 - Il motore (#86) lo implementa come effetto attivo finché la carta è in campo.
 - Da dire a Nicolas, che ha scritto la lista.
+- *Il 4/11 il catalogo completo è stato rivisto nella [028](028-catalogo-degli-effetti.md): Non Sequitur resta senza valore, non funziona contro Immunità e due Non Sequitur si annullano a vicenda.*

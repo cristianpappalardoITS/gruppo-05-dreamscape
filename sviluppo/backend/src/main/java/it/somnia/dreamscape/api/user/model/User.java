@@ -91,4 +91,15 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public User(String username, String email, String passwordHash, UserRole role) {
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.role = role;
+    }
+
+    public boolean isAdmin() {
+        return role == UserRole.ADMIN;
+    }
 }

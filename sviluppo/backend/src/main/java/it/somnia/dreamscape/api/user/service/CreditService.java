@@ -18,7 +18,11 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Unico punto in cui cambia il saldo: aggiorna {@code users.credits} e scrive il movimento.
- * Chi lo chiama ha già bloccato la riga dell'utente ({@code UserRepository.findByIdForUpdate}).
+ *
+ * <p>Chi lo chiama ha già bloccato la riga dell'utente con
+ * {@link UserService#getActiveUserForUpdate(UUID)}, così due operazioni insieme non sbagliano il saldo.
+ * Unica eccezione: la registrazione, dove l'utente è appena stato creato nella stessa transazione
+ * e nessun'altra richiesta può ancora vederlo.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,10 +33,14 @@ public class CreditService {
     /**
      * Aggiunge (amount positivo) o toglie (negativo) Dream Credits.
      *
-     * @param lockedUser    utente con la riga già bloccata nella transazione in corso
+     * @param lockedUser    utente con la riga già bloccata nella transazione in corso, o appena creato in essa
+     * @param type          il motivo del movimento (es. {@code SIGNUP_BONUS}, {@code DAILY_REWARD})
+     * @param amount        i crediti da aggiungere (positivo) o togliere (negativo), mai 0
      * @param packOpeningId apertura del pacchetto comprato, o null
      * @param matchId       partita che dà il premio, o null
+     * @return il movimento salvato, con il saldo dopo l'operazione
      * @throws NotEnoughCreditsException se il saldo andrebbe sotto 0
+     * @throws IllegalArgumentException  se {@code amount} è 0
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public CreditTransaction apply(User lockedUser, CreditTransactionType type, int amount, UUID packOpeningId,
@@ -51,11 +59,29 @@ public class CreditService {
         return creditTransactionRepository.save(transaction);
     }
 
+    /**
+     * Come {@link #apply(User, CreditTransactionType, int, UUID, UUID)}, per i movimenti senza
+     * pacchetto né partita (es. bonus di registrazione e ricompensa giornaliera).
+     *
+     * @param lockedUser utente con la riga già bloccata nella transazione in corso, o appena creato in essa
+     * @param type       il motivo del movimento
+     * @param amount     i crediti da aggiungere (positivo) o togliere (negativo), mai 0
+     * @return il movimento salvato, con il saldo dopo l'operazione
+     * @throws NotEnoughCreditsException se il saldo andrebbe sotto 0
+     */
     @Transactional(propagation = Propagation.MANDATORY)
     public CreditTransaction apply(User lockedUser, CreditTransactionType type, int amount) {
         return apply(lockedUser, type, amount, null, null);
     }
 
+    /**
+     * Restituisce i movimenti di crediti dell'utente, dal più recente ({@code GET /me/credit-transactions}).
+     *
+     * @param userId l'utente collegato
+     * @param page   la pagina, da 0
+     * @param size   quanti movimenti per pagina
+     * @return la pagina dei movimenti
+     */
     @Transactional(readOnly = true)
     public PageResponse<CreditTransactionResponse> listTransactions(UUID userId, int page, int size) {
         return PageResponse.from(

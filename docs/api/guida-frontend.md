@@ -311,6 +311,24 @@ Risposta di `GET /rules`:
 
 `maxPerDeck: null` vuol dire "nessun limite".
 
+Risposta di `GET /factions`:
+
+```json
+[
+  {
+    "code": "DREAMS",
+    "name": "Dreams",
+    "description": "Speranza, desiderio, creatività e protezione. Stile conservativo e curativo.",
+    "lordTitle": "Dreams Lord",
+    "lordCardId": "019a1f30-0000-7000-8000-000000000004",
+    "strongAgainst": ["MEMORIES"],
+    "weakAgainst": ["NIGHTMARES"]
+  }
+]
+```
+
+`lordCardId` è `null` finché il catalogo vero non è nel database: la carta del Lord si legge con `GET /cards/{cardId}`.
+
 ### Accesso 🔓
 
 | Pagina | Chiamate |

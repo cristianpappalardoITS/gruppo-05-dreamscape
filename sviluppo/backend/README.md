@@ -1,0 +1,48 @@
+# Backend di Dreamscape
+
+Applicazione Spring Boot: portale e API REST del gioco, con il database PostgreSQL creato da Flyway.
+
+## Requisiti
+- Java 25
+- Docker (PostgreSQL in sviluppo e test con Testcontainers)
+- Gradle: non serve installarlo, c'è il wrapper `./gradlew`
+
+## Avvio
+```bash
+cp .env.example .env
+./gradlew bootRun
+```
+
+`bootRun` parte con il profilo `dev`: Docker Compose avvia PostgreSQL 18 e Flyway crea tabelle, dati del regolamento e dati finti.
+
+## Test
+```bash
+./gradlew test
+```
+
+## Configurazione
+| Variabile | Descrizione | Esempio |
+|-----------|-------------|---------|
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Database avviato da Docker Compose in sviluppo, nel file `.env` (fuori dal repository) | `dreamscape` |
+| `DB_URL` | URL del database alla consegna | `jdbc:postgresql://localhost:5432/dreamscape` |
+| `DB_USERNAME`, `DB_PASSWORD` | Credenziali del database alla consegna | `dreamscape` |
+
+## Struttura
+- `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).
+- `src/main/resources/db/migration/`: tabelle (`V1`–`V10`) e dati del regolamento (`V100`). Una migration già eseguita non si modifica.
+- `src/main/resources/db/testdata/`: dati finti (`V900`–`V902`), caricati solo nel profilo `dev` e nei test.
+
+Lo schema è spiegato in [docs/database/schema.md](../../docs/database/schema.md).
+
+## Dati finti (profilo `dev` e test)
+- **Carte:** 39 carte del Set di prova (`TEST-001`–`TEST-039`): per ogni fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art (`TEST-013-FA`, `TEST-026-FA`, `TEST-039-FA`). Ognuno dei 19 effetti è su almeno una carta.
+- **Pacchetti:** Pacchetto di prova (500 DC), tre set iniziali di prova (uno per fazione), due pacchetti di benvenuto di prova.
+- **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
+
+| Username | Email | Password |
+|----------|-------|----------|
+| `anna_test` | `anna_test@example.test` | `prova-dreamscape` |
+| `bruno_test` | `bruno_test@example.test` | `prova-dreamscape` |
+| `carla_test` | `carla_test@example.test` | `prova-dreamscape` |
+
+Sono password di prova, valide solo sul database locale.

@@ -6,19 +6,27 @@ Regole valide per tutto il codice del progetto. Per i nomi vedi [naming.md](nami
 
 Il package base del backend è `it.somnia.dreamscape.api`; quello del motore di gioco è `it.somnia.dreamscape.engine`.
 
-I package del backend sono divisi **per funzionalità** (`deck/`, `trade/`...), non per tipo (`controllers/`, `services/`...). Dentro ogni package ci sono controller, service, repository, entità e DTO di quella funzionalità.
+I package del backend sono divisi **per funzionalità** (`deck/`, `trade/`...), non per tipo. Dentro ogni funzionalità ci sono le stesse sottocartelle: `controller/`, `service/`, `repository/`, `model/` (entità JPA) e `dto/` con `request/` e `response/`. Le cartelle vuote hanno un file `.gitkeep`, da togliere quando arriva la prima classe.
 
 ```
 deck/
-├── DeckController.java
-├── DeckService.java
-├── DeckRepository.java
-├── Deck.java                # entità JPA
-├── DeckCard.java            # entità JPA (tabella di relazione)
+├── controller/
+│   └── DeckController.java
+├── service/
+│   └── DeckService.java
+├── repository/
+│   └── DeckRepository.java
+├── model/
+│   ├── Deck.java            # entità JPA
+│   └── DeckCard.java        # entità JPA (tabella di relazione)
 └── dto/
-    ├── DeckRequest.java
-    └── DeckResponse.java
+    ├── request/
+    │   └── DeckRequest.java
+    └── response/
+        └── DeckResponse.java
 ```
+
+`admin/` non ha `model/` né `repository/`: usa quelli delle altre funzionalità. `common/` ha `config/`, `security/`, `exception/` e `storage/`.
 
 ## Lingua
 

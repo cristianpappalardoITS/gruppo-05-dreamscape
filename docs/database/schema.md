@@ -667,7 +667,7 @@ Al primo accesso del giorno (ora italiana): `UPDATE users SET credits = credits 
 
 ## Formato dei campi JSON di `matches`
 
-Proposta da concordare con chi sviluppa il motore di gioco. I nomi seguono il regolamento: un **round** è un singolo scambio di colpi, uno **scontro** è la serie di round tra le stesse due creature.
+I nomi seguono il regolamento: un **round** è un singolo scambio di colpi, uno **scontro** è la serie di round tra le stesse due creature.
 
 **`challenger_deck_snapshot` / `opponent_deck_snapshot`**
 
@@ -690,30 +690,61 @@ Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta no
 
 **`round_log`**
 
+Il log lo restituisce il motore e il backend lo salva così com'è ([decisione 029](../decisioni/029-motore-di-gioco.md)). Ogni round ha la lista degli **eventi in ordine** e lo stato dei due lati a fine round. Il log contiene solo dati: le frasi della cronaca le compone il frontend, con i nomi presi dalle copie dei mazzi.
+
 ```json
 {
+  "engineVersion": "1.0.0",
   "coinTossWinner": "OPPONENT",
   "rounds": [
     {
       "round": 3,
       "clash": 2,
-      "challengerCard": { "cardId": "019a1f30-0000-7000-8000-000000000003", "attack": 4, "attackModifier": -2, "factionBonus": 0, "defenseBefore": 7, "defenseAfter": -2 },
-      "opponentCard":   { "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "attackModifier": 0, "factionBonus": 1, "defenseBefore": 5, "defenseAfter": 3 },
-      "outcome": "CHALLENGER_CARD_DIED",
-      "triggeredEffects": [
-        { "cardId": "019a1f30-0000-7000-8000-000000000008", "code": "WEAKENING", "text": "Indebolimento 2: l'attacco del Faro nella Nebbia scende da 4 a 2" }
+      "events": [
+        { "phase": "START", "type": "CARD_PLAYED", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003", "attack": 4, "defense": 7 },
+        { "phase": "START", "type": "CARD_PLAYED", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "defense": 5 },
+        { "phase": "COMBAT", "type": "EFFECT", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008", "code": "WEAKENING", "value": 2,
+          "targetSide": "CHALLENGER", "target": "CARD", "stat": "ATTACK", "before": 4, "after": 2, "untilEndOfRound": true },
+        { "phase": "COMBAT", "type": "ATTACK", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008",
+          "attack": 8, "factionBonus": 1, "attackModifier": 0, "damage": 9, "defenseBefore": 7, "defenseAfter": -2 },
+        { "phase": "COMBAT", "type": "ATTACK", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003",
+          "attack": 4, "factionBonus": 0, "attackModifier": -2, "damage": 2, "defenseBefore": 5, "defenseAfter": 3 },
+        { "phase": "END", "type": "CARD_DIED", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003" },
+        { "phase": "END", "type": "PLAYER_DAMAGE", "side": "CHALLENGER", "amount": 2, "lifePointsBefore": 20, "lifePointsAfter": 18 }
       ],
-      "damageToPlayer": { "challenger": 2, "opponent": 0 },
-      "lifePointsAfter": { "challenger": 18, "opponent": 20 }
+      "outcome": "CHALLENGER_CARD_DIED",
+      "afterRound": {
+        "challenger": { "cardId": null, "attack": null, "defense": null, "lifePoints": 18, "cardsInDeck": 18, "cardsInDiscard": 2 },
+        "opponent":   { "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "defense": 3, "lifePoints": 20, "cardsInDeck": 18, "cardsInDiscard": 1 }
+      }
     }
   ]
 }
 ```
 
+Campi del log e dei round:
+- `engineVersion`: versione del motore che ha giocato la partita. Con lo stesso seed la partita si rigioca uguale solo con la stessa versione.
 - `coinTossWinner`: `CHALLENGER` o `OPPONENT`. La moneta si tira prima della partita e decide l'ordine quando due effetti scattano nello stesso momento.
-- `outcome`: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
-- `attackModifier`: quanto gli effetti cambiano l'attacco in quel round.
-- L'esempio è il round 3 della partita di esempio del regolamento: l'Uomo Senza Volto (8 + 1 di bonus) uccide il Faro nella Nebbia, che aveva difesa 7, e il giocatore subisce 9 − 7 = 2 danni.
+- `clash`: numero dello scontro, cioè della coppia di creature in campo.
+- `outcome`: chi è morto nel round, contando anche le morti causate dagli effetti: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
+- `afterRound`: lo stato dei due lati a fine round. `cardId`, `attack` e `defense` sono `null` se il lato non ha una creatura in campo; `attack` comprende le modifiche permanenti (es. Intensificazione), non il bonus di fazione. Serve per saltare a un round senza rileggere gli eventi.
+
+Campi comuni degli eventi: `phase` (`START` = fase iniziale, `COMBAT` = combattimento, `END` = fase finale), `type` e `side`, cioè il lato a cui appartiene la carta o il giocatore dell'evento.
+
+| `type` | Quando | Altri campi |
+|--------|--------|-------------|
+| `CARD_PLAYED` | Fase iniziale: un lato senza creature in campo gioca la prima carta del mazzo | `cardId`, `attack`, `defense` |
+| `EFFECT` | Un effetto cambia un valore. Un evento per ogni valore cambiato | `cardId` e `code` della carta che ha l'effetto, `value` (X, `null` se l'effetto non ha valore), `targetSide`, `target` (`CARD` o `PLAYER`), `stat` (`ATTACK`, `DEFENSE`, `LIFE_POINTS`), `before`, `after`, `untilEndOfRound` (`true` se vale solo per questo round, es. Speranza, Vendetta, Indebolimento) |
+| `EFFECT_BLOCKED` | Un effetto ne ferma un altro o ferma una regola | `cardId` e `code` della carta che blocca (es. `IMMUNITY`, `NON_SEQUITUR`, `NEUTRALITY`, `BARRIER`, `CRADLE`), `blocked`: il codice dell'effetto fermato, oppure `FACTION_BONUS`, `COMBAT_HIT` o `PLAYER_DAMAGE` |
+| `ATTACK` | Combattimento: un colpo. Ci sono sempre due `ATTACK`, contemporanei; nella lista viene prima il lato che ha vinto la moneta | `cardId` di chi colpisce, `attack` (con le modifiche permanenti), `factionBonus`, `attackModifier` (modifiche di questo round), `damage` (danno inflitto davvero: 0 se annullato da Barriera), `defenseBefore` e `defenseAfter` della creatura colpita |
+| `CARD_DIED` | Fase finale: la creatura va nella pila degli scarti | `cardId` |
+| `PLAYER_DAMAGE` | Fase finale: danno del combattimento al giocatore di `side` (i danni degli effetti sono `EFFECT` con `target: "PLAYER"`) | `amount`, `lifePointsBefore`, `lifePointsAfter` |
+| `BONUS_EXPIRED` | Fine del round: finisce un bonus con `untilEndOfRound` sulla creatura ancora in campo. Solo se cambia qualcosa | `cardId`, `code`, `stat`, `before`, `after` |
+| `GAME_OVER` | Ultimo evento della partita | `winner` (`CHALLENGER`, `OPPONENT`, `null` se pareggio), `endReason` |
+
+- La difesa può andare sotto 0 (`defenseAfter: -2`); i punti vita no: si fermano a 0.
+- Il danno al giocatore è l'attacco totale della vincitrice (`attack` + `factionBonus` + `attackModifier`) meno il `defenseBefore` della sconfitta, mai sotto 0.
+- L'esempio è il round 3 della partita di esempio del regolamento. L'Uomo Senza Volto (8 + 1 di bonus) uccide il Faro nella Nebbia, che aveva difesa 7, e il giocatore subisce 9 − 7 = 2 danni. Indebolimento 2 abbassa l'attacco del Faro nel primo round dello scontro. Permanenza del Faro non scatta, perché il Faro è morto. Negli scarti ci sono già le due carte dei round 1 e 2.
 
 ---
 

@@ -6,7 +6,7 @@ Per **Cristian, Marco e Nicolas**. Raccoglie le regole e le decisioni da seguire
 
 ## In breve: le 10 regole da non sbagliare
 
-1. **Il motore è Java puro:** niente Spring, JPA, database o HTTP in `engine/`. Riceve i dati e un `Random`, restituisce il risultato.
+1. **Il motore è Java puro:** niente Spring, JPA, database o HTTP in `sviluppo/engine/`. Riceve i dati e un `Random`, restituisce il risultato.
 2. **Nessun numero di gioco nel codice:** punti vita, round, limiti, vantaggi, prezzi e pesi stanno in `GameRules` o nelle tabelle (`game_modes`, `rarities`, `faction_advantages`, `packs`).
 3. **Controller → Service → Repository.** La logica sta nel service, le transazioni pure. Le entità non escono mai dalle API: si usano i DTO.
 4. **Le API sono un contratto con Web:** nomi, campi ed errori come in [guida-frontend.md](../api/guida-frontend.md). Se cambiano, si aggiorna la guida nella stessa PR e si avvisa Gaia.
@@ -48,7 +48,7 @@ Tre cose da fare prima del primo branch di codice (domande 1, 2 e 7 del [2/11](.
 
 | Livello | Scelta |
 |---------|--------|
-| Motore | Java, modulo `engine/` separato, test JUnit |
+| Motore | Java, sottoprogetto Gradle `sviluppo/engine/` separato, test JUnit |
 | Backend | Java + Spring Boot 4, Spring Data JPA (Hibernate 7), Spring Security con JWT |
 | Database | PostgreSQL 18, UUID v7, migration Flyway, test con Testcontainers su PostgreSQL vero (non H2) |
 | Avvio | Un solo `docker compose up` per backend, database e frontend (#68, #100) |
@@ -92,11 +92,11 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 - Token di accesso **15 minuti**, refresh token **7 giorni**.
 - Lo storico delle partite usa le **copie dei mazzi** salvate in `matches` e il `random_seed`: con lo stesso seed il motore rigioca la stessa partita.
 
-## 4. Il motore di gioco (`engine/`)
+## 4. Il motore di gioco (`sviluppo/engine/`)
 
-- Riceve i mazzi già caricati (es. `DeckSnapshot`), le regole (`GameRules`) e un `Random`. Restituisce il risultato e il log round per round. Non legge il database.
-- Il log usa i nomi del regolamento: un **round** è un singolo scambio di colpi, uno **scontro** è la serie di round tra le stesse due creature. Il formato JSON è in [schema.md](../database/schema.md#formato-dei-campi-json-di-matches): Web lo usa per il replay (#97).
-- L'ordine degli effetti lo decide il lancio della moneta, preso dallo stesso `Random`.
+- Riceve le copie dei mazzi (es. `DeckSnapshot`), le regole (`GameRules`) e il seed, da cui crea un solo `Random`. Restituisce il risultato e il log round per round. Non legge il database e parla di lati (`CHALLENGER`, `OPPONENT`), non di utenti ([decisione 029](../decisioni/029-motore-di-gioco.md)).
+- Il log usa i nomi del regolamento: un **round** è un singolo scambio di colpi, uno **scontro** è la serie di round tra le stesse due creature. Ogni round è una lista di eventi in ordine, solo dati e niente testi. Il formato JSON è in [schema.md](../database/schema.md#formato-dei-campi-json-di-matches): Web lo usa per il replay (#97).
+- Il `Random` si usa sempre in quest'ordine: mescola il mazzo di chi sfida, poi quello dell'avversario, poi tira la moneta. L'ordine degli effetti lo decide la moneta.
 - Ogni regola e ogni effetto ha un test JUnit con seed fisso: `calculateDamage_attackerHasFactionAdvantage_addsBonus`.
 - Le simulazioni (#87) usano lo stesso motore, senza copiarne la logica.
 

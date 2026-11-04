@@ -53,8 +53,8 @@ Il pagamento con denaro reale non fa parte della fase 1: i crediti sono solo vir
 
 ```
 gruppo-05-dreamscape/
-├── engine/      # Motore di gioco Java + test JUnit
 ├── sviluppo/
+│   ├── engine/  # Motore di gioco Java + test JUnit
 │   └── backend/ # Applicazione Spring Boot (portale + API REST)
 ├── frontend/    # Pagine HTML, CSS e JavaScript, componenti React
 ├── database/    # Script SQL, migrazioni, dati di prova

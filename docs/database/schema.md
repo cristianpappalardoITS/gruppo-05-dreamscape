@@ -357,6 +357,7 @@ erDiagram
         varchar description "testo per i giocatori, con {value}"
         varchar trigger_event "ON_PLAY, WHILE_IN_PLAY, END_OF_ROUND, ON_DEATH, ON_KILL"
         boolean has_value "ha il valore X"
+        boolean is_active "spento = non si assegna più"
     }
     card_effects {
         uuid id PK
@@ -565,6 +566,7 @@ Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei
 - `factions.lord_card_id` deve essere una Leggendaria normale (non una versione) della stessa fazione.
 - Una carta ha al massimo un effetto, come prevede il regolamento attuale. Gli effetti stanno solo sulle carte normali.
 - `card_effects.effect_value` c'è se e solo se l'effetto ha `has_value = TRUE`.
+- Un effetto spento (`effects.is_active = FALSE`) non si può assegnare alle carte. Il catalogo è provvisorio ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)): per togliere un effetto lo si spegne e si cambiano con una migration di dati le carte che lo hanno.
 - ATT e DIF di una carta già posseduta si possono cambiare: valgono anche per le sue versioni, lo storico resta corretto grazie alle copie dei mazzi in `matches`, e i mazzi si ricontrollano quando si gioca.
 - Una carta disattivata non esce più dai pacchetti e non si può usare nei mazzi: i mazzi che la contengono diventano non validi e il giocatore viene avvisato. Chi la possiede la tiene, e la può ancora scambiare.
 
@@ -754,10 +756,10 @@ Con le 12 carte di prova non si forma un mazzo valido (al massimo 18 carte). Per
 | Cartella | Contenuto | Quando si esegue |
 |----------|-----------|------------------|
 | `db/migration/` | Tabelle (`V1`–`V10`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
-| `db/testdata/` | Circa 30 carte finte (es. 12 Comuni, 9 Rare, 6 Epiche, 3 Leggendarie), pacchetti e qualche utente di prova | Solo nel profilo `dev` e nei test |
+| `db/testdata/` | 39 carte finte (per fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art), pacchetti e tre utenti di prova (`V900`–`V902`) | Solo nel profilo `dev` e nei test |
 
 - Numerazione da `V900` in su (es. `V900__seed_test_cards.sql`), così non si scontra mai con le migration vere.
-- Codici con il prefisso `TEST-` (es. `TEST-001`) e l'espansione `TEST`: non si confondono con le carte vere.
+- Codici con il prefisso `TEST-` (es. `TEST-001`) e l'espansione `TEST`: non si confondono con le carte vere. Anche i nomi hanno "(prova)", perché `cards.name` è unico. Per fazione servono almeno 7 Comuni e 3 Rare, come per il set iniziale vero.
 - Le illustrazioni finte possono restare vuote (`illustration_url` NULL): il frontend mostra un segnaposto.
 - Le password degli utenti di prova si scrivono già cifrate con BCrypt, mai in chiaro. Gli utenti e le password di prova sono elencati nel README del backend.
 - Quando arriva il catalogo vero, i dati finti restano solo per i test.
@@ -807,7 +809,7 @@ I dati stanno nel volume Docker di PostgreSQL e restano a ogni riavvio. Flyway e
 | Numeri | Contenuto | Esempio |
 |--------|-----------|---------|
 | `V1`–`V99` | Struttura: tabelle, colonne, indici | `V9__add_card_type_to_cards.sql` |
-| `V100`–`V199` | Catalogo ufficiale | `V100__seed_rules_data.sql`, `V101__seed_base_set.sql`, `V102__seed_packs.sql` |
+| `V100`–`V199` | Catalogo ufficiale | `V100__seed_rules_data.sql` (rarità, fazioni, vantaggi ed effetti, già scritta), `V101__seed_base_set.sql`, `V102__seed_packs.sql` |
 | ... | Ogni espansione nuova prosegue la numerazione | `V103__expansion_1.sql` |
 
 Flyway esegue le migration in ordine di numero. Una migration già eseguita **non si modifica mai**: per correggere una carta si scrive una nuova migration con un `UPDATE`.
@@ -996,6 +998,7 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 | Carte disattivate | Nessuna regola | Non si usano nei mazzi: mazzo non valido e avviso al giocatore ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
 | Amicizia tolta o account cancellato | Scambi e sfide in attesa restavano aperti | Si annullano da soli ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
 | Effetto "Non Sequitur" | "Non Sequitur X" | Senza valore (`has_value = FALSE`) ([decisione 027](../decisioni/027-effetto-non-sequitur.md)) |
+| `effects.is_active` | Non c'era | Un effetto si spegne senza cancellare la riga, perché il catalogo è provvisorio |
 | Catalogo degli effetti | I 23 della lista di Nicolas | 19 effetti, versione provvisoria da bilanciare: 9 tolti, alcuni cambiati, 5 nuovi; lo schema non cambia ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)) |
 
 ### 4 novembre 2026: copie bloccate negli scambi

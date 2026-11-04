@@ -84,7 +84,7 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Rank e leghe | In fase 1. Elo, si parte da 1000. Leghe: Dormiente, Sognatore, Lucido, Dreamweaver; premio in DC la prima volta che si entra in una lega | Rank "dopo" |
 | Fazioni | Dreams, Nightmares, Memories, in inglese anche nei testi. Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams | Altri cicli, Sogni / Incubi / Ricordi |
 | Vantaggio di fazione | **+1 ATT** a chi è in vantaggio | "+1 Attacco/Difesa", malus |
-| Rarità | Comune, Rara, Epica, Leggendaria. Le Leggendarie hanno una copia rara **full art** | "Mitica", "TIER" mostrato all'utente |
+| Rarità | Comune, Rara, Epica, Leggendaria. Le Leggendarie hanno una versione rara **full art**, che è una carta a parte con il suo id | "Mitica", "TIER" mostrato all'utente |
 | Lord | Il Sogno Lucido (Dreams), L'Uomo Senza Volto (Nightmares), La Custode del Tempo Fermo (Memories): sono anche le copertine | |
 | Pacchetto | Oggi c'è il **Dream Pack**: 5 carte, **500 DC**, con tre copertine (una per Lord) e lo stesso contenuto. Si apre subito, all'acquisto. Il cliente vuole **più tipi di pacchetti a prezzi diversi**: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il negozio va pensato per più pacchetti | Pack Base 200, Pack Fazione 350, Pack Elite 500 (nomi e prezzi vecchi), inventario dei pacchetti chiusi |
 | Contenuto del Dream Pack | 3 Comuni, 1 Rara, 1 slot speciale: Rara 70%, Epica 25%, Leggendaria 4%, Leggendaria full art 1% | |
@@ -231,7 +231,7 @@ Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e access
 | #112 Wireframe Amici, Benvenuto, Profilo, backoffice | Daniele | 3 | [Pagine e chiamate](../api/guida-frontend.md#6-pagine-e-chiamate) |
 | #81 Componente della carta | Yuri, Gaia | 4 | [Come si monta una carta](../api/guida-frontend.md#7-come-si-monta-una-carta) |
 | #82 Negozio e apertura | Daniele | 4 | Dream Pack (sezione 3), apertura con l'id nell'URL |
-| #83 Collezione e dettaglio | Alessandro | 4 | Filtri, paginazione, passaggio alla full art |
+| #83 Collezione e dettaglio | Alessandro | 4 | Filtri, paginazione, altre versioni della carta (full art) |
 
 ## 8. A chi chiedere
 

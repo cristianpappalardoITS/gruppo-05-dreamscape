@@ -19,7 +19,7 @@ Il brief chiedeva una modalità Base obbligatoria e una seconda modalità con gl
 - Partita simulata dal server, senza interazione dei giocatori. Si dice **round**, non turno.
 - **20 punti vita** (scelta del cliente, da verificare con le simulazioni del motore, #87), **massimo 60 round**, poi pareggio. Fine anche a mazzo esaurito.
 - **Vantaggio di fazione:** Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams. Chi è in vantaggio ha **+1 ATT**.
-- Effetti: i 23 della lista di Nicolas, al massimo uno per carta.
+- Effetti: i 23 della lista di Nicolas, al massimo uno per carta. *Sostituito il 4/11 da [028](028-catalogo-degli-effetti.md): catalogo provvisorio di 19 effetti, da bilanciare.*
 
 ## Motivazione
 Una sola modalità riduce il lavoro su motore, pagine e regolamento. Il giro dei vantaggi del regolamento era già nelle carte e nella presentazione.

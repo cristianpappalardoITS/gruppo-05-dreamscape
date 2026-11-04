@@ -37,7 +37,7 @@
 | | `rarities` | I TIER di rarità, con il limite per mazzo e le copie massime |
 | | `card_sets` | Le espansioni: set base, espansione 1... |
 | | `cards` | Le carte-creatura con codice, ATT, DIF, fazione, rarità, espansione, illustrazioni e ritaglio |
-| Collezione e mazzi | `user_cards` | Le carte possedute da ogni utente, con il numero di copie (e quante full art) |
+| Collezione e mazzi | `user_cards` | Le carte possedute da ogni utente, con il numero di copie (la full art è una carta a parte) |
 | | `decks` | I mazzi degli utenti |
 | | `deck_cards` | Le carte di ogni mazzo |
 | Pacchetti | `packs` | I pacchetti: in vendita (anche di una fazione o a tempo), set iniziale, benvenuto |
@@ -57,7 +57,7 @@
 | | `leagues` | Le leghe del rank, con il punteggio minimo e il premio |
 | | `user_league_rewards` | Le leghe raggiunte da ogni giocatore, per dare il premio una volta sola |
 | Modalità ed effetti | `game_modes` | Le modalità di gioco con i loro valori (punti vita, limite di round) |
-| | `effects` | Il catalogo degli effetti (lista di Nicolas), validi in ogni partita |
+| | `effects` | Il catalogo degli effetti (provvisorio, [decisione 028](../decisioni/028-catalogo-degli-effetti.md)), validi in ogni partita |
 | | `card_effects` | Quali effetti ha ogni carta, con il loro valore |
 | Contatti | `contact_messages` | I messaggi inviati dal form della pagina Contatti |
 
@@ -79,6 +79,7 @@ erDiagram
     cards ||--o{ user_cards : "posseduta in"
     decks ||--|{ deck_cards : "contiene"
     cards ||--o{ deck_cards : "usata in"
+    cards |o--o{ cards : "versione (full art)"
     factions ||--o{ cards : "raggruppa"
     factions |o--o| cards : "Lord"
     rarities ||--o{ cards : "classifica"
@@ -155,27 +156,25 @@ erDiagram
     }
     cards {
         uuid id PK
-        varchar code UK "es. BASE-001"
-        varchar name UK
-        int attack "almeno 1"
-        int defense "almeno 1"
-        uuid faction_id FK
-        uuid rarity_id FK
+        varchar code UK "es. BASE-001, BASE-004-FA"
+        uuid base_card_id FK "NULL = carta normale"
+        varchar variant_type "NULL, FULL_ART"
+        varchar name UK "NULL nelle versioni"
+        int attack "almeno 1; NULL nelle versioni"
+        int defense "almeno 1; NULL nelle versioni"
+        uuid faction_id FK "NULL nelle versioni"
+        uuid rarity_id FK "NULL nelle versioni"
         uuid card_set_id FK
-        varchar illustration_url "3:2, WebP grande"
+        varchar illustration_url "3:2, o 2:3 per la full art"
         varchar illustration_thumb_url "miniatura"
         numeric illustration_focus_y "ritaglio"
-        varchar full_art_illustration_url "2:3, solo Leggendarie"
-        varchar full_art_thumb_url "miniatura"
-        numeric full_art_focus_y
         boolean is_active
     }
     user_cards {
         uuid id PK
         uuid user_id FK
         uuid card_id FK
-        int quantity "tutte le copie"
-        int full_art_quantity "di cui full art"
+        int quantity
     }
     decks {
         uuid id PK
@@ -187,7 +186,6 @@ erDiagram
         uuid deck_id FK
         uuid card_id FK
         int quantity
-        boolean is_full_art "mostra la full art"
     }
 ```
 
@@ -254,8 +252,7 @@ erDiagram
     pack_opening_cards {
         uuid id PK
         uuid pack_opening_id FK
-        uuid card_id FK
-        boolean is_full_art
+        uuid card_id FK "la full art, se è uscita quella"
     }
     credit_transactions {
         uuid id PK
@@ -306,7 +303,6 @@ erDiagram
         uuid trade_id FK
         uuid card_id FK
         varchar side "OFFERED, REQUESTED"
-        boolean is_full_art
         int quantity
     }
     challenges {
@@ -396,6 +392,7 @@ erDiagram
         varchar goal_type "PLAY_MATCHES, WIN_MATCHES"
         int goal_count
         int reward_credits
+        varchar match_type "NULL = tutte, CASUAL, RANKED"
         boolean is_active
     }
     user_missions {
@@ -419,6 +416,7 @@ erDiagram
         uuid user_id FK
         uuid league_id FK
         timestamptz reached_at
+        uuid match_id FK "partita con cui ci si è entrati"
         uuid credit_transaction_id FK
     }
 ```
@@ -453,20 +451,20 @@ erDiagram
 | **Limiti per TIER in `rarities`**: `max_per_deck` e `max_copies` | Il regolamento ha limiti per rarità (Leggendarie 2, Epiche 4, Rare 8, Comuni libere) e copie che dipendono dalla rarità (2, ma 1 per le Leggendarie). Stando in tabella si ribilanciano senza toccare il codice. |
 | **Codice stabile per ogni carta** (`cards.code`, es. `BASE-001`) | Le migration con i dati e i nomi dei file immagine usano il codice, che non cambia se si corregge il nome della carta. |
 | **La carta la monta il frontend** con un componente React (`Card`, #81), usato nelle pagine HTML | Il componente riceve i dati della carta e l'illustrazione e monta: illustrazione con il suo ritaglio, cornice della fazione e della rarità con la finestra trasparente, simbolo, nome, testi, ATT e DIF. Se cambia una statistica o un testo, la carta si aggiorna da sola: nessuna immagine da ricomporre. Le 15 carte del set di prova sono il riferimento visivo. |
-| **Nel database solo illustrazione e ritaglio** (`illustration_url`, `illustration_thumb_url`, `illustration_focus_y` e le stesse per la full art) | L'illustrazione è l'unica parte diversa per ogni carta. Cornici, simboli, coordinate delle zone e font sono uguali per tutte e stanno nel frontend. Il ritaglio lo fa il JavaScript, ma solo il database sa dove sta il soggetto di ogni immagine: per questo il numero è nella carta (0,40 per quasi tutte, 0,27 per Il Sogno Lucido). Il ritaglio è lo stesso del compositore: niente zoom, solo spostamento verticale. |
+| **Nel database solo illustrazione e ritaglio** (`illustration_url`, `illustration_thumb_url`, `illustration_focus_y`, per ogni carta e ogni versione) | L'illustrazione è l'unica parte diversa per ogni carta. Cornici, simboli, coordinate delle zone e font sono uguali per tutte e stanno nel frontend. Il ritaglio lo fa il JavaScript, ma solo il database sa dove sta il soggetto di ogni immagine: per questo il numero è nella carta (0,40 per quasi tutte, 0,27 per Il Sogno Lucido). Il ritaglio è lo stesso del compositore: niente zoom, solo spostamento verticale. |
 | **Originali intatti, al browser copie WebP** (`*_url` = grande, `*_thumb_url` = miniatura) | I PNG originali pesano 2,5–3,3 MB: con le 12 carte di oggi la prima visita alla collezione scaricherebbe circa 55 MB tra illustrazioni e cornici. L'originale resta com'è, con i suoi metadati, e non si serve al browser. Il backend serve due copie WebP: grande (larghezza 1024 px, circa 120–350 KB) per il dettaglio della carta e l'apertura dei pacchetti, miniatura (larghezza 400 px, circa 25–80 KB) per le griglie. Con le miniature la collezione scende sotto 1 MB. Due colonne in più evitano regole sul nome del file da ricordare nel frontend. |
 | **Immagini in cache per sempre** (versione nel nome del file) | Ogni file ha un numero di versione, es. `base-004-v1.webp`. Il backend serve `/images/**` con `Cache-Control: public, max-age=31536000, immutable`: il browser scarica ogni immagine una volta sola. Se un'illustrazione cambia, la nuova ha un nome nuovo (`base-004-v2.webp`) e il browser la scarica perché l'URL è diverso. La carta montata non si salva: il JavaScript la rimonta a ogni pagina in pochi millisecondi, con le immagini già in cache. |
 | **Illustrazioni servite dal backend** | Quelle del catalogo ufficiale stanno nel repository, quelle caricate dal backoffice in un volume Docker. Gli originali restano PNG senza conversioni, così i loro metadati non si perdono; le copie WebP sono file a parte. |
-| **Full art come copia rara della stessa carta** (`user_cards.full_art_quantity`) | Solo le Leggendarie hanno la full art. Quando esce una Leggendaria da un pacchetto c'è una piccola probabilità (`packs.full_art_chance`: 20% nel Dream Pack, cioè l'1% del pacchetto) che sia full art. In partita è la stessa carta: stesse statistiche, conta per gli stessi limiti di copie. Cambia solo l'immagine, in collezione e negli scambi. |
+| **Full art come carta a parte, con il suo id** (`cards.base_card_id`, `variant_type = 'FULL_ART'`, [decisione 025](../decisioni/025-versioni-delle-carte.md)) | Oggi solo le Leggendarie hanno la full art. Quando esce una Leggendaria da un pacchetto c'è una piccola probabilità (`packs.full_art_chance`: 20% nel Dream Pack, cioè l'1% del pacchetto) che esca la sua full art. Collezione, mazzi, scambi e aperture la trattano come una carta diversa (un `card_id` suo), così domani le skin saranno altre versioni nello stesso modo. Non ha statistiche proprie: nome, ATT, DIF, fazione, rarità ed effetto sono quelli della carta base, e nel mazzo le due versioni contano insieme per le copie massime. |
 | **Attacco e difesa almeno 1** (`CHECK`) | Con attacco almeno 1 ogni round toglie difesa; insieme al limite di round, la partita finisce sempre. |
 | **Espansioni** (`card_sets`) con pacchetti legati a un'espansione (`packs.card_set_id`) | Permette pacchetti che contengono solo le carte nuove. Con `card_set_id = NULL` il pacchetto pesca da tutte le espansioni. |
-| **Carte e pacchetti si disattivano, non si cancellano** (`is_active`) | Restano collegati a collezioni, mazzi e storico. |
+| **Carte e pacchetti si disattivano, non si cancellano** (`is_active`) | Restano collegati a collezioni, mazzi e storico. Una carta disattivata resta di chi la possiede, ma non esce più dai pacchetti e non si può usare nei mazzi ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)). |
 
 ### Collezione, pacchetti e scambi
 
 | Scelta | Perché |
 |--------|--------|
-| **Collezione con `quantity`** (una riga per utente e carta) | Più semplice di una riga per ogni copia. Con le transazioni basta per garantire che negli scambi nessuna carta venga persa o duplicata. `full_art_quantity` dice quante di quelle copie sono full art. |
+| **Collezione con `quantity`** (una riga per utente e carta) | Più semplice di una riga per ogni copia. Con le transazioni basta per garantire che negli scambi nessuna carta venga persa o duplicata. La full art ha la sua riga, perché è una carta a parte. |
 | **Tipi di pacchetto** (`packs.pack_type`: SHOP, STARTER, WELCOME) | Set iniziale e pacchetti di benvenuto sono pacchetti come gli altri, ma non si comprano: si regalano quando il giocatore sceglie la fazione. Così si usa la stessa logica di estrazione. |
 | **Pacchetti di una fazione** (`packs.faction_id`) | Il set iniziale è di una fazione scelta dal giocatore: ci sono tre pacchetti STARTER, uno per fazione. La stessa colonna permette in futuro pacchetti di fazione in vendita. |
 | **Più pacchetti in vendita, anche a tempo** (`price_credits`, slot, pesi, `full_art_chance`, `available_from`, `available_until`) | Il cliente vuole più tipi di pacchetti a prezzi diversi: un pacchetto più caro con carte più rare è solo una riga con prezzo e pesi diversi. Il periodo di vendita serve per i pacchetti di un evento. |
@@ -475,7 +473,7 @@ erDiagram
 | **Apertura immediata** (`pack_openings`, con `source`) | L'utente compra e apre subito il pacchetto: un solo passaggio, un solo record. `source` distingue i pacchetti comprati da quelli regalati alla registrazione; `price_paid` conserva il prezzo anche se poi cambia. |
 | **Lista amici** (`friendships`) | A manda la richiesta, B la accetta. Una sola riga per coppia, in qualunque direzione (indice su `LEAST`/`GREATEST`). Un rifiuto o la rimozione dell'amicizia cancellano la riga. |
 | **Scambi solo tra amici, senza limiti di valore** | Si propone uno scambio solo a un amico. Quantità e rarità sono libere (es. 1 Epica per 5 Comuni): nessun controllo di equilibrio, decide il destinatario accettando o rifiutando. |
-| **Full art negli scambi** (`trade_items.is_full_art`) | Una copia full art vale di più: nello scambio si dice se si offrono copie normali o full art. |
+| **Full art negli scambi** | La full art è una carta a parte: nello scambio si offre o si chiede con il suo `card_id`, come ogni altra carta. |
 
 ### Partite e modalità
 
@@ -493,9 +491,9 @@ erDiagram
 | **Log round per round come JSONB** (`round_log`) | Si legge sempre tutto insieme, non serve interrogare i singoli round. Una tabella dei round si può aggiungere in futuro se servisse. |
 | **`random_seed` in `matches`** | Con lo stesso seed il motore rigioca la stessa identica partita: utile per verifiche e test. Decide anche il lancio della moneta per l'ordine degli effetti, che si legge nel log. |
 | **Stati e tipi come `VARCHAR` + `CHECK`** invece di `ENUM` | Si mappano facilmente su enum Java. Aggiungere un valore richiede solo una migration che aggiorna il `CHECK`. |
-| **Effetti separati dalle carte** (catalogo + tabella di collegamento) | Lo stesso effetto si riusa su più carte con valori diversi, come prevede la lista di keyword di Nicolas (es. Protezione X, Castigo X). |
+| **Effetti separati dalle carte** (catalogo + tabella di collegamento) | Lo stesso effetto si riusa su più carte con valori diversi, come prevede il catalogo degli effetti (es. Castigo X, Miasma X). Il catalogo è provvisorio ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)): effetti nuovi o tolti sono righe, non colonne. |
 | **`effects.has_value`** | Il backoffice chiede il valore X solo per gli effetti che lo hanno; il service controlla che `card_effects.effect_value` ci sia solo per quelli. |
-| **Momenti degli effetti** (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) | Sono i momenti della lista di Nicolas: quando la carta viene giocata, finché resta in campo, alla fine di ogni round, quando viene uccisa, quando uccide. |
+| **Momenti degli effetti** (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) | Sono i momenti del catalogo degli effetti: quando la carta viene giocata, finché resta in campo, alla fine di ogni round, quando viene uccisa, quando uccide. |
 | **Il comportamento dell'effetto sta nel codice Java**, il database salva solo `code`, momento e valore | Gli effetti sono molto diversi tra loro: descriverli tutti con colonne sarebbe rigido. Il motore associa ogni `code` alla sua classe Java. |
 | **`id UUID` v7 su ogni tabella**, anche quelle di relazione (`DEFAULT uuidv7()`) | Una regola sola per tutti. Gli id finiscono negli URL e nelle API (`/sfide/{id}`): un UUID non si indovina, un numero sì. La versione 7 è ordinata nel tempo, quindi gli indici restano efficienti. In Java il campo è `java.util.UUID`; con JPA evita le chiavi composte. L'unicità reale è garantita dai vincoli `UNIQUE`. |
 | **UUID generati da Hibernate** (Spring Boot 4, `@UuidGenerator(style = UuidGenerator.Style.VERSION_7)`) | L'id esiste già prima del salvataggio: niente riletture dopo l'insert, entità più semplici da testare. Il `DEFAULT uuidv7()` resta nel database per le migration con i dati e per chi scrive SQL a mano. |
@@ -531,14 +529,15 @@ Al salvataggio di un mazzo il service verifica:
 - esattamente 20 carte (valore nella configurazione, uguale per tutte le modalità);
 - copie massime per carta secondo la rarità (`rarities.max_copies`);
 - limite per TIER (`rarities.max_per_deck`);
-- l'utente possiede abbastanza copie di ogni carta (`user_cards.quantity`, full art comprese);
-- `is_full_art = TRUE` solo se la carta ha una full art e l'utente ne possiede almeno una copia (`user_cards.full_art_quantity >= 1`). Il database controlla già che la riga abbia `quantity = 1` (`chk_deck_cards_full_art`).
+- le copie massime e i limiti per TIER si contano per **carta base**: la full art e la normale della stessa carta contano insieme (`COALESCE(base_card_id, id)`), es. una Leggendaria al massimo 1 copia, normale o full art;
+- l'utente possiede abbastanza copie di ogni carta del mazzo (`user_cards.quantity` di quel `card_id`: la full art si conta a parte, perché è una carta diversa);
+- tutte le carte sono attive (`cards.is_active`, e per una versione anche la sua carta base).
 
-La full art nel mazzo è solo una scelta di aspetto: si vede nell'editor, nella lista dei mazzi e in partita, e finisce nella copia del mazzo salvata in `matches` (`isFullArt`).
+Il giocatore mette nel mazzo la versione che vuole mostrare (la normale o la full art): si vede nell'editor, nella lista dei mazzi e in partita, e finisce nella copia del mazzo salvata in `matches`.
 
 Si salvano **solo i mazzi validi**: niente bozze.
 
-Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavano dentro o se l'admin cambia una carta. Per questo il mazzo si **ricontrolla prima di ogni partita**. Se il mazzo classificato non è più valido, il matchmaking non sceglie quel giocatore finché non lo sistema.
+Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavano dentro o se l'admin cambia o **disattiva** una carta. Per questo il mazzo si **ricontrolla prima di ogni partita**, e la lista dei mazzi avvisa il giocatore con il motivo (es. "La carta X non è più disponibile"). Se il mazzo classificato non è più valido, il matchmaking non sceglie quel giocatore finché non lo sistema.
 
 ### Acquisto di un pacchetto
 
@@ -550,9 +549,9 @@ Un mazzo può diventare non valido dopo, se l'utente scambia carte che ci stavan
    Se aggiorna 0 righe, il saldo è insufficiente.
 3. Estrae le carte lato server. Per ogni slot e per ogni carta dello slot:
    - sceglie la rarità con i pesi di `pack_slot_rarities`;
-   - pesca a caso, con la stessa probabilità per ogni carta, tra le carte attive di quella rarità (e dell'espansione e della fazione, se il pacchetto ha `card_set_id` o `faction_id`);
-   - se la carta ha una full art, con probabilità `packs.full_art_chance` la copia è full art.
-4. Scrive `pack_openings`, `pack_opening_cards`, `credit_transactions` e aggiorna `user_cards` (`quantity` e, se serve, `full_art_quantity`).
+   - pesca a caso, con la stessa probabilità per ogni carta, tra le carte **normali** attive di quella rarità (e dell'espansione e della fazione, se il pacchetto ha `card_set_id` o `faction_id`);
+   - se la carta estratta ha una full art attiva, con probabilità `packs.full_art_chance` esce la full art al suo posto.
+4. Scrive `pack_openings`, `pack_opening_cards` (con il `card_id` della carta uscita), `credit_transactions` e aggiorna `user_cards`.
 
 Tutto nella stessa transazione: o va a buon fine tutto, o niente.
 
@@ -560,25 +559,26 @@ Dal backoffice un pacchetto si può attivare solo se, per ogni rarità usata nei
 
 ### Catalogo
 
-- `full_art_illustration_url` si può impostare solo su carte Leggendarie.
+- La full art è una carta con `base_card_id` e `variant_type = 'FULL_ART'`: oggi solo per le Leggendarie, una per carta (`uq_cards_full_art`). Non ha nome, statistiche né effetto propri (`chk_cards_variant`): l'API li restituisce presi dalla carta base. Una versione non ha a sua volta versioni.
 - Le illustrazioni caricate dal backoffice si salvano così come sono (PNG), senza conversioni che toglierebbero i metadati. Il backend crea anche le due copie WebP (grande e miniatura) e salva i loro URL nella carta: `illustration_url` e `illustration_thumb_url` si impostano sempre insieme (lo controlla anche `chk_cards_thumbs`).
 - Una nuova illustrazione per una carta che ne ha già una prende la versione successiva nel nome (`-v2`, `-v3`...). Un file già pubblicato non si sovrascrive mai, altrimenti i browser continuerebbero a mostrare quello vecchio dalla cache.
-- `factions.lord_card_id` deve essere una Leggendaria della stessa fazione.
-- Una carta ha al massimo un effetto, come prevede il regolamento attuale.
+- `factions.lord_card_id` deve essere una Leggendaria normale (non una versione) della stessa fazione.
+- Una carta ha al massimo un effetto, come prevede il regolamento attuale. Gli effetti stanno solo sulle carte normali.
 - `card_effects.effect_value` c'è se e solo se l'effetto ha `has_value = TRUE`.
-- ATT e DIF di una carta già posseduta si possono cambiare: lo storico resta corretto grazie alle copie dei mazzi in `matches`, e i mazzi si ricontrollano quando si gioca.
+- ATT e DIF di una carta già posseduta si possono cambiare: valgono anche per le sue versioni, lo storico resta corretto grazie alle copie dei mazzi in `matches`, e i mazzi si ricontrollano quando si gioca.
+- Una carta disattivata non esce più dai pacchetti e non si può usare nei mazzi: i mazzi che la contengono diventano non validi e il giocatore viene avvisato. Chi la possiede la tiene, e la può ancora scambiare.
 
 ### Amici
 
 - **Richiesta:** A cerca B per username e manda la richiesta (`status = 'PENDING'`). Non si può chiedere l'amicizia a se stessi né a chi è già amico o ha già una richiesta in sospeso. Se B aveva già chiesto l'amicizia ad A, la richiesta di A la accetta subito.
 - **Risposta:** solo B (`addressee_id`) può accettare (`status = 'ACCEPTED'`, `accepted_at`) o rifiutare (la riga si cancella).
-- **Rimozione:** uno dei due toglie l'amicizia e la riga si cancella. Gli scambi già conclusi restano nello storico.
+- **Rimozione:** uno dei due toglie l'amicizia e la riga si cancella. Nella stessa transazione gli scambi e le sfide `PENDING` tra i due passano a `CANCELLED`, così le copie offerte tornano disponibili ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)). Gli scambi già conclusi restano nello storico.
 
 ### Scambi
 
 Quando si propone uno scambio, proponente e destinatario devono essere amici (`friendships` con `status = 'ACCEPTED'`). Quantità e rarità sono libere: si può offrire 1 Epica per 5 Comuni.
 
-**Copie bloccate negli scambi in attesa.** Le copie che un giocatore offre in uno scambio `PENDING` sono bloccate per gli **altri scambi**: non le può offrire due volte. Restano invece usabili nei mazzi. Non c'è una colonna in più: le copie disponibili per uno scambio si calcolano così, contando a parte le full art (`is_full_art`):
+**Copie bloccate negli scambi in attesa.** Le copie che un giocatore offre in uno scambio `PENDING` sono bloccate per gli **altri scambi**: non le può offrire due volte. Restano invece usabili nei mazzi. Non c'è una colonna in più: le copie disponibili per uno scambio si calcolano così (la full art ha il suo `card_id`, quindi si conta da sola):
 
 ```sql
 -- Copie di una carta già offerte dal giocatore negli scambi in attesa
@@ -586,20 +586,23 @@ SELECT COALESCE(SUM(ti.quantity), 0)
 FROM trade_items ti
 JOIN trades t ON t.id = ti.trade_id
 WHERE t.proposer_id = :userId AND t.status = 'PENDING'
-  AND ti.side = 'OFFERED' AND ti.card_id = :cardId AND ti.is_full_art = :isFullArt;
--- disponibili = copie possedute (quantity, o full_art_quantity per le full art) - copie già offerte
+  AND ti.side = 'OFFERED' AND ti.card_id = :cardId;
+-- disponibili = copie possedute (user_cards.quantity) - copie già offerte
 ```
 
 Alla proposta il service blocca le righe di `user_cards` delle carte offerte (`SELECT ... FOR UPDATE`), così due proposte nello stesso momento non offrono le stesse copie, e rifiuta lo scambio (`409`) se offre più copie di quelle disponibili. Le carte **richieste** all'amico non si bloccano: lui non ha ancora accettato. Il blocco finisce da solo quando lo scambio non è più `PENDING` (accettato, rifiutato o annullato).
 
 **Avviso sui mazzi.** Alla proposta e all'accettazione il service dice se una carta che esce sta in un mazzo del giocatore e se quel mazzo diventerà non valido (anche se è il mazzo classificato). Lo scambio si può fare lo stesso: il mazzo resta salvato, non valido, finché il giocatore non lo sistema.
 
+**Full art che esce da un mazzo.** Se il giocatore cede una full art che usa in un mazzo e possiede una copia libera della versione normale, il mazzo passa alla versione normale (`deck_cards.card_id` = la carta base) e resta valido. Se non ce l'ha, il mazzo diventa non valido. In tutti e due i casi l'avviso lo dice prima dello scambio.
+
 Quando il destinatario accetta:
 1. Ricontrolla che siano ancora amici.
 2. Blocca le righe di `user_cards` coinvolte (`SELECT ... FOR UPDATE`).
-3. Ricontrolla che entrambi abbiano ancora tutte le carte nelle quantità previste, contando a parte le copie full art (`is_full_art`). Per il destinatario contano solo le copie disponibili: quelle che ha offerto in altri scambi in attesa sono bloccate.
-4. Sposta le carte: scala `quantity` (e `full_art_quantity` per le full art), cancella le righe che arrivano a 0, aggiunge o incrementa quelle del ricevente.
-5. Imposta `status = 'ACCEPTED'` e `resolved_at`.
+3. Ricontrolla che entrambi abbiano ancora tutte le carte nelle quantità previste (la full art si conta a parte, con il suo `card_id`). Per il destinatario contano solo le copie disponibili: quelle che ha offerto in altri scambi in attesa sono bloccate.
+4. Sposta le carte: scala `quantity`, cancella le righe che arrivano a 0, aggiunge o incrementa quelle del ricevente.
+5. Per ogni full art ceduta che stava in un mazzo, passa il mazzo alla versione normale se il giocatore ne ha una copia libera (vedi sopra).
+6. Imposta `status = 'ACCEPTED'` e `resolved_at`.
 
 Se un controllo fallisce, la transazione si annulla e nessuna carta si muove: lo scambio passa a `CANCELLED` e chi prova ad accettare riceve un messaggio. Lo stesso succede se l'amicizia è stata tolta. Ogni scambio deve avere almeno una carta per lato.
 
@@ -622,25 +625,25 @@ Tutte le partite usano le regole BASE e vengono simulate subito dal server, senz
 - Partita classificata: un avversario con punteggio vicino (es. ±100, poi la distanza si allarga), preferendo chi non si è già affrontato 3 volte oggi.
 
 Per ogni partita, nella stessa transazione:
-1. Ricontrolla la validità di entrambi i mazzi.
+1. Blocca le righe dei due giocatori in `users` (`SELECT ... FOR UPDATE`, sempre in ordine di `id` per evitare stalli) e ricontrolla la validità di entrambi i mazzi. Con il matchmaking asincrono lo stesso avversario può essere scelto da più giocatori nello stesso momento: senza il blocco si perdono aggiornamenti del punteggio e si superano i limiti giornalieri.
 2. Genera il seed e chiama il motore di gioco con i valori della modalità (punti vita, limite di round). Gli passa sempre anche gli effetti delle carte (`card_effects`).
-3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi.
+3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi. Il vincitore è uno dei due giocatori o nessuno (`chk_matches_winner`); i punti vita finali non scendono sotto 0 (`chk_matches_life_points`).
 4. Solo per le classificate:
    - se i due giocatori non si sono già affrontati 3 volte oggi in classificata, calcola le variazioni di punteggio (Elo, K = 32), aggiorna `users.rating` di entrambi e salva `*_rating_change`; altrimenti restano `NULL`;
    - se chi ha avviato la partita vince, non ha già 3 vittorie premiate oggi e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`);
-   - se un punteggio entra per la prima volta in una lega, dà il premio della lega (vedi sotto).
+   - se un punteggio entra per la prima volta in una lega, dà il premio della lega e salva la partita in `user_league_rewards.match_id` (vedi sotto).
 5. Aggiorna le missioni dei due giocatori (vedi sotto).
 
 ### Missioni
 
 - Il periodo si calcola in ora italiana: `DAILY` = il giorno, `WEEKLY` = la settimana che inizia il lunedì. `period_start` è il primo giorno del periodo.
-- Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria).
+- Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria). Se la missione ha `match_type`, contano solo le partite di quel tipo; se è `NULL` contano tutte.
 - Quando `progress` arriva a `goal_count` e `completed_at` è vuoto, salva `completed_at`, scrive `credit_transactions` con `type = 'MISSION_REWARD'` e ne salva l'id in `credit_transaction_id`. Il vincolo `UNIQUE` impedisce una seconda riga nello stesso periodo.
 
 ### Leghe
 
 - Dopo ogni variazione del punteggio, il service cerca le leghe con `min_rating <= rating` che il giocatore non ha in `user_league_rewards`.
-- Per ognuna inserisce la riga e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
+- Per ognuna inserisce la riga, con la partita che l'ha fatta raggiungere (`match_id`), e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
 
 ### Ricompensa giornaliera
 
@@ -648,7 +651,7 @@ Al primo accesso del giorno (ora italiana): `UPDATE users SET credits = credits 
 
 ### Utenti
 
-- **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username ed email sostituiti da valori unici senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Lo storico di sfide, scambi e partite resta valido.
+- **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username `deleted-` + id senza trattini (40 caratteri, per questo la colonna è `VARCHAR(40)`; alla registrazione il limite resta 30) ed email sostituita da un valore unico senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Amicizie tolte e scambi e sfide in attesa annullati, come quando si toglie un'amicizia. Lo storico di sfide, scambi e partite resta valido.
 - **Primo admin:** creato all'avvio da username e password letti da variabili d'ambiente.
 - **Email:** il portale invia solo l'email di recupero password, se c'è tempo di farla. Se non si fa, `password_reset_tokens` si toglie con una migration.
 
@@ -672,15 +675,16 @@ Proposta da concordare con chi sviluppa il motore di gioco. I nomi seguono il re
   "deckName": "Mazzo offensivo",
   "cards": [
     {
-      "cardId": "019a1f30-0000-7000-8000-000000000008", "cardCode": "BASE-008", "name": "L'Uomo Senza Volto", "attack": 8, "defense": 5,
-      "faction": "NIGHTMARES", "rarity": "LEGENDARY", "quantity": 1, "isFullArt": true,
+      "cardId": "019a1f30-0000-7000-8000-000000000108", "cardCode": "BASE-008-FA", "baseCardId": "019a1f30-0000-7000-8000-000000000008",
+      "variantType": "FULL_ART", "name": "L'Uomo Senza Volto", "attack": 8, "defense": 5,
+      "faction": "NIGHTMARES", "rarity": "LEGENDARY", "quantity": 1,
       "effects": [ { "code": "WEAKENING", "name": "Indebolimento", "triggerEvent": "WHILE_IN_PLAY", "value": 2 } ]
     }
   ]
 }
 ```
 
-Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta non ne ha. `isFullArt` dice se nel replay della partita si mostra la full art.
+Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta non ne ha. `cardId` è la versione usata nel mazzo (qui la full art, `variantType: "FULL_ART"`); nome, statistiche ed effetti sono quelli della carta base al momento della partita.
 
 **`round_log`**
 
@@ -735,7 +739,7 @@ Ogni carta ha al massimo un effetto: `effects` è una lista vuota se la carta no
 | `V7__create_credit_transactions.sql` | `credit_transactions` |
 | `V8__create_contact_messages.sql` | `contact_messages` |
 | `V9__create_missions.sql` | `missions` (+ le due missioni fisse), `user_missions` |
-| `V10__create_leagues.sql` | `leagues`, `user_league_rewards` |
+| `V10__create_leagues.sql` | `leagues` (+ le quattro leghe), `user_league_rewards` |
 
 L'ordine conta: ogni file crea tabelle che dipendono solo da quelle dei file precedenti. I riferimenti "all'indietro" si aggiungono con un `ALTER TABLE` appena esiste la tabella di arrivo: `factions.lord_card_id` dopo `cards` (V2), `users.starter_faction_id` dopo `factions` (V2), `users.ranked_deck_id` dopo `decks` (V3).
 
@@ -810,7 +814,7 @@ Flyway esegue le migration in ordine di numero. Una migration già eseguita **no
 
 ### Convenzioni del catalogo
 
-- **Codice carta:** `<codice espansione>-<numero a 3 cifre>`, es. `BASE-001`, `EXP1-012`.
+- **Codice carta:** `<codice espansione>-<numero a 3 cifre>`, es. `BASE-001`, `EXP1-012`. La full art aggiunge `-FA`: `BASE-004-FA`.
 - **Illustrazioni:** l'originale ha il nome del codice in minuscolo, es. `base-004.png`, e la full art `base-004-fullart.png`, come nella cartella `carte/illustrazioni`. Resta PNG, con i suoi metadati. Le copie servite al browser aggiungono la versione e, per la miniatura, `-thumb`:
 
   | File | Esempio | Uso |
@@ -818,7 +822,7 @@ Flyway esegue le migration in ordine di numero. Una migration già eseguita **no
   | Originale | `base-004.png` | Archivio, non servito |
   | Grande | `/images/cards/base-004-v1.webp` | `illustration_url` |
   | Miniatura | `/images/cards/base-004-v1-thumb.webp` | `illustration_thumb_url` |
-  | Full art grande e miniatura | `/images/cards/base-004-fullart-v1.webp`, `…-v1-thumb.webp` | `full_art_illustration_url`, `full_art_thumb_url` |
+  | Full art grande e miniatura (carta `BASE-004-FA`) | `/images/cards/base-004-fullart-v1.webp`, `…-v1-thumb.webp` | `illustration_url`, `illustration_thumb_url` della full art |
 
   Quelle del catalogo ufficiale stanno nel repository; quelle caricate dal backoffice nel volume dei file caricati.
 - **Cornici e simboli:** file statici del frontend, uno per fazione e rarità, con la finestra trasparente e le coordinate delle zone (nome, simbolo, testi, ATT, DIF).
@@ -912,11 +916,11 @@ Quello che resta da decidere prima delle migration. Le decisioni già prese, con
 | Nuovi pacchetti in vendita | Tipi, nomi, prezzi, slot e pesi dei pacchetti oltre al Dream Pack (richiesta del cliente) | Un pacchetto più caro con lo slot speciale più ricco; eventuali pacchetti di fazione o a tempo | Maie + Nicolas |
 | Numero di carte del catalogo | 99 o 102 (risposta del cliente) | 102, cioè 34 per fazione | Nicolas + Maie |
 | Punti vita e limite di round | 20 punti vita confermati dal cliente, da verificare con le simulazioni del motore (#87) | 20 punti vita e 60 round finché non si decide | Marco + Maie |
-| Leghe | Punteggio minimo di ogni lega e premio in DC | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500; premi da proporre | Maie |
+| Leghe | Punteggio minimo di ogni lega e premio in DC | Le quattro leghe sono già in `V10` con le soglie proposte (Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500) e premio 0: soglie e premi si cambiano dal backoffice | Maie |
 | Crediti a chi viene scelto dal matchmaking | Se vince il giocatore scelto come avversario (anche non collegato), riceve i 30 DC? | No: i DC della vittoria vanno solo a chi ha avviato la partita; il rank cambia per tutti e due | Maie + SWD |
-| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici | Maie + Nicolas |
+| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici. Lo schema è già pronto (`missions.match_type`): basta cambiare il dato | Maie + Nicolas |
 | Distanza del matchmaking | Quanto può essere lontano il punteggio dell'avversario in una classificata | ±100, poi si allarga di 100 alla volta fino a ±400, poi chiunque | SWD |
-| Skin e animazioni | Deciso: Backlog, lo schema non cambia. Da dire al cliente | Tabelle `cosmetics` e `user_cosmetics` quando si fanno | Sara + Gaia |
+| Skin e animazioni | Deciso: Backlog. Da dire al cliente | Le skin saranno versioni delle carte, come la full art (`cards.variant_type`, [decisione 025](../decisioni/025-versioni-delle-carte.md)); le animazioni non toccano il database | Sara + Gaia |
 
 ---
 
@@ -977,6 +981,22 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### Correzioni prima delle migration (#69)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Vincitore della partita | Qualunque utente | Uno dei due giocatori o nessuno (`chk_matches_winner`) |
+| Punti vita finali | Anche negativi | Mai sotto 0 (`chk_matches_life_points`) |
+| `users.username` | `VARCHAR(30)` | `VARCHAR(40)`: ci sta lo username dell'account anonimizzato (`deleted-` + id); alla registrazione il limite resta 30 |
+| Missioni | Contavano sempre tutte le partite | `missions.match_type`: `NULL` = tutte, `CASUAL` o `RANKED`; per ora `NULL` per tutte e due |
+| Leghe | Tabella vuota | Le quattro leghe in `V10` con le soglie proposte e premio 0; `user_league_rewards.match_id` per mostrare la lega raggiunta nel risultato della partita |
+| Partite | Nessuna indicazione sulla concorrenza | Righe dei due giocatori bloccate prima di calcolare punteggio e limiti giornalieri |
+| Full art | Copia rara della stessa carta (`user_cards.full_art_quantity`, `deck_cards.is_full_art`, `trade_items.is_full_art`, `pack_opening_cards.is_full_art`, colonne `full_art_*` in `cards`) | Carta a parte con il suo id: `cards.base_card_id` e `variant_type = 'FULL_ART'`, senza statistiche proprie; tolte tutte le colonne `full_art_*` e `is_full_art` tranne `packs.full_art_chance` ([decisione 025](../decisioni/025-versioni-delle-carte.md)) |
+| Carte disattivate | Nessuna regola | Non si usano nei mazzi: mazzo non valido e avviso al giocatore ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
+| Amicizia tolta o account cancellato | Scambi e sfide in attesa restavano aperti | Si annullano da soli ([decisione 026](../decisioni/026-carte-disattivate-e-amicizie-tolte.md)) |
+| Effetto "Non Sequitur" | "Non Sequitur X" | Senza valore (`has_value = FALSE`) ([decisione 027](../decisioni/027-effetto-non-sequitur.md)) |
+| Catalogo degli effetti | I 23 della lista di Nicolas | 19 effetti, versione provvisoria da bilanciare: 9 tolti, alcuni cambiati, 5 nuovi; lo schema non cambia ([decisione 028](../decisioni/028-catalogo-degli-effetti.md)) |
 
 ### 4 novembre 2026: copie bloccate negli scambi
 

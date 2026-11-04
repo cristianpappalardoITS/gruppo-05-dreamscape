@@ -18,7 +18,7 @@ Il brief chiede scambi in quantità diverse, solo se il destinatario accetta. Il
 - **Lista amici**: A manda la richiesta, B la accetta. Nessun limite di amici né di richieste.
 - **Scambi solo tra amici**, quantità e rarità libere (es. 1 Epica per 5 Comuni), sempre solo se l'altro accetta. Niente crediti negli scambi.
 - Le carte offerte **non si bloccano**: all'accettazione si ricontrolla tutto e, se mancano carte o l'amicizia è stata tolta, lo scambio si annulla da solo con un messaggio. *Sostituito il 4/11 da [024](024-copie-bloccate-negli-scambi.md).*
-- Scambi e sfide in attesa **non scadono**: chi propone può annullare.
+- Scambi e sfide in attesa **non scadono**: chi propone può annullare. *Se si toglie l'amicizia si annullano da soli: completato il 4/11 da [026](026-carte-disattivate-e-amicizie-tolte.md).*
 - Al posto delle notifiche, un **contatore** delle richieste in attesa nel menu.
 
 ## Motivazione

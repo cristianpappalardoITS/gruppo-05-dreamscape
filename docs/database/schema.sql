@@ -3,7 +3,7 @@
 -- PostgreSQL 18 o successivo (serve uuidv7())
 --
 -- Il file è diviso nelle future migration Flyway: ogni blocco "V#__nome"
--- diventerà un file in backend/src/main/resources/db/migration/.
+-- diventerà un file in sviluppo/backend/src/main/resources/db/migration/.
 -- Spiegazione delle scelte: docs/database/schema.md
 -- Regolamento di riferimento: docs/proposte/proposta-regolamento-dreamscape.pdf
 --
@@ -40,9 +40,11 @@
 -- privacy_accepted_at / terms_accepted_at: quando il giocatore ha accettato Privacy Policy
 -- e Termini di servizio alla registrazione. Obbligatori per i giocatori; l'admin, creato
 -- all'avvio da variabili d'ambiente, non passa dalla registrazione.
+-- username: alla registrazione al massimo 30 caratteri (lo controlla il service). La colonna
+-- ne tiene 40 per l'account cancellato, che diventa 'deleted-' + id senza trattini.
 CREATE TABLE users (
     id                  UUID        NOT NULL DEFAULT uuidv7(),
-    username            VARCHAR(30)  NOT NULL,
+    username            VARCHAR(40)  NOT NULL,
     email               VARCHAR(255) NOT NULL,
     password_hash       VARCHAR(255) NOT NULL,
     role                VARCHAR(20)  NOT NULL DEFAULT 'PLAYER',
@@ -174,71 +176,92 @@ CREATE TABLE card_sets (
     CONSTRAINT uq_card_sets_name UNIQUE (name)
 );
 
--- Le carte del catalogo (tutte creature). Una carta posseduta da qualcuno
--- non si cancella: si disattiva con is_active = FALSE.
+-- Le carte del catalogo (tutte creature) e le loro versioni.
 -- code è un identificativo stabile (es. BASE-001): resta uguale anche se il nome
 -- cambia, si usa nelle migration con i dati e per il nome dei file immagine.
+-- Versioni: la full art (domani anche le skin) è una carta con il suo id e il suo codice
+-- (es. BASE-004-FA), collegata alla carta normale da base_card_id. Per collezione, mazzi,
+-- scambi e aperture è una carta diversa, ma non ha statistiche proprie: nome, descrizione,
+-- ATT, DIF, fazione, rarità ed effetto si leggono dalla carta base (nella versione sono
+-- NULL), così una modifica dal backoffice vale per tutte le versioni. Nel mazzo le
+-- versioni della stessa carta contano insieme per le copie massime (lo controlla il service).
+-- variant_type: NULL = carta normale; FULL_ART = illustrazione verticale 2:3 su tutta la
+-- carta, senza cornice. Una versione non ha a sua volta versioni (lo controlla il service).
 -- La carta la monta il frontend in JavaScript: illustrazione, cornice della fazione e
 -- della rarità, simbolo, nome, testi, ATT e DIF. Qui si salvano solo l'illustrazione
 -- e il suo ritaglio; cornici e simboli sono file del frontend.
--- illustration_url: illustrazione orizzontale 3:2 della carta normale.
--- full_art_illustration_url: illustrazione verticale 2:3 della versione full art
--- (solo Leggendarie, controllato dal service). La full art è la stessa carta.
--- *_focus_y: ritaglio verticale dell'illustrazione, da 0 (in alto) a 1 (in basso),
+-- illustration_url: illustrazione della carta (3:2 per la normale, 2:3 per la full art).
+-- illustration_focus_y: ritaglio verticale, da 0 (in alto) a 1 (in basso),
 -- come la colonna centro_y del compositore (es. Il Sogno Lucido 0.27).
 -- Immagini: il PNG originale resta intatto, con i suoi metadati, e non si serve al
 -- browser. Dall'originale si creano due copie WebP: grande (larghezza 1024 px) e
--- miniatura (larghezza 400 px). *_url = copia grande, *_thumb_url = miniatura.
--- Il nome del file ha un numero di versione (es. base-004-v1.webp): una nuova
--- illustrazione ha un nome nuovo, così il browser tiene i file in cache per sempre.
+-- miniatura (larghezza 400 px). illustration_url = copia grande, illustration_thumb_url
+-- = miniatura. Il nome del file ha un numero di versione (es. base-004-v1.webp): una
+-- nuova illustrazione ha un nome nuovo, così il browser tiene i file in cache per sempre.
 -- attack >= 1: con attacco almeno 1 ogni round toglie difesa e la partita va avanti.
+-- is_active = FALSE: la carta non esce più dai pacchetti e non si può usare nei mazzi.
+-- Chi la possiede la tiene; i mazzi che la contengono diventano non validi e il
+-- giocatore viene avvisato. Una carta posseduta da qualcuno non si cancella mai.
+-- Se la carta base è disattivata, valgono come disattivate anche le sue versioni.
 CREATE TABLE cards (
-    id                        UUID        NOT NULL DEFAULT uuidv7(),
-    code                      VARCHAR(20)  NOT NULL,
-    name                      VARCHAR(80)  NOT NULL,
-    description               TEXT         NULL,
-    attack                    INT          NOT NULL,
-    defense                   INT          NOT NULL,
-    faction_id                UUID         NOT NULL,
-    rarity_id                 UUID         NOT NULL,
-    card_set_id               UUID         NOT NULL,
-    illustration_url          VARCHAR(500) NULL,
-    illustration_thumb_url    VARCHAR(500) NULL,
-    illustration_focus_y      NUMERIC(3,2) NOT NULL DEFAULT 0.40,
-    full_art_illustration_url VARCHAR(500) NULL,
-    full_art_thumb_url        VARCHAR(500) NULL,
-    full_art_focus_y          NUMERIC(3,2) NOT NULL DEFAULT 0.40,
-    is_active                 BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at                TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    updated_at                TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    id                     UUID         NOT NULL DEFAULT uuidv7(),
+    code                   VARCHAR(20)  NOT NULL,
+    base_card_id           UUID         NULL,
+    variant_type           VARCHAR(20)  NULL,
+    name                   VARCHAR(80)  NULL,
+    description            TEXT         NULL,
+    attack                 INT          NULL,
+    defense                INT          NULL,
+    faction_id             UUID         NULL,
+    rarity_id              UUID         NULL,
+    card_set_id            UUID         NOT NULL,
+    illustration_url       VARCHAR(500) NULL,
+    illustration_thumb_url VARCHAR(500) NULL,
+    illustration_focus_y   NUMERIC(3,2) NOT NULL DEFAULT 0.40,
+    is_active              BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at             TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at             TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CONSTRAINT pk_cards PRIMARY KEY (id),
     CONSTRAINT uq_cards_code UNIQUE (code),
     CONSTRAINT uq_cards_name UNIQUE (name),
+    CONSTRAINT fk_cards_base_card FOREIGN KEY (base_card_id) REFERENCES cards (id),
     CONSTRAINT fk_cards_faction FOREIGN KEY (faction_id) REFERENCES factions (id),
     CONSTRAINT fk_cards_rarity FOREIGN KEY (rarity_id) REFERENCES rarities (id),
     CONSTRAINT fk_cards_card_set FOREIGN KEY (card_set_id) REFERENCES card_sets (id),
+    CONSTRAINT chk_cards_variant_type CHECK (variant_type IS NULL OR variant_type IN ('FULL_ART')),
+    -- La carta normale ha tutti i suoi dati; la versione nessuno, li prende dalla base
+    CONSTRAINT chk_cards_variant CHECK (
+        (base_card_id IS NULL AND variant_type IS NULL AND name IS NOT NULL AND attack IS NOT NULL
+         AND defense IS NOT NULL AND faction_id IS NOT NULL AND rarity_id IS NOT NULL)
+        OR (base_card_id IS NOT NULL AND variant_type IS NOT NULL AND name IS NULL AND description IS NULL
+            AND attack IS NULL AND defense IS NULL AND faction_id IS NULL AND rarity_id IS NULL)),
+    CONSTRAINT chk_cards_not_own_base CHECK (base_card_id <> id),
     CONSTRAINT chk_cards_attack CHECK (attack >= 1),
     CONSTRAINT chk_cards_defense CHECK (defense >= 1),
-    CONSTRAINT chk_cards_focus CHECK (illustration_focus_y BETWEEN 0 AND 1 AND full_art_focus_y BETWEEN 0 AND 1),
+    CONSTRAINT chk_cards_focus CHECK (illustration_focus_y BETWEEN 0 AND 1),
     -- Copia grande e miniatura ci sono sempre insieme
-    CONSTRAINT chk_cards_thumbs CHECK ((illustration_url IS NULL) = (illustration_thumb_url IS NULL)
-                                       AND (full_art_illustration_url IS NULL) = (full_art_thumb_url IS NULL))
+    CONSTRAINT chk_cards_thumbs CHECK ((illustration_url IS NULL) = (illustration_thumb_url IS NULL))
 );
+
+-- Le versioni di una carta; al massimo una full art per carta.
+CREATE INDEX idx_cards_base_card ON cards (base_card_id);
+CREATE UNIQUE INDEX uq_cards_full_art ON cards (base_card_id) WHERE variant_type = 'FULL_ART';
 
 -- Ora che factions esiste, si collega la fazione del set iniziale scelta dal giocatore.
 ALTER TABLE users ADD CONSTRAINT fk_users_starter_faction FOREIGN KEY (starter_faction_id) REFERENCES factions (id);
 
 -- Ora che cards esiste, si collega il Lord di ogni fazione alla sua carta.
--- Che sia una Leggendaria della stessa fazione lo controlla il service.
+-- Che sia una Leggendaria normale (non una versione) della stessa fazione lo controlla il service.
 ALTER TABLE factions
     ADD CONSTRAINT fk_factions_lord_card FOREIGN KEY (lord_card_id) REFERENCES cards (id);
 
--- Catalogo degli effetti (lista proposta da Nicolas). Gli effetti fanno parte della
--- modalità Base: valgono in ogni partita.
+-- Catalogo degli effetti (decisione 028: catalogo provvisorio, da bilanciare; gli effetti
+-- si aggiungono o tolgono con migration di dati). Fanno parte della modalità Base:
+-- valgono in ogni partita.
 -- code collega la riga all'implementazione Java nel motore di gioco.
 -- trigger_event dice quando agisce l'effetto:
 --   ON_PLAY      quando la carta viene giocata (fase iniziale)
---   WHILE_IN_PLAY finché la carta resta in campo (es. Protezione, Indebolimento)
+--   WHILE_IN_PLAY finché la carta resta in campo (es. Barriera, Culla)
 --   END_OF_ROUND alla fine di ogni round, se la carta è ancora in campo
 --   ON_DEATH     quando la carta viene uccisa
 --   ON_KILL      quando la carta uccide una creatura avversaria
@@ -261,10 +284,11 @@ CREATE TABLE effects (
 );
 
 -- Gli effetti di ogni carta. Lo stesso effetto può avere valori diversi
--- su carte diverse (es. "Protezione {value}": 1 su una carta, 2 su un'altra).
+-- su carte diverse (es. "Castigo {value}": 1 su una carta, 2 su un'altra).
 -- effect_value è NULL per gli effetti che non hanno un numero (es. Neutralità).
 -- Il regolamento attuale prevede un solo effetto per carta: lo controlla il service,
 -- così lo schema resta pronto se in futuro se ne vorranno di più.
+-- Gli effetti stanno solo sulle carte normali: le versioni (full art) usano quelli della base.
 CREATE TABLE card_effects (
     id           UUID        NOT NULL DEFAULT uuidv7(),
     card_id      UUID   NOT NULL,
@@ -282,21 +306,19 @@ CREATE TABLE card_effects (
 -- ============================================================================
 
 -- La collezione: una riga per (utente, carta) con il numero di copie.
--- quantity conta TUTTE le copie; full_art_quantity quante di queste sono full art.
+-- La full art è una carta a parte: ha la sua riga, con le sue copie.
 -- Quando quantity arriverebbe a 0 la riga si cancella.
 CREATE TABLE user_cards (
     id                UUID        NOT NULL DEFAULT uuidv7(),
     user_id           UUID        NOT NULL,
     card_id           UUID        NOT NULL,
     quantity          INT         NOT NULL,
-    full_art_quantity INT         NOT NULL DEFAULT 0,
     acquired_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT pk_user_cards PRIMARY KEY (id),
     CONSTRAINT uq_user_cards_user_card UNIQUE (user_id, card_id),
     CONSTRAINT fk_user_cards_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_cards_card FOREIGN KEY (card_id) REFERENCES cards (id),
-    CONSTRAINT chk_user_cards_quantity CHECK (quantity > 0),
-    CONSTRAINT chk_user_cards_full_art CHECK (full_art_quantity >= 0 AND full_art_quantity <= quantity)
+    CONSTRAINT chk_user_cards_quantity CHECK (quantity > 0)
 );
 
 CREATE TABLE decks (
@@ -316,23 +338,20 @@ CREATE TABLE decks (
 ALTER TABLE users ADD CONSTRAINT fk_users_ranked_deck FOREIGN KEY (ranked_deck_id) REFERENCES decks (id) ON DELETE SET NULL;
 
 -- Le carte di un mazzo. I vincoli del regolamento (20 carte, copie massime per rarità,
--- limiti per TIER, possesso delle carte) si verificano nel service, non qui.
--- Full art e copia normale sono la stessa carta: nel mazzo contano insieme.
--- is_full_art: il giocatore sceglie di mostrare la full art nel mazzo e in partita.
--- Vale solo per le carte con full art (Leggendarie, 1 copia per mazzo) e solo se
--- l'utente possiede una copia full art: lo controlla il service.
+-- limiti per TIER, possesso delle carte, carte attive) si verificano nel service, non qui.
+-- card_id può essere una versione (es. la full art): il giocatore mette nel mazzo la
+-- versione che vuole mostrare. Le versioni della stessa carta contano insieme per le
+-- copie massime (es. una Leggendaria: 1 copia, normale o full art).
 CREATE TABLE deck_cards (
-    id          UUID    NOT NULL DEFAULT uuidv7(),
-    deck_id     UUID    NOT NULL,
-    card_id     UUID    NOT NULL,
-    quantity    INT     NOT NULL,
-    is_full_art BOOLEAN NOT NULL DEFAULT FALSE,
+    id       UUID NOT NULL DEFAULT uuidv7(),
+    deck_id  UUID NOT NULL,
+    card_id  UUID NOT NULL,
+    quantity INT  NOT NULL,
     CONSTRAINT pk_deck_cards PRIMARY KEY (id),
     CONSTRAINT uq_deck_cards_deck_card UNIQUE (deck_id, card_id),
     CONSTRAINT fk_deck_cards_deck FOREIGN KEY (deck_id) REFERENCES decks (id) ON DELETE CASCADE,
     CONSTRAINT fk_deck_cards_card FOREIGN KEY (card_id) REFERENCES cards (id),
-    CONSTRAINT chk_deck_cards_quantity CHECK (quantity > 0),
-    CONSTRAINT chk_deck_cards_full_art CHECK (NOT is_full_art OR quantity = 1)
+    CONSTRAINT chk_deck_cards_quantity CHECK (quantity > 0)
 );
 
 
@@ -357,8 +376,9 @@ CREATE TABLE deck_cards (
 -- Solo i pacchetti SHOP hanno un prezzo; gli altri non si possono comprare.
 -- card_set_id: se valorizzato, il pacchetto pesca solo le carte di quell'espansione;
 -- NULL = pesca da tutte le espansioni attive.
--- full_art_chance: probabilità (in percentuale) che una carta con versione full art
--- esca come full art. Si regola per pacchetto, es. più alta in un pacchetto speciale.
+-- Si estraggono solo carte normali; poi, se la carta estratta ha una versione full art,
+-- con probabilità full_art_chance (in percentuale) esce quella versione al suo posto.
+-- Si regola per pacchetto, es. più alta in un pacchetto speciale.
 -- Dream Pack: 20% delle Leggendarie, cioè l'1% del pacchetto.
 CREATE TABLE packs (
     id              UUID        NOT NULL DEFAULT uuidv7(),
@@ -462,12 +482,11 @@ CREATE TABLE pack_openings (
 CREATE INDEX idx_pack_openings_user_opened ON pack_openings (user_id, opened_at);
 
 -- Le carte uscite da un'apertura: una riga per carta (i doppioni sono righe diverse).
--- is_full_art = TRUE se la copia è uscita in versione full art.
+-- card_id è la carta uscita: la full art, se è uscita quella.
 CREATE TABLE pack_opening_cards (
-    id              UUID        NOT NULL DEFAULT uuidv7(),
-    pack_opening_id UUID    NOT NULL,
-    card_id         UUID    NOT NULL,
-    is_full_art     BOOLEAN NOT NULL DEFAULT FALSE,
+    id              UUID NOT NULL DEFAULT uuidv7(),
+    pack_opening_id UUID NOT NULL,
+    card_id         UUID NOT NULL,
     CONSTRAINT pk_pack_opening_cards PRIMARY KEY (id),
     CONSTRAINT fk_pack_opening_cards_opening FOREIGN KEY (pack_opening_id) REFERENCES pack_openings (id) ON DELETE CASCADE,
     CONSTRAINT fk_pack_opening_cards_card FOREIGN KEY (card_id) REFERENCES cards (id)
@@ -530,7 +549,7 @@ CREATE INDEX idx_trades_proposer_status ON trades (proposer_id, status);
 
 -- Le carte dello scambio. side = OFFERED (le dà chi propone)
 -- oppure REQUESTED (le dà chi riceve). Permette scambi 3 contro 1, 1 contro 5...
--- is_full_art distingue le copie full art da quelle normali della stessa carta.
+-- La full art è una carta a parte: si scambia con il suo card_id.
 -- Le copie OFFERED di uno scambio PENDING sono bloccate per gli altri scambi di chi
 -- propone (le conta il service da qui), ma restano usabili nei mazzi.
 CREATE TABLE trade_items (
@@ -538,10 +557,9 @@ CREATE TABLE trade_items (
     trade_id    UUID        NOT NULL,
     card_id     UUID        NOT NULL,
     side        VARCHAR(10) NOT NULL,
-    is_full_art BOOLEAN     NOT NULL DEFAULT FALSE,
     quantity    INT         NOT NULL,
     CONSTRAINT pk_trade_items PRIMARY KEY (id),
-    CONSTRAINT uq_trade_items_trade_card_side UNIQUE (trade_id, card_id, side, is_full_art),
+    CONSTRAINT uq_trade_items_trade_card_side UNIQUE (trade_id, card_id, side),
     CONSTRAINT fk_trade_items_trade FOREIGN KEY (trade_id) REFERENCES trades (id) ON DELETE CASCADE,
     CONSTRAINT fk_trade_items_card FOREIGN KEY (card_id) REFERENCES cards (id),
     CONSTRAINT chk_trade_items_side CHECK (side IN ('OFFERED', 'REQUESTED')),
@@ -622,10 +640,11 @@ CREATE INDEX idx_challenges_challenger_status ON challenges (challenger_id, stat
 -- starting_life_points e round_limit: copia dei valori della modalità usati in questa
 -- partita, così lo storico resta corretto anche se la modalità cambia.
 -- *_deck_snapshot: copia dei mazzi al momento della partita (carte con ATT, DIF, fazione,
--- effetti e se mostrare la full art).
+-- effetti e la versione usata, es. la full art).
 -- round_log: lo svolgimento round per round, così come lo restituisce il motore.
 -- random_seed: permette di rigiocare la stessa partita per verifiche e test
 -- (decide anche il lancio della moneta per l'ordine degli effetti).
+-- *_life_points: punti vita alla fine, mai sotto 0 (il motore si ferma a 0).
 -- *_rating_change: variazione del punteggio di rank; NULL se la partita non conta
 -- per il rank (partita rapida, o classificata oltre la terza del giorno contro lo
 -- stesso avversario).
@@ -656,6 +675,9 @@ CREATE TABLE matches (
     CONSTRAINT fk_matches_opponent FOREIGN KEY (opponent_id) REFERENCES users (id),
     -- Niente ON DELETE SET NULL: una vittoria non deve mai diventare un pareggio.
     CONSTRAINT fk_matches_winner FOREIGN KEY (winner_id) REFERENCES users (id),
+    -- Vince uno dei due giocatori, oppure nessuno (pareggio).
+    CONSTRAINT chk_matches_winner CHECK (winner_id IS NULL OR winner_id IN (challenger_id, opponent_id)),
+    CONSTRAINT chk_matches_life_points CHECK (challenger_life_points >= 0 AND opponent_life_points >= 0),
     CONSTRAINT chk_matches_type CHECK (match_type IN ('CASUAL', 'RANKED')),
     CONSTRAINT chk_matches_different_users CHECK (challenger_id <> opponent_id),
     -- Le sfide tra amici sono solo partite rapide.
@@ -743,6 +765,9 @@ CREATE INDEX idx_contact_messages_status_created ON contact_messages (status, cr
 -- il lunedì a mezzanotte, ora italiana.
 -- goal_type: cosa si conta, es. PLAY_MATCHES (partite giocate) o WIN_MATCHES (vittorie).
 -- goal_count: quante volte farlo; reward_credits: il premio in DC.
+-- match_type: quali partite contano. NULL = tutte; CASUAL = solo rapide; RANKED = solo
+-- classificate. Quali partite contano per le due missioni lo decidono Maie e Nicolas
+-- (proposta: giornaliera tutte, settimanale solo RANKED): basta cambiare il dato.
 CREATE TABLE missions (
     id             UUID        NOT NULL DEFAULT uuidv7(),
     code           VARCHAR(40)  NOT NULL,
@@ -752,13 +777,15 @@ CREATE TABLE missions (
     goal_type      VARCHAR(30)  NOT NULL,
     goal_count     INT          NOT NULL,
     reward_credits INT          NOT NULL,
+    match_type     VARCHAR(10)  NULL,
     is_active      BOOLEAN      NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_missions PRIMARY KEY (id),
     CONSTRAINT uq_missions_code UNIQUE (code),
     CONSTRAINT chk_missions_period CHECK (period IN ('DAILY', 'WEEKLY')),
     CONSTRAINT chk_missions_goal_type CHECK (goal_type IN ('PLAY_MATCHES', 'WIN_MATCHES')),
     CONSTRAINT chk_missions_goal_count CHECK (goal_count > 0),
-    CONSTRAINT chk_missions_reward CHECK (reward_credits >= 0)
+    CONSTRAINT chk_missions_reward CHECK (reward_credits >= 0),
+    CONSTRAINT chk_missions_match_type CHECK (match_type IS NULL OR match_type IN ('CASUAL', 'RANKED'))
 );
 
 -- L'avanzamento di ogni giocatore in ogni missione, per periodo.
@@ -783,7 +810,7 @@ CREATE TABLE user_missions (
 );
 
 -- Le due missioni della versione semplice. I premi sono quelli confermati dal cliente;
--- che cosa si conta lo propongono Maie e Nicolas.
+-- che cosa si conta lo propongono Maie e Nicolas: per ora contano tutte le partite (match_type NULL).
 INSERT INTO missions (code, name, description, period, goal_type, goal_count, reward_credits) VALUES
     ('DAILY_PLAY', 'Missione giornaliera', 'Gioca una partita.', 'DAILY', 'PLAY_MATCHES', 1, 100),
     ('WEEKLY_WIN', 'Obiettivo settimanale', 'Vinci 5 partite.', 'WEEKLY', 'WIN_MATCHES', 5, 250);
@@ -814,15 +841,27 @@ CREATE TABLE leagues (
 -- Le leghe raggiunte da ogni giocatore. Una riga nasce la prima volta che entra nella
 -- lega e non si cancella se poi scende: per questo il premio arriva una volta sola.
 -- credit_transaction_id è NULL se la lega non ha premio.
+-- match_id: la partita con cui si è entrati nella lega, per mostrarlo nel risultato
+-- (leagueReached) anche se si ricarica la pagina.
 CREATE TABLE user_league_rewards (
     id                    UUID        NOT NULL DEFAULT uuidv7(),
     user_id               UUID        NOT NULL,
     league_id             UUID        NOT NULL,
     reached_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    match_id              UUID        NULL,
     credit_transaction_id UUID        NULL,
     CONSTRAINT pk_user_league_rewards PRIMARY KEY (id),
     CONSTRAINT uq_user_league_rewards_user_league UNIQUE (user_id, league_id),
     CONSTRAINT fk_user_league_rewards_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_user_league_rewards_league FOREIGN KEY (league_id) REFERENCES leagues (id),
+    CONSTRAINT fk_user_league_rewards_match FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE SET NULL,
     CONSTRAINT fk_user_league_rewards_credit FOREIGN KEY (credit_transaction_id) REFERENCES credit_transactions (id) ON DELETE SET NULL
 );
+
+-- Le quattro leghe con le soglie proposte. I premi restano a 0 finché Maie non li decide:
+-- soglie e premi si cambiano dal backoffice. Chi si registra parte da 1000, cioè Dormiente.
+INSERT INTO leagues (code, name, min_rating, reward_credits) VALUES
+    ('DORMANT',     'Dormiente',   0,    0),
+    ('DREAMER',     'Sognatore',   1100, 0),
+    ('LUCID',       'Lucido',      1300, 0),
+    ('DREAMWEAVER', 'Dreamweaver', 1500, 0);

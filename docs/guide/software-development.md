@@ -80,7 +80,7 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 | Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie 2, Epiche 4, Rare 8. Si salvano solo i mazzi validi | `GameRules`, `rarities` |
 | Partita | 20 punti vita (confermati dal cliente, da verificare con #87), max 60 round, poi pareggio | `game_modes`, copiati in `matches` |
 | Vantaggio di fazione | Dreams → Memories → Nightmares → Dreams, **+1 ATT** | `faction_advantages` |
-| Effetti | I 23 della [lista di Nicolas](../../carte/effetti/Effetti%20Keyword%20Descrizioni.txt), al massimo uno per carta | `effects`, `card_effects` |
+| Effetti | I 19 del [catalogo provvisorio](../decisioni/028-catalogo-degli-effetti.md), al massimo uno per carta: da bilanciare, si possono aggiungere o togliere | `effects`, `card_effects` |
 
 ### Regole del gioco già decise
 
@@ -188,7 +188,7 @@ La proposta è in `docs/proposte/rilascio-aws.md`, sul branch `docs/rilascio-aws
 | #80 Collezione e mazzi | Cristian | 4 | Mazzi non validi (domanda 5) |
 | #78 Crediti e Dream Pack | Marco | 4 | Numeri della sezione 3; apertura immediata (domanda 16) |
 | #79 Round del motore senza effetti | Marco | 4 | Regolamento, esempio del round 3 |
-| #86 Effetti nel motore | Cristian | 5 | Lista di Nicolas, un test per effetto |
+| #86 Effetti nel motore | Cristian | 5 | Catalogo della [decisione 028](../decisioni/028-catalogo-degli-effetti.md), un test per effetto |
 | #87 Simulazioni di punti vita e round | Marco, con Maie | 5 | Punti vita e round (domanda 11, risposta del cliente) |
 
 ## 8. A chi chiedere

@@ -21,5 +21,5 @@ Il catalogo è già passato da circa 30 a circa 100 carte, e il lavoro di Digita
 
 ## Conseguenze
 - Va detto al cliente.
-- Quando si fanno, si aggiungono tabelle nuove con una migration, senza toccare quelle esistenti.
+- Quando si fanno, si aggiungono tabelle nuove con una migration, senza toccare quelle esistenti. *Per le skin delle carte, dal 4/11 sono versioni delle carte come la full art ([025](025-versioni-delle-carte.md)): basta un nuovo `variant_type`.*
 - Il retro di base resta quello scelto dal cliente: il monolite sul lago ([022](022-risposte-del-cliente.md)).

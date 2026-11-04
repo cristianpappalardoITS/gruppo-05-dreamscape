@@ -2,8 +2,9 @@
 -- Schema del database di Dreamscape · PROPOSTA DA VERIFICARE (non ancora approvata)
 -- PostgreSQL 18 o successivo (serve uuidv7())
 --
--- Il file è diviso nelle future migration Flyway: ogni blocco "V#__nome"
--- diventerà un file in sviluppo/backend/src/main/resources/db/migration/.
+-- Il file è diviso nelle migration Flyway: ogni blocco "V#__nome" è un file in
+-- sviluppo/backend/src/main/resources/db/migration/. Se cambia lo schema, si cambiano
+-- insieme questo file e una migration nuova (quelle già applicate non si toccano).
 -- Spiegazione delle scelte: docs/database/schema.md
 -- Regolamento di riferimento: docs/proposte/proposta-regolamento-dreamscape.pdf
 --
@@ -269,6 +270,9 @@ ALTER TABLE factions
 -- has_value: TRUE se l'effetto ha il valore X (es. "Indebolimento 2"). Il backoffice chiede
 -- il numero solo per questi effetti; il service controlla che card_effects.effect_value
 -- ci sia se e solo se has_value è TRUE.
+-- is_active = FALSE: l'effetto è spento e non si può più assegnare alle carte. Il catalogo è
+-- provvisorio (decisione 028): così un effetto si toglie senza cancellare la riga. Le carte che
+-- lo hanno già si cambiano con una migration di dati.
 CREATE TABLE effects (
     id            UUID        NOT NULL DEFAULT uuidv7(),
     code          VARCHAR(50)  NOT NULL,
@@ -276,6 +280,7 @@ CREATE TABLE effects (
     description   VARCHAR(255) NOT NULL,
     trigger_event VARCHAR(20)  NOT NULL,
     has_value     BOOLEAN      NOT NULL DEFAULT FALSE,
+    is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
     CONSTRAINT pk_effects PRIMARY KEY (id),
     CONSTRAINT uq_effects_code UNIQUE (code),
     CONSTRAINT uq_effects_name UNIQUE (name),

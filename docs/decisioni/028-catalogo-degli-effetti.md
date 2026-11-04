@@ -50,8 +50,8 @@ Regole comuni:
 Tolti gli effetti che decidono la partita da soli o che possono bloccare il motore, il catalogo è più facile da implementare e da bilanciare. Nessun effetto rimasto tocca il mazzo o la pila degli scarti, tranne Vendetta, che conta soltanto le carte negli scarti. Gli effetti nuovi coprono i ruoli rimasti scoperti: la difesa di Memories e la cura di Dreams.
 
 ## Conseguenze
-- **Provvisorio:** ogni modifica al catalogo (valori, effetti nuovi o tolti) si registra con una decisione nuova o un aggiornamento di questa, e diventa una migration di dati. Un effetto già usato da una carta non si cancella: prima si cambia l'effetto della carta.
-- Lo schema non cambia: i cinque momenti (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) sono tutti usati, `effects.has_value` vale per gli effetti con la X. I codici sono una proposta per la migration dei dati.
+- **Provvisorio:** ogni modifica al catalogo (valori, effetti nuovi o tolti) si registra con una decisione nuova o un aggiornamento di questa, e diventa una migration di dati. Un effetto non si cancella: si spegne (`effects.is_active = FALSE`), così non si assegna più alle carte, e le carte che lo hanno si cambiano con una migration di dati.
+- Lo schema cambia solo per `effects.is_active`, che serve a spegnere un effetto. I cinque momenti (`ON_PLAY`, `WHILE_IN_PLAY`, `END_OF_ROUND`, `ON_DEATH`, `ON_KILL`) sono tutti usati, `effects.has_value` vale per gli effetti con la X. I codici sono una proposta per la migration dei dati.
 - Il motore (#86) ha un test per ogni effetto; i valori di X si scelgono carta per carta nel catalogo (#74) e si verificano con le simulazioni (#87, #103).
 - Carte di prova da riabbinare: Il Rifugio Sicuro (aveva Protezione; la più vicina è Barriera), Il Corridoio Infinito (aveva Ritorno), La Caduta Senza Fine (ancora da scegliere). I Lord (La Custode aveva Eredità difensiva) si decidono insieme agli effetti dei Lord, ancora da discutere.
 - Da dire a Nicolas e Maie; da aggiornare la proposta di regolamento (sezione 6).

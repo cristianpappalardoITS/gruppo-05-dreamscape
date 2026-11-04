@@ -111,20 +111,26 @@ Collections.shuffle(cards);
 
 ## 5. Backend e database
 
-### Struttura (proposta, da fissare nella #68)
+### Struttura
 
 ```
 sviluppo/backend/src/main/java/it/somnia/dreamscape/api/
-├── user/        # registrazione, accesso, profilo, crediti
+├── user/        # registrazione, accesso, profilo, crediti, ricompensa giornaliera
 ├── card/        # catalogo, fazioni, rarità, effetti, regole
-├── pack/        # Dream Pack, aperture, set iniziale e benvenuto
-├── deck/        # collezione e mazzi
+├── pack/        # pacchetti, aperture, set iniziale e benvenuto
+├── deck/        # collezione e mazzi, mazzo classificato
 ├── friend/      # amicizie
 ├── trade/       # scambi
-├── challenge/   # sfide e partite
+├── challenge/   # sfide tra amici
+├── match/       # partite, matchmaking, rank e storico
+├── mission/     # missione giornaliera e obiettivo settimanale
+├── league/      # leghe e premi di lega
+├── contact/     # messaggi del form Contatti
 ├── admin/       # backoffice
-└── common/      # errori, sicurezza, configurazione, FileStorage
+└── common/      # config, security, exception, storage (FileStorage)
 ```
+
+Ogni funzionalità ha `controller/`, `service/`, `repository/`, `model/` e `dto/request/`, `dto/response/` ([regole-codice.md](../regole-codice.md#organizzazione-dei-package-del-backend)).
 
 ### API
 

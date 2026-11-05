@@ -13,7 +13,11 @@ cp .env.example .env
 ./gradlew bootRun
 ```
 
-`bootRun` parte con il profilo `dev`: Docker Compose avvia PostgreSQL 18 e Flyway crea tabelle, dati del regolamento e dati finti.
+`bootRun` parte con il profilo `dev`: Docker Compose avvia PostgreSQL 18 e Mailpit, e Flyway crea tabelle, dati del regolamento e dati finti.
+
+- API su `http://localhost:8080/api/v1`, documentazione Swagger su `http://localhost:8080/swagger-ui.html`, stato su `/actuator/health`.
+- Le email del backend (recupero password) non partono davvero: si leggono in Mailpit, su `http://localhost:8025`.
+- Nel profilo `dev` la chiave JWT è finta e scritta in `application-dev.properties`: alla consegna serve `JWT_SECRET`.
 
 ## Test
 ```bash
@@ -26,6 +30,11 @@ cp .env.example .env
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Database avviato da Docker Compose in sviluppo, nel file `.env` (fuori dal repository) | `dreamscape` |
 | `DB_URL` | URL del database alla consegna | `jdbc:postgresql://localhost:5432/dreamscape` |
 | `DB_USERNAME`, `DB_PASSWORD` | Credenziali del database alla consegna | `dreamscape` |
+| `JWT_SECRET` | Chiave del token di accesso, almeno 32 caratteri casuali. Obbligatoria fuori dal profilo `dev` | (generata con `openssl rand -base64 48`) |
+| `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Primo admin, creato all'avvio se non esiste. Se ne manca uno, nessun admin | `admin` |
+| `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Server SMTP per le email alla consegna. Senza `SPRING_MAIL_HOST` il link di recupero si scrive solo nel log | `smtp.example.com` |
+| `MAIL_FROM` | Mittente delle email | `noreply@dreamscape.local` |
+| `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password.html?token=` |
 
 ## Struttura
 - `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).

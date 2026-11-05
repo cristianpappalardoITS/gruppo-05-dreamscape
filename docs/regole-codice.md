@@ -26,7 +26,7 @@ deck/
         └── DeckResponse.java
 ```
 
-`admin/` non ha `model/` né `repository/`: usa quelli delle altre funzionalità. `common/` ha `config/`, `security/`, `exception/` e `storage/`.
+`admin/` non ha `model/` né `repository/`: usa quelli delle altre funzionalità. `common/` ha `config/`, `security/`, `exception/`, `storage/` e `dto/response/` (la lista paginata `PageResponse`). Le eccezioni di una funzionalità stanno nel suo `service/`.
 
 ## Lingua
 

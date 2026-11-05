@@ -82,6 +82,8 @@ Ogni errore ha lo stesso formato, così si mostra il messaggio senza logica spec
 | `404` | Non esiste (carta, mazzo, scambio...) | Pagina o messaggio "non trovato" |
 | `409` | Conflitto (username già usato, crediti insufficienti, carte non più possedute) | Mostra `message` |
 
+Codici (`code`) che arrivano con ogni API: `VALIDATION_ERROR` (campi sbagliati, con `fieldErrors`), `MALFORMED_REQUEST` (JSON o parametri illeggibili), `UNAUTHORIZED` (token mancante o scaduto), `FORBIDDEN`, `NOT_FOUND`, `CONFLICT` (due richieste insieme sugli stessi dati: si riprova), `INTERNAL_ERROR`. I codici delle singole pagine sono scritti accanto alle loro chiamate.
+
 ---
 
 ## 3. Accesso con JWT
@@ -137,6 +139,20 @@ Esempio di risposta all'accesso:
 - `role` è `PLAYER` oppure `ADMIN`: con `ADMIN` si mostra il backoffice. Un solo login per tutti: l'admin entra dalla stessa pagina.
 - **Regole dei campi** (il backend le ricontrolla sempre): username da 3 a 30 caratteri, lettere, numeri e trattino basso; email valida; password di almeno 8 caratteri; Privacy e Termini obbligatori.
 - Username ed email sono unici **senza distinguere le maiuscole**: "Lucida" e "lucida" sono lo stesso utente.
+- `/auth/refresh` risponde `{ "accessToken": "…", "expiresIn": 900 }` e manda un refresh token **nuovo** nel cookie: quello vecchio non vale più. Il cookie si chiama `dreamscape_refresh` e vale solo per `/api/v1`.
+- Il primo accesso del giorno (ora italiana), con il login o con il refresh all'apertura di una pagina, dà i **50 DC** della ricompensa giornaliera: si vedono in `GET /me/credit-transactions`.
+- Il link dell'email di recupero porta a `nuova-password.html?token=…` (indirizzo da confermare con chi fa la pagina): la pagina manda `token` e `newPassword` a `/auth/password-resets`. Il link vale **1 ora** e una volta sola.
+
+Codici di errore dell'accesso:
+
+| `code` | Stato | Quando |
+|--------|-------|--------|
+| `USERNAME_TAKEN`, `EMAIL_TAKEN` | 409 | Registrazione o cambio email con dati già usati (anche in `fieldErrors`) |
+| `INVALID_CREDENTIALS` | 401 | Login sbagliato: stesso messaggio se manca l'utente o la password è errata |
+| `INVALID_REFRESH_TOKEN` | 401 | Cookie mancante, scaduto o revocato: si va alla pagina di accesso |
+| `ACCOUNT_DISABLED` | 401 | L'account è stato cancellato |
+| `WRONG_PASSWORD` | 400 | Password attuale sbagliata nel cambio password o nella cancellazione dell'account |
+| `INVALID_RESET_TOKEN` | 400 | Link di recupero scaduto o già usato: si chiede un link nuovo |
 
 ---
 

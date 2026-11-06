@@ -6,7 +6,7 @@
 |------|------|-----------------|
 | Panoramica del progetto | `README.md` nella radice | Marco / Cristian |
 | Linee guida (workflow, codice, naming, commenti, template) | `docs/*.md` | Marco / Cristian |
-| Come avviare e usare un modulo | `README.md` dentro `engine/`, `sviluppo/backend/`, `frontend/` | Chi lavora sul modulo |
+| Come avviare e usare un modulo | `README.md` dentro `sviluppo/engine/`, `sviluppo/backend/`, `frontend/` | Chi lavora sul modulo |
 | Classi e metodi | Javadoc nel codice | Chi scrive il codice |
 | Endpoint REST | `docs/api/endpoints.md` | Chi crea o modifica l'endpoint |
 | Decisioni del gruppo (concept, fazioni, valori di gioco...) | `docs/decisioni/` | Marco / Cristian, su comunicazione dei referenti |

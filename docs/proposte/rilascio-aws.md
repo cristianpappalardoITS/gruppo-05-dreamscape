@@ -5,7 +5,7 @@
 
 ## 1. L'idea in breve
 
-- Oggi tutto il progetto gira sul proprio PC con **un solo `docker compose up`**, come chiede la issue #100: un container per il backend Spring Boot (con il motore dentro, come libreria), uno per PostgreSQL e uno per il frontend.
+- Oggi tutto il progetto gira sul proprio PC con **un solo `docker compose up`**, come chiede la issue #100: un container per il backend Spring Boot, uno per il motore di gioco (microservizio, [decisione 029](../decisioni/029-motore-di-gioco.md)), uno per PostgreSQL e uno per il frontend.
 - Su AWS ogni pezzo avrebbe il suo servizio. Il codice resta lo stesso: cambiano **la configurazione** e **poche classi** dietro a un'interfaccia. L'immagine Docker del backend è la stessa che girerebbe sull'EC2.
 - Per questo bastano le [regole del capitolo 4](#4-regole-da-seguire-da-subito), da seguire già adesso.
 
@@ -58,7 +58,7 @@ Non serve un framework come Quarkus o Micronaut: basta una piccola classe `Handl
 | Frontend | Container del frontend | S3 + CloudFront | Niente, se le chiamate usano percorsi relativi |
 | Backend | Container del backend | La stessa immagine Docker su EC2 | Niente: solo variabili d'ambiente |
 | Database | Container di PostgreSQL 18 | RDS per PostgreSQL | Niente: solo `DB_URL`, utente e password |
-| Motore | Libreria chiamata direttamente dal backend | Lambda | Un'altra implementazione di `BattleSimulator` |
+| Motore | Container `engine-service`, chiamato dal backend via HTTP | Lambda con lo stesso `engine-core` (oppure lo stesso container sull'EC2) | Un'altra implementazione di `BattleSimulator` |
 | Immagini | Cartella montata come volume nel container del backend | S3 | Un'altra implementazione di `FileStorage` |
 | Email | Scritte nel log | SNS + SQS + Lambda + SES | Un'altra implementazione di `EmailSender` |
 | Lavori programmati | `@Scheduled` di Spring | EventBridge + Lambda (oppure `@Scheduled` anche su AWS) | Nessuno, se la logica sta in un service |
@@ -68,10 +68,10 @@ Non serve un framework come Quarkus o Micronaut: basta una piccola classe `Handl
 
 ### 4.1 Motore di gioco
 
-- Resta **Java puro**, come dice già [regole-codice.md](../regole-codice.md#motore-di-gioco-engine): niente Spring, JPA, database o HTTP.
+- Il nucleo `engine-core` resta **Java puro**, come dice già [regole-codice.md](../regole-codice.md#motore-di-gioco-sviluppoengine): niente Spring, JPA, database o HTTP. Su Lambda una piccola classe `Handler` prende il posto di `engine-service`.
 - Dati in ingresso e in uscita **semplici e trasformabili in JSON**: record con stringhe, numeri, liste ed enum. Niente oggetti del backend, niente entità JPA, niente riferimenti circolari.
 - Il `Random` arriva da fuori, come già previsto. Il backend crea un **seed** (`long`), lo salva con la partita e lo passa al motore, che fa `new Random(seed)`. Così la partita si può rifare uguale, sia in locale sia su Lambda.
-- I valori di gioco restano in `GameRules`. Backend e motore si rilasciano **sempre insieme**, così usano le stesse regole.
+- I valori di gioco restano in `GameRules` e li manda il backend a ogni chiamata, insieme ai mazzi. Il formato JSON tra backend e motore si cambia sempre nelle due parti insieme.
 
 ### 4.2 Un'interfaccia davanti a ogni servizio esterno
 

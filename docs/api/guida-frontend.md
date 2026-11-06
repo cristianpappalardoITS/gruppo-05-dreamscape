@@ -81,6 +81,7 @@ Ogni errore ha lo stesso formato, così si mostra il messaggio senza logica spec
 | `403` | Accesso non permesso (es. un giocatore nel backoffice) | Mostra "non hai i permessi" |
 | `404` | Non esiste (carta, mazzo, scambio...) | Pagina o messaggio "non trovato" |
 | `409` | Conflitto (username già usato, crediti insufficienti, carte non più possedute) | Mostra `message` |
+| `503` | Servizio momentaneamente non disponibile (es. il motore di gioco non risponde) | Mostra `message` e invita a riprovare |
 
 Codici (`code`) che arrivano con ogni API: `VALIDATION_ERROR` (campi sbagliati, con `fieldErrors`), `MALFORMED_REQUEST` (JSON o parametri illeggibili), `UNAUTHORIZED` (token mancante o scaduto), `FORBIDDEN`, `NOT_FOUND`, `CONFLICT` (due richieste insieme sugli stessi dati: si riprova), `INTERNAL_ERROR`. I codici delle singole pagine sono scritti accanto alle loro chiamate.
 
@@ -606,6 +607,7 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 | Rifiuta / Annulla | `POST /challenges/{challengeId}/reject`, `POST /challenges/{challengeId}/cancel` |
 
 - Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
+- Se il motore di gioco non risponde, `POST /matches/...` e `POST /challenges/{challengeId}/accept` rispondono `503` con `code: "ENGINE_UNAVAILABLE"`: la partita non si gioca, niente crediti né punti, la sfida resta in attesa. Si mostra "Partita non disponibile, riprova tra poco".
 - Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
 - Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
 
@@ -627,16 +629,28 @@ Il risultato:
   "finalLifePoints": { "challenger": 0, "opponent": 6 },
   "coinTossWinner": "OPPONENT",
   "playedAt": "2026-10-26T16:40:00Z",
+  "engineVersion": "1.0.0",
   "rounds": [
     {
       "round": 3,
       "clash": 2,
-      "challengerCard": { "cardId": "019a1f30-0000-7000-8000-000000000003", "attack": 4, "attackModifier": -2, "factionBonus": 0, "defenseBefore": 7, "defenseAfter": -2 },
-      "opponentCard":   { "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "attackModifier": 0, "factionBonus": 1, "defenseBefore": 5, "defenseAfter": 3 },
+      "events": [
+        { "phase": "START", "type": "CARD_PLAYED", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003", "attack": 4, "defense": 7 },
+        { "phase": "START", "type": "CARD_PLAYED", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "defense": 5 },
+        { "phase": "COMBAT", "type": "EFFECT", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008", "code": "WEAKENING", "value": 2,
+          "targetSide": "CHALLENGER", "target": "CARD", "stat": "ATTACK", "before": 4, "after": 2, "untilEndOfRound": true },
+        { "phase": "COMBAT", "type": "ATTACK", "side": "OPPONENT", "cardId": "019a1f30-0000-7000-8000-000000000008",
+          "attack": 8, "factionBonus": 1, "attackModifier": 0, "damage": 9, "defenseBefore": 7, "defenseAfter": -2 },
+        { "phase": "COMBAT", "type": "ATTACK", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003",
+          "attack": 4, "factionBonus": 0, "attackModifier": -2, "damage": 2, "defenseBefore": 5, "defenseAfter": 3 },
+        { "phase": "END", "type": "CARD_DIED", "side": "CHALLENGER", "cardId": "019a1f30-0000-7000-8000-000000000003" },
+        { "phase": "END", "type": "PLAYER_DAMAGE", "side": "CHALLENGER", "amount": 2, "lifePointsBefore": 20, "lifePointsAfter": 18 }
+      ],
       "outcome": "CHALLENGER_CARD_DIED",
-      "triggeredEffects": [ { "cardId": "019a1f30-0000-7000-8000-000000000008", "code": "WEAKENING", "text": "Indebolimento 2: l'attacco del Faro nella Nebbia scende da 4 a 2" } ],
-      "damageToPlayer": { "challenger": 2, "opponent": 0 },
-      "lifePointsAfter": { "challenger": 18, "opponent": 20 }
+      "afterRound": {
+        "challenger": { "cardId": null, "attack": null, "defense": null, "lifePoints": 18, "cardsInDeck": 18, "cardsInDiscard": 2 },
+        "opponent":   { "cardId": "019a1f30-0000-7000-8000-000000000008", "attack": 8, "defense": 3, "lifePoints": 20, "cardsInDeck": 18, "cardsInDiscard": 1 }
+      }
     }
   ],
   "decks": { "challenger": { "...": "..." }, "opponent": { "...": "..." } }
@@ -648,6 +662,8 @@ Il risultato:
 - `ratingChange` è `null` nelle partite rapide, e nelle classificate oltre la terza del giorno contro lo stesso avversario. `creditsEarned` sono i DC vinti da chi guarda. `leagueReached` dice se con questa partita si entra per la prima volta in una lega (`{ "name": "Sognatore", "rewardCredits": … }`): è il momento per un'animazione.
 - `endReason`: `LIFE_POINTS` (punti vita a 0), `DECK_EXHAUSTED` (mazzo finito), `ROUND_LIMIT` (60 round, pareggio).
 - `outcome`: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
+- **Replay:** ogni round ha `events`, gli eventi **in ordine**: carta giocata, effetti, i due colpi, morti, danno al giocatore, fine della partita. Il replay li mostra uno alla volta. `afterRound` è lo stato dei due lati a fine round (carta in campo, attacco, difesa, punti vita, carte nel mazzo e negli scarti): serve per saltare a un round. L'elenco dei tipi di evento e dei loro campi è in [schema.md](../database/schema.md#formato-dei-campi-json-di-matches).
+- **Frasi della cronaca:** il log ha solo dati, niente testi. La frase la compone la pagina: nomi delle carte e degli effetti da `decks`, valori dall'evento. Esempio: dall'evento `EFFECT` con `code: "WEAKENING"`, `value: 2`, `before: 4`, `after: 2` → "Indebolimento 2: l'attacco del Faro nella Nebbia scende da 4 a 2".
 - Un **round** è un singolo scambio di colpi; uno **scontro** (`clash`) è la serie di round tra le stesse due creature. Nella cronaca si usa "round", non "turno".
 - `decks` contiene la copia dei due mazzi com'erano al momento della partita: serve per mostrare le carte anche se poi i mazzi sono cambiati.
 - **Storico:** `/storico`, con un filtro per tipo di partita.

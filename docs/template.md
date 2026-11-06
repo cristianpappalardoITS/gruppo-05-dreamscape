@@ -280,7 +280,7 @@ Cosa cambia per SWD, WMD, DGS. Cosa resta aperto.
 - ...
 ```
 
-## Template: README di modulo (`engine/README.md`, `sviluppo/backend/README.md`...)
+## Template: README di modulo (`sviluppo/engine/README.md`, `sviluppo/backend/README.md`...)
 
 ````markdown
 # Nome modulo

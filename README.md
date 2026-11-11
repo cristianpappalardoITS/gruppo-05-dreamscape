@@ -54,10 +54,10 @@ Il pagamento con denaro reale non fa parte della fase 1: i crediti sono solo vir
 ```
 gruppo-05-dreamscape/
 ├── sviluppo/
-│   ├── engine/  # Motore di gioco: microservizio (nucleo Java puro + servizio)
-│   └── backend/ # Applicazione Spring Boot (portale + API REST)
-├── frontend/    # Pagine HTML, CSS e JavaScript, componenti React
-├── database/    # Script SQL, migrazioni, dati di prova
+│   ├── engine/    # Motore di gioco: microservizio (nucleo Java puro + servizio)
+│   ├── backend/   # Applicazione Spring Boot (portale + API REST)
+│   ├── frontend/  # Pagine HTML, CSS e JavaScript, componenti React
+│   └── database/  # Script SQL, migrazioni, dati di prova
 ├── carte/       # Set di carte di prova: cornici, illustrazioni, carte finite, script, effetti
 ├── docs/        # Documentazione e linee guida
 └── .github/     # Template di issue e pull request

@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import it.somnia.dreamscape.api.card.model.Faction;
+import it.somnia.dreamscape.api.deck.model.Deck;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -64,9 +65,10 @@ public class User {
     @JoinColumn(name = "starter_faction_id")
     private Faction starterFaction;
 
-    // Mazzo classificato: per ora solo l'id, finché non c'è l'entità Deck (#80)
-    @Column(name = "ranked_deck_id")
-    private UUID rankedDeckId;
+    // Mazzo classificato; il service verifica che appartenga all'utente e sia valido.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ranked_deck_id")
+    private Deck rankedDeck;
 
     // Giorno (ora italiana) dell'ultima ricompensa per l'accesso giornaliero
     @Column(name = "last_daily_reward_on")

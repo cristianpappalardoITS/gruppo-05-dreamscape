@@ -461,9 +461,11 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 ]
 ```
 
-- Il giocatore sceglie una delle tre copertine: il contenuto è lo stesso.
-- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)".
-- Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione; `availableUntil` (UTC) se è in vendita solo fino a una data.
+- Arrivano solo i pacchetti **in vendita in questo momento**, dal più economico. Set iniziale e pacchetti di benvenuto non ci sono: si ricevono nella pagina Benvenuto.
+- Il giocatore sceglie una delle copertine: il contenuto è lo stesso. `covers` può essere vuoto (pacchetto senza copertine, o copertine non ancora pronte): in quel caso si mostra un'immagine generica del pacchetto.
+- `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)". Le rarità di uno slot arrivano dalla più comune alla più rara; `chance` è già in percentuale.
+- `fullArtChance` è la percentuale delle **Leggendarie** che escono in full art, non del pacchetto: con 5% di Leggendaria e 20 di `fullArtChance` la full art esce nell'1% dei pacchetti (5 × 20 / 100).
+- Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione (`null` = tutte); `availableUntil` (UTC) se è in vendita solo fino a una data (`null` = nessun limite).
 
 Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }`:
 
@@ -479,6 +481,23 @@ Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000
 ```
 
 Poi si va su `/negozio/apertura/{openingId}`, che legge `GET /pack-openings/{openingId}`. Con l'**id dell'apertura** nell'URL, ricaricare la pagina non compra un altro pacchetto. Se i crediti non bastano arriva un `409` con `code: "NOT_ENOUGH_CREDITS"`.
+
+`GET /pack-openings/{openingId}` → l'apertura, con le carte **nell'ordine in cui sono uscite** (l'ultima è quella dello slot speciale):
+
+```json
+{
+  "openingId": "019a2b44-5c6d-7e8f-9a0b-1c2d3e4f5a6b",
+  "packName": "Dream Pack",
+  "openedAt": "2026-11-11T10:15:00Z",
+  "cards": [
+    { "card": { "code": "BASE-021", "...": "..." } },
+    { "card": { "code": "BASE-008-FA", "variantType": "FULL_ART", "...": "..." } }
+  ]
+}
+```
+
+- Ogni `card` è l'oggetto [Carta](#carta). Una full art arriva già con nome, statistiche ed effetto della carta normale.
+- L'apertura di un altro giocatore, o un id che non esiste, dà `404` con `code: "PACK_OPENING_NOT_FOUND"`: la pagina mostra "Apertura non trovata" e un link al negozio. Un id scritto male dà `400` con `MALFORMED_REQUEST`.
 
 #### Collezione e dettaglio carta
 
@@ -795,5 +814,5 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**,
 | DC a chi viene scelto dal matchmaking e vince | No: i DC della vittoria vanno solo a chi ha avviato la partita | Maie + SWD |
 | Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
 | Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
-| Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Il database prevede già più pacchetti (`packs`) | Maie, Nicolas |
+| Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Proposta della #129: Pacchetto di fazione (6 carte, 600 DC), piccolo (3 carte, 300 DC), grande (10 carte, 1.000 DC). Sono solo righe di dati: il negozio li mostra senza cambiare il codice | Maie, Sara, Valerio |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |

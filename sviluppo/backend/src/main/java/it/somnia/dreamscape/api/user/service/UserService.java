@@ -121,7 +121,7 @@ public class UserService {
         user.setEmail(anonymous + "@deleted.invalid");
         user.setPasswordHash(DISABLED_PASSWORD_HASH);
         user.setEnabled(false);
-        user.setRankedDeckId(null);
+        user.setRankedDeck(null);
         eventPublisher.publishEvent(new AccountDeletedEvent(user.getId()));
         refreshTokenService.revokeAll(user.getId());
     }

@@ -2,12 +2,14 @@ package it.somnia.dreamscape.api.pack.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import it.somnia.dreamscape.api.card.model.Faction;
 import it.somnia.dreamscape.api.pack.model.Pack;
 import it.somnia.dreamscape.api.pack.model.PackType;
 
@@ -21,4 +23,10 @@ public interface PackRepository extends JpaRepository<Pack, UUID> {
               AND (p.availableUntil IS NULL OR p.availableUntil > :now)
             ORDER BY p.priceCredits ASC, p.name ASC""")
     List<Pack> findOnSale(@Param("type") PackType type, @Param("now") Instant now);
+
+    // Il set iniziale di una fazione (Benvenuto)
+    Optional<Pack> findFirstByPackTypeAndFactionAndActiveTrueOrderByNameAsc(PackType type, Faction faction);
+
+    // I pacchetti di benvenuto attivi, nell'ordine in cui si aprono
+    List<Pack> findByPackTypeAndActiveTrueOrderByNameAsc(PackType type);
 }

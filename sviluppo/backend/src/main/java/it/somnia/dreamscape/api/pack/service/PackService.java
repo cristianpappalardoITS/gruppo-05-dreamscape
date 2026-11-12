@@ -1,31 +1,19 @@
 package it.somnia.dreamscape.api.pack.service;
 
 import java.time.Clock;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import it.somnia.dreamscape.api.card.dto.response.CardResponse;
-import it.somnia.dreamscape.api.card.model.Card;
-import it.somnia.dreamscape.api.card.model.CardEffect;
-import it.somnia.dreamscape.api.card.repository.CardEffectRepository;
-import it.somnia.dreamscape.api.deck.model.UserCards;
-import it.somnia.dreamscape.api.deck.repository.UserCardsRepository;
 import it.somnia.dreamscape.api.pack.dto.request.OpenPackRequest;
 import it.somnia.dreamscape.api.pack.dto.response.OpenPackResponse;
-import it.somnia.dreamscape.api.pack.dto.response.OpenedCardResponse;
 import it.somnia.dreamscape.api.pack.dto.response.PackOpeningResponse;
 import it.somnia.dreamscape.api.pack.dto.response.PackResponse;
 import it.somnia.dreamscape.api.pack.model.Pack;
 import it.somnia.dreamscape.api.pack.model.PackCover;
 import it.somnia.dreamscape.api.pack.model.PackOpening;
-import it.somnia.dreamscape.api.pack.model.PackOpeningCard;
 import it.somnia.dreamscape.api.pack.model.PackOpeningSource;
 import it.somnia.dreamscape.api.pack.model.PackType;
 import it.somnia.dreamscape.api.pack.repository.PackOpeningRepository;
@@ -50,9 +38,8 @@ public class PackService {
 
     private final PackRepository packRepository;
     private final PackOpeningRepository packOpeningRepository;
-    private final CardEffectRepository cardEffectRepository;
-    private final UserCardsRepository userCardsRepository;
-    private final PackDrawer packDrawer;
+    private final PackOpener packOpener;
+    private final OpenedCardMapper openedCardMapper;
     private final UserService userService;
     private final CreditService creditService;
     private final Clock clock;
@@ -104,14 +91,11 @@ public class PackService {
             throw new NotEnoughCreditsException();
         }
 
-        List<Card> cards = packDrawer.draw(pack);
-        PackOpening opening = new PackOpening(user, pack, cover, PackOpeningSource.PURCHASE, pack.getPriceCredits());
-        cards.forEach(opening::addCard);
-        packOpeningRepository.save(opening);
+        PackOpening opening = packOpener.open(user, pack, cover, PackOpeningSource.PURCHASE, pack.getPriceCredits());
         int creditsAfter = creditService.apply(user, CreditTransactionType.PACK_PURCHASE, -pack.getPriceCredits(),
                 opening.getId(), null).getBalanceAfter();
-        addToCollection(user, cards);
-        return new OpenPackResponse(opening.getId(), creditsAfter, toOpenedCards(cards));
+        return new OpenPackResponse(opening.getId(), creditsAfter,
+                openedCardMapper.toResponses(PackOpener.cardsOf(opening)));
     }
 
     /**
@@ -126,9 +110,8 @@ public class PackService {
     public PackOpeningResponse getOpening(UUID userId, UUID openingId) {
         PackOpening opening = packOpeningRepository.findByIdAndUserId(openingId, userId)
                 .orElseThrow(PackOpeningNotFoundException::new);
-        List<Card> cards = opening.getCards().stream().map(PackOpeningCard::getCard).toList();
         return new PackOpeningResponse(opening.getId(), opening.getPack().getName(), opening.getOpenedAt(),
-                toOpenedCards(cards));
+                openedCardMapper.toResponses(PackOpener.cardsOf(opening)));
     }
 
     // La copertina è facoltativa; se c'è, deve essere una copertina attiva di questo pacchetto
@@ -140,36 +123,5 @@ public class PackService {
                 .filter(cover -> cover.getId().equals(coverId) && cover.isActive())
                 .findFirst()
                 .orElseThrow(InvalidCoverException::new);
-    }
-
-    // Una riga per carta posseduta: se c'è già si aumentano le copie, altrimenti si crea.
-    // La full art è una carta a parte, quindi ha la sua riga.
-    private void addToCollection(User user, List<Card> cards) {
-        Map<UUID, UserCards> owned = new HashMap<>();
-        userCardsRepository.findUserCardsByUser_Id(user.getId())
-                .forEach(userCard -> owned.put(userCard.getCard().getId(), userCard));
-        for (Card card : cards) {
-            UserCards userCard = owned.get(card.getId());
-            if (userCard != null) {
-                userCard.setQuantity(userCard.getQuantity() + 1);
-            } else {
-                owned.put(card.getId(), userCardsRepository.save(new UserCards(user, card, 1)));
-            }
-        }
-    }
-
-    // Gli effetti stanno sulle carte normali: per una full art si usa quello della sua carta base
-    private List<OpenedCardResponse> toOpenedCards(List<Card> cards) {
-        List<Card> baseCards = cards.stream().map(PackService::baseOf).distinct().toList();
-        Map<UUID, CardEffect> effectsByCardId = cardEffectRepository.findByCardIn(baseCards).stream()
-                .collect(Collectors.toMap(effect -> effect.getCard().getId(), Function.identity()));
-        return cards.stream()
-                .map(card -> new OpenedCardResponse(
-                        CardResponse.from(card, effectsByCardId.get(baseOf(card).getId()))))
-                .toList();
-    }
-
-    private static Card baseOf(Card card) {
-        return card.getBaseCard() != null ? card.getBaseCard() : card;
     }
 }

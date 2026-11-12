@@ -41,4 +41,20 @@ public final class PackExceptions {
                     List.of(new FieldErrorResponse("coverId", "Scegli una delle copertine del pacchetto.")));
         }
     }
+
+    // Fazione inesistente nella scelta del Benvenuto
+    public static class InvalidStarterFactionException extends ApiException {
+        public InvalidStarterFactionException() {
+            super(HttpStatus.BAD_REQUEST, "INVALID_FACTION", "Fazione non valida.",
+                    List.of(new FieldErrorResponse("starterFaction", "Scegli Dreams, Nightmares o Memories.")));
+        }
+    }
+
+    // Il Benvenuto si riceve una volta sola
+    public static class WelcomeAlreadyClaimedException extends ApiException {
+        public WelcomeAlreadyClaimedException() {
+            super(HttpStatus.CONFLICT, "WELCOME_ALREADY_CLAIMED",
+                    "Hai già scelto la fazione e ricevuto i regali di benvenuto.");
+        }
+    }
 }

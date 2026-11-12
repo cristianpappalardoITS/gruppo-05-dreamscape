@@ -35,6 +35,7 @@ import it.somnia.dreamscape.api.card.model.Rarity;
 import it.somnia.dreamscape.api.pack.model.Pack;
 import it.somnia.dreamscape.api.pack.model.PackSlot;
 import it.somnia.dreamscape.api.pack.model.PackSlotRarity;
+import it.somnia.dreamscape.api.pack.model.PackType;
 import it.somnia.dreamscape.api.pack.repository.DrawableCardRepository;
 
 // L'estrazione senza database: pacchetti, slot e carte sono finti, il generatore casuale è controllato
@@ -213,6 +214,51 @@ class PackDrawerTest {
         assertShare(drawn, legendaryCard, 0.05);
     }
 
+    @Test
+    void draw_starterPack_neverGoesOverMaxCopies() {
+        // Given: set iniziale con 4 Comuni da pescare tra 2 carte, al massimo 2 copie per carta
+        Card first = card("C-1");
+        Card second = card("C-2");
+        when(repository.findDrawable(eq(common.getId()), any(), any())).thenReturn(List.of(first, second));
+        Pack starter = pack("20", slot(4, Map.of(common, 100)));
+        when(starter.getPackType()).thenReturn(PackType.STARTER);
+        PackDrawer drawer = new PackDrawer(repository, new Random(42));
+
+        // When
+        List<Card> drawn = drawer.draw(starter);
+
+        // Then: per forza 2 copie di ognuna
+        assertEquals(2, drawn.stream().filter(card -> card == first).count());
+        assertEquals(2, drawn.stream().filter(card -> card == second).count());
+    }
+
+    @Test
+    void draw_starterPackWithTooFewCards_throwsIllegalStateException() {
+        // Given: 5 Comuni da pescare tra 2 carte, ma al massimo 2 copie per carta
+        List<Card> twoCommons = List.of(card("C-1"), card("C-2"));
+        when(repository.findDrawable(eq(common.getId()), any(), any())).thenReturn(twoCommons);
+        Pack starter = pack("20", slot(5, Map.of(common, 100)));
+        when(starter.getPackType()).thenReturn(PackType.STARTER);
+        PackDrawer drawer = new PackDrawer(repository, new Random(42));
+
+        // When / Then
+        assertThrows(IllegalStateException.class, () -> drawer.draw(starter));
+    }
+
+    @Test
+    void draw_shopPack_canGoOverMaxCopies() {
+        // Given: nei pacchetti del negozio il limite non c'è
+        Pack shopPack = pack("20", slot(5, Map.of(common, 100)));
+        when(shopPack.getPackType()).thenReturn(PackType.SHOP);
+        PackDrawer drawer = new PackDrawer(repository, new Random(42));
+
+        // When
+        List<Card> drawn = drawer.draw(shopPack);
+
+        // Then: 5 copie dell'unica Comune
+        assertEquals(5, drawn.stream().filter(card -> card == commonCard).count());
+    }
+
     private static void assertShare(List<Card> drawn, Card card, double expected) {
         double share = drawn.stream().filter(drawnCard -> drawnCard == card).count() / (double) drawn.size();
         assertTrue(Math.abs(share - expected) < 0.01, card.getCode() + ": " + share);
@@ -249,11 +295,13 @@ class PackDrawerTest {
         when(rarity.getId()).thenReturn(UUID.randomUUID());
         when(rarity.getCode()).thenReturn(code);
         when(rarity.getSortOrder()).thenReturn(sortOrder);
+        when(rarity.getMaxCopies()).thenReturn(code.equals("LEGENDARY") ? 1 : 2);
         return rarity;
     }
 
     private static Card card(String code) {
         Card card = mock(Card.class, withSettings().stubOnly());
+        when(card.getId()).thenReturn(UUID.randomUUID());
         when(card.getCode()).thenReturn(code);
         return card;
     }

@@ -46,7 +46,7 @@ Lo schema è spiegato in [docs/database/schema.md](../../docs/database/schema.md
 ## Dati finti (profilo `dev` e test)
 - **Carte:** 39 carte del Set di prova (`TEST-001`–`TEST-039`): per ogni fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art (`TEST-013-FA`, `TEST-026-FA`, `TEST-039-FA`). Ognuno dei 19 effetti è su almeno una carta.
 - **Pacchetti:** Pacchetto di prova (500 DC), tre set iniziali di prova (uno per fazione), due pacchetti di benvenuto di prova.
-- **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
+- **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere, quindi possono provare la pagina Benvenuto (`POST /me/welcome`) e poi comprare il Pacchetto di prova. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
 
 | Username | Email | Password |
 |----------|-------|----------|

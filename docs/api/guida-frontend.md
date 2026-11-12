@@ -365,7 +365,7 @@ Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pag
 | Momento | Chiamata | Cosa succede |
 |---------|----------|--------------|
 | Apertura della pagina | `GET /me/welcome` | Se `starterFaction` è `null`, la fazione non è ancora scelta: si mostrano le tre fazioni con il loro Lord |
-| Scelta della fazione | `POST /me/welcome` con `{ "starterFaction": "DREAMS" }` | Il backend dà il set iniziale di quella fazione e apre i due pacchetti di benvenuto. Risponde come `GET /me/welcome`. La scelta si fa una volta sola: la seconda volta arriva `409` |
+| Scelta della fazione | `POST /me/welcome` con `{ "starterFaction": "DREAMS" }` | Il backend dà il set iniziale di quella fazione e apre i due pacchetti di benvenuto. Risponde `201` con lo stesso oggetto di `GET /me/welcome`. La scelta si fa una volta sola: la seconda volta arriva `409` con `code: "WELCOME_ALREADY_CLAIMED"` |
 
 ```json
 {
@@ -379,6 +379,10 @@ Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pag
 ```
 
 Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte senza mai superare le copie massime: con queste 20 carte si compone sempre un mazzo valido. Il mazzo **non** viene creato in automatico: dalla pagina Benvenuto conviene un pulsante "Componi il tuo primo mazzo" che apre l'editor. Le carte si possono rivelare una alla volta come in un'apertura.
+
+- Se la fazione non è ancora scelta, `GET /me/welcome` risponde con `starterFaction: null` e le due liste vuote.
+- Le carte arrivano subito nella collezione, gratis: i regali non toccano i crediti.
+- Errori: fazione che non esiste → `400` con `code: "INVALID_FACTION"` e il campo `starterFaction` in `fieldErrors`; fazione vuota → `400` con `VALIDATION_ERROR`.
 
 #### Dashboard
 
@@ -467,7 +471,7 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 - `fullArtChance` è la percentuale delle **Leggendarie** che escono in full art, non del pacchetto: con 5% di Leggendaria e 20 di `fullArtChance` la full art esce nell'1% dei pacchetti (5 × 20 / 100).
 - Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione (`null` = tutte); `availableUntil` (UTC) se è in vendita solo fino a una data (`null` = nessun limite).
 
-Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }`:
+Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }` (il corpo si può omettere se il pacchetto non ha copertine). Risponde `201`:
 
 ```json
 {
@@ -480,7 +484,14 @@ Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000
 }
 ```
 
-Poi si va su `/negozio/apertura/{openingId}`, che legge `GET /pack-openings/{openingId}`. Con l'**id dell'apertura** nell'URL, ricaricare la pagina non compra un altro pacchetto. Se i crediti non bastano arriva un `409` con `code: "NOT_ENOUGH_CREDITS"`.
+Poi si va su `/negozio/apertura/{openingId}`, che legge `GET /pack-openings/{openingId}`. Con l'**id dell'apertura** nell'URL, ricaricare la pagina non compra un altro pacchetto.
+
+| Errore | `code` | Quando |
+|--------|--------|--------|
+| `409` | `NOT_ENOUGH_CREDITS` | Il saldo non basta: non si estrae niente e i crediti non cambiano |
+| `409` | `PACK_NOT_ON_SALE` | Il pacchetto non è più in vendita (spento o scaduto): conviene ricaricare `GET /packs` |
+| `404` | `PACK_NOT_FOUND` | Il pacchetto non esiste o non si compra (set iniziale, benvenuto) |
+| `400` | `INVALID_COVER` | La copertina non è di quel pacchetto o non è più attiva (`fieldErrors` sul campo `coverId`) |
 
 `GET /pack-openings/{openingId}` → l'apertura, con le carte **nell'ordine in cui sono uscite** (l'ultima è quella dello slot speciale):
 

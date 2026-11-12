@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +34,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final RefreshTokenService refreshTokenService;
-    private final PasswordResetNotifier notifier;
+    private final ApplicationEventPublisher eventPublisher;
     private final PasswordEncoder passwordEncoder;
     private final SecurityProperties securityProperties;
     private final MailProperties mailProperties;
@@ -41,7 +42,8 @@ public class PasswordResetService {
 
     /**
      * Manda il link se l'email appartiene a un utente attivo. Non dice mai se l'email esiste:
-     * il controller risponde sempre 202.
+     * il controller risponde sempre 202, e l'email parte dopo la risposta
+     * ({@link PasswordResetRequestedEvent}), così i tempi non cambiano.
      */
     @Transactional
     public void requestReset(String email) {
@@ -60,7 +62,8 @@ public class PasswordResetService {
         String token = OpaqueTokens.generate();
         passwordResetTokenRepository.save(new PasswordResetToken(managedUser, OpaqueTokens.hash(token),
                 now.plus(securityProperties.passwordResetTokenTtl())));
-        notifier.sendResetLink(user.getEmail(), user.getUsername(), mailProperties.passwordResetUrl() + token);
+        eventPublisher.publishEvent(new PasswordResetRequestedEvent(user.getEmail(), user.getUsername(),
+                mailProperties.passwordResetUrl() + token));
     }
 
     /**

@@ -3,10 +3,6 @@ package it.somnia.dreamscape.api.user;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -15,14 +11,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +27,7 @@ import it.somnia.dreamscape.api.TestcontainersConfiguration;
 import it.somnia.dreamscape.api.common.security.RefreshCookies;
 import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.repository.UserRepository;
-import it.somnia.dreamscape.api.user.service.PasswordResetNotifier;
+import it.somnia.dreamscape.api.user.service.PasswordResetRequestedEvent;
 import jakarta.servlet.http.Cookie;
 import tools.jackson.databind.ObjectMapper;
 
@@ -42,6 +38,7 @@ import tools.jackson.databind.ObjectMapper;
         "dreamscape.admin.email=admin_test@example.test",
         "dreamscape.admin.password=password-admin-dei-test" })
 @AutoConfigureMockMvc
+@RecordApplicationEvents
 @Transactional
 class AuthApiTest {
 
@@ -56,8 +53,9 @@ class AuthApiTest {
     @Autowired
     private UserRepository userRepository;
 
-    @MockitoBean
-    private PasswordResetNotifier passwordResetNotifier;
+    // L'email parte solo dopo il commit, che qui non arriva mai: si controlla l'evento (vedi PasswordResetMailTest)
+    @Autowired
+    private ApplicationEvents events;
 
     @Test
     void register_validRequest_createsPlayerWithSignupBonus() throws Exception {
@@ -272,7 +270,7 @@ class AuthApiTest {
                 .content("{ \"email\": \"nessuno@example.test\" }"))
                 .andExpect(status().isAccepted());
 
-        verify(passwordResetNotifier, never()).sendResetLink(anyString(), anyString(), anyString());
+        assertEquals(0, events.stream(PasswordResetRequestedEvent.class).count());
     }
 
     @Test
@@ -281,9 +279,10 @@ class AuthApiTest {
         mockMvc.perform(post("/api/v1/auth/password-reset-requests").contentType(MediaType.APPLICATION_JSON)
                 .content("{ \"email\": \"bruno_test@example.test\" }"))
                 .andExpect(status().isAccepted());
-        ArgumentCaptor<String> link = ArgumentCaptor.forClass(String.class);
-        verify(passwordResetNotifier).sendResetLink(eq("bruno_test@example.test"), eq("bruno_test"), link.capture());
-        String token = link.getValue().substring(link.getValue().indexOf("token=") + "token=".length());
+        PasswordResetRequestedEvent sent = events.stream(PasswordResetRequestedEvent.class).findFirst().orElseThrow();
+        assertEquals("bruno_test@example.test", sent.email());
+        assertEquals("bruno_test", sent.username());
+        String token = sent.link().substring(sent.link().indexOf("token=") + "token=".length());
         String body = "{ \"token\": \"" + token + "\", \"newPassword\": \"password-ritrovata\" }";
 
         // When

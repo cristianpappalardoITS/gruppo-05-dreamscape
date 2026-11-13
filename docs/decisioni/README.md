@@ -17,7 +17,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [009](009-amici-e-scambi.md) | Amici e scambi | 26/10–3/11 | Approvata (sfide: vedi 010; carte bloccate: vedi 024; amicizia tolta: vedi 026) |
 | [010](010-tipi-di-partita-e-rank.md) | Partite classificate e rapide, matchmaking e rank | 3/11 | Approvata |
 | [011](011-premi-di-lega.md) | Leghe e premi di lega | 3/11 | Approvata, importi da proporre |
-| [012](012-pacchetti.md) | Pacchetti: Dream Pack, apertura subito, più tipi | 31/10–3/11 | Approvata, nuovi tipi da decidere |
+| [012](012-pacchetti.md) | Pacchetti: Dream Pack, apertura subito, più tipi | 31/10–3/11 | Approvata (nuovi pacchetti e copertina del Dream Pack: vedi 030) |
 | [013](013-crediti-e-ricompense.md) | Dream Credits e ricompense | 31/10–3/11 | Approvata |
 | [014](014-dotazione-iniziale.md) | Dotazione iniziale: 500 DC, set di una fazione, benvenuto | 2/11, 3/11 | Approvata |
 | [015](015-missioni.md) | Missione giornaliera e obiettivo settimanale | 2/11, 3/11 | Approvata |
@@ -35,12 +35,13 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [027](027-effetto-non-sequitur.md) | Effetto "Non Sequitur" senza valore | 4/11 | Approvata (catalogo: vedi 028) |
 | [028](028-catalogo-degli-effetti.md) | Catalogo degli effetti: 19 effetti, versione provvisoria | 4/11 | Approvata come provvisoria: da bilanciare, effetti da aggiungere o togliere in corso d'opera |
 | [029](029-motore-di-gioco.md) | Motore di gioco: microservizio in `sviluppo/engine`, seed, log a eventi | 4/11 | Approvata; regole del round da confermare |
+| [030](030-nuovi-pacchetti.md) | Nuovi pacchetti: Nap Pack, pacchetti dei Lord, REM Pack; Dream Pack con il retro delle carte | 9/11, 13/11 | Approvata, sostituisce le copertine del Dream Pack di 012; percentuali provvisorie |
 
 ## Ancora da decidere
 
 | Cosa | Chi | Dove |
 |------|-----|------|
-| Tipi, prezzi e pesi dei nuovi pacchetti | Maie, Nicolas | [012](012-pacchetti.md) |
+| Immagini di Nap Pack e REM Pack | Digital | [030](030-nuovi-pacchetti.md) |
 | Numero esatto di carte: 99 o 102 | Nicolas, Maie | [016](016-catalogo-fase-1.md) |
 | Soglie e premi delle leghe | Maie | [011](011-premi-di-lega.md) |
 | DC a chi viene scelto dal matchmaking e vince | Maie, SWD | [010](010-tipi-di-partita-e-rank.md) |

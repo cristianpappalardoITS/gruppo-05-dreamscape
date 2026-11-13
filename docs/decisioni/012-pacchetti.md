@@ -1,7 +1,7 @@
 # 012 · Pacchetti
 
 - **Data:** 2026-10-31 (apertura subito e richiesta del cliente: 2026-11-02; struttura nel database: 2026-11-03)
-- **Stato:** approvata; tipi e prezzi dei nuovi pacchetti da decidere
+- **Stato:** approvata; nuovi pacchetti e copertina del Dream Pack (solo il retro delle carte, non più le tre dei Lord): vedi [030](030-nuovi-pacchetti.md)
 - **Referenti:** Sara, Maie, Nicolas
 - **Task:** #61, domanda 16 del 2/11; #78, #82
 

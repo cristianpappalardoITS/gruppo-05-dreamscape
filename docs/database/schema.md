@@ -467,10 +467,10 @@ erDiagram
 |--------|--------|
 | **Collezione con `quantity`** (una riga per utente e carta) | Più semplice di una riga per ogni copia. Con le transazioni basta per garantire che negli scambi nessuna carta venga persa o duplicata. La full art ha la sua riga, perché è una carta a parte. |
 | **Tipi di pacchetto** (`packs.pack_type`: SHOP, STARTER, WELCOME) | Set iniziale e pacchetti di benvenuto sono pacchetti come gli altri, ma non si comprano: si regalano quando il giocatore sceglie la fazione. Così si usa la stessa logica di estrazione. |
-| **Pacchetti di una fazione** (`packs.faction_id`) | Il set iniziale è di una fazione scelta dal giocatore: ci sono tre pacchetti STARTER, uno per fazione. La stessa colonna permette in futuro pacchetti di fazione in vendita. |
+| **Pacchetti di una fazione** (`packs.faction_id`) | Il set iniziale è di una fazione scelta dal giocatore: ci sono tre pacchetti STARTER, uno per fazione. La stessa colonna serve ai tre pacchetti di fazione in vendita: Lucid, Faceless e Still Time Pack. |
 | **Più pacchetti in vendita, anche a tempo** (`price_credits`, slot, pesi, `full_art_chance`, `available_from`, `available_until`) | Il cliente vuole più tipi di pacchetti a prezzi diversi: un pacchetto più caro con carte più rare è solo una riga con prezzo e pesi diversi. Il periodo di vendita serve per i pacchetti di un evento. |
 | **Slot con rarità pesate** (`pack_slots` + `pack_slot_rarities`) | Uno slot può dare rarità diverse con probabilità diverse (es. slot speciale del Dream Pack: Rara 70, Epica 25, Leggendaria 5). Uno slot con una sola rarità dà sempre quella: così si fa anche l'Epica garantita del benvenuto. Dentro una rarità ogni carta attiva ha la stessa probabilità. |
-| **Copertine dei pacchetti** (`pack_covers`) | Stesso contenuto, immagine diversa: il pacchetto base ha tre copertine, una per ogni Lord. Il giocatore sceglie quella che preferisce e la scelta resta nell'apertura (`pack_openings.pack_cover_id`). |
+| **Copertine dei pacchetti** (`pack_covers`) | Stesso contenuto, immagine diversa: il giocatore sceglie quella che preferisce e la scelta resta nell'apertura (`pack_openings.pack_cover_id`). Oggi nessun pacchetto ha copertine: ognuno ha una sola immagine in `packs.image_url` (Dream Pack il retro delle carte, i pacchetti di fazione il loro Lord, [decisione 030](../decisioni/030-nuovi-pacchetti.md)). La tabella resta per pacchetti futuri con più immagini. |
 | **Apertura immediata** (`pack_openings`, con `source`) | L'utente compra e apre subito il pacchetto: un solo passaggio, un solo record. `source` distingue i pacchetti comprati da quelli regalati alla registrazione; `price_paid` conserva il prezzo anche se poi cambia. |
 | **Lista amici** (`friendships`) | A manda la richiesta, B la accetta. Una sola riga per coppia, in qualunque direzione (indice su `LEAST`/`GREATEST`). Un rifiuto o la rimozione dell'amicizia cancellano la riga. |
 | **Scambi solo tra amici, senza limiti di valore** | Si propone uno scambio solo a un amico. Quantità e rarità sono libere (es. 1 Epica per 5 Comuni): nessun controllo di equilibrio, decide il destinatario accettando o rifiutando. |
@@ -787,7 +787,7 @@ Con le 12 carte di prova non si forma un mazzo valido (al massimo 18 carte). Per
 | Cartella | Contenuto | Quando si esegue |
 |----------|-----------|------------------|
 | `db/migration/` | Tabelle (`V1`–`V10`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
-| `db/testdata/` | 39 carte finte (per fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art), pacchetti e tre utenti di prova (`V900`–`V902`) | Solo nel profilo `dev` e nei test |
+| `db/testdata/` | 39 carte finte (per fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art), pacchetti di prova (spenti da `V903`: valgono quelli veri di `V101`) e tre utenti di prova (`V900`–`V903`) | Solo nel profilo `dev` e nei test |
 
 - Numerazione da `V900` in su (es. `V900__seed_test_cards.sql`), così non si scontra mai con le migration vere.
 - Codici con il prefisso `TEST-` (es. `TEST-001`) e l'espansione `TEST`: non si confondono con le carte vere. Anche i nomi hanno "(prova)", perché `cards.name` è unico. Per fazione servono almeno 7 Comuni e 3 Rare, come per il set iniziale vero.
@@ -895,46 +895,40 @@ UPDATE factions f SET lord_card_id = c.id FROM cards c WHERE c.code = 'BASE-012'
 
 ### Esempio: pacchetti
 
+I pacchetti veri sono in `V101__seed_packs.sql` ([decisioni 014](../decisioni/014-dotazione-iniziale.md) e [030](../decisioni/030-nuovi-pacchetti.md)): sei in vendita, tre set iniziali e due Welcome Pack. Un estratto, con il Dream Pack e un pacchetto di fazione:
+
 ```sql
--- V102__seed_packs.sql (estratto)
+-- full_art_chance è la percentuale delle Leggendarie che escono in full art:
+-- 20 (una su 5, cioè l'1% del Dream Pack), 10 nei pacchetti di una sola fazione.
+-- Nessuna copertina: ogni pacchetto avrà una sola immagine in packs.image_url.
+INSERT INTO packs (name, description, pack_type, price_credits, faction_id, full_art_chance)
+SELECT v.name, v.description, v.pack_type, v.price_credits, f.id, v.full_art_chance
+FROM (VALUES
+    ('Dream Pack', 'Il pacchetto di ogni Dreamweaver: 5 carte, con una Rara sicura e uno slot speciale.', 'SHOP', 500, NULL,     20),
+    ('Lucid Pack', 'Il Sogno Lucido sceglie per te: 6 carte, solo di Dreams.',                           'SHOP', 600, 'DREAMS', 10)
+) AS v (name, description, pack_type, price_credits, faction, full_art_chance)
+LEFT JOIN factions f ON f.code = v.faction;
 
--- Dream Pack in vendita: 5 carte, 500 DC, tre copertine (una per Lord).
--- full_art_chance 20: una Leggendaria su cinque è full art, cioè l'1% del pacchetto.
-INSERT INTO packs (name, pack_type, price_credits, full_art_chance) VALUES ('Dream Pack', 'SHOP', 500, 20);
-
-INSERT INTO pack_covers (pack_id, faction_id, name, image_url, sort_order)
-SELECT p.id, f.id, f.lord_title, CONCAT('/images/packs/dream-pack-', LOWER(f.code), '-v1.webp'), x.sort_order
-FROM packs p
-CROSS JOIN factions f
-JOIN (VALUES ('DREAMS', 1), ('NIGHTMARES', 2), ('MEMORIES', 3)) AS x (code, sort_order) ON x.code = f.code
-WHERE p.name = 'Dream Pack';
-
--- Slot del Dream Pack: 3 Comuni, 1 Rara, 1 slot speciale (Rara 70, Epica 25, Leggendaria 5)
+-- Slot: Dream Pack 3 Comuni, 1 Rara, 1 speciale; Lucid Pack 3 Comuni, 2 Rare, 1 speciale
 INSERT INTO pack_slots (pack_id, sort_order, card_count)
-SELECT id, x.sort_order, x.card_count
-FROM packs, (VALUES (1, 3), (2, 1), (3, 1)) AS x (sort_order, card_count)
-WHERE name = 'Dream Pack';
+SELECT p.id, v.sort_order, v.card_count
+FROM (VALUES ('Dream Pack', 1, 3), ('Dream Pack', 2, 1), ('Dream Pack', 3, 1),
+             ('Lucid Pack', 1, 3), ('Lucid Pack', 2, 2), ('Lucid Pack', 3, 1)) AS v (pack_name, sort_order, card_count)
+JOIN packs p ON p.name = v.pack_name;
 
+-- Pesi dello slot speciale: Rara 70, Epica 25, Leggendaria 5
 INSERT INTO pack_slot_rarities (pack_slot_id, rarity_id, weight)
-SELECT s.id, r.id, x.weight
-FROM pack_slots s
-JOIN packs p ON p.id = s.pack_id AND p.name = 'Dream Pack'
-JOIN (VALUES (1, 'COMMON', 100), (2, 'RARE', 100),
-             (3, 'RARE', 70), (3, 'EPIC', 25), (3, 'LEGENDARY', 5)) AS x (sort_order, code, weight)
-     ON x.sort_order = s.sort_order
-JOIN rarities r ON r.code = x.code;
-
--- Set iniziale: uno per fazione, 14 Comuni e 6 Rare di quella fazione
-INSERT INTO packs (name, pack_type, faction_id)
-SELECT CONCAT('Set iniziale ', f.name), 'STARTER', f.id FROM factions f;
--- per ognuno: slot 1 = 14 COMMON (peso 100); slot 2 = 6 RARE (peso 100)
-
--- Pacchetti di benvenuto, con carte di tutte le fazioni: uno con l'Epica garantita
-INSERT INTO packs (name, pack_type) VALUES ('Benvenuto', 'WELCOME'), ('Benvenuto con Epica', 'WELCOME');
--- "Benvenuto" ha gli slot del Dream Pack; "Benvenuto con Epica" ha lo slot speciale con la sola rarità EPIC
+SELECT sl.id, r.id, v.weight
+FROM (VALUES ('Dream Pack', 1, 'COMMON', 100), ('Dream Pack', 2, 'RARE', 100),
+             ('Dream Pack', 3, 'RARE', 70), ('Dream Pack', 3, 'EPIC', 25), ('Dream Pack', 3, 'LEGENDARY', 5)
+             -- ... e lo stesso per il Lucid Pack
+     ) AS v (pack_name, sort_order, rarity, weight)
+JOIN packs p ON p.name = v.pack_name
+JOIN pack_slots sl ON sl.pack_id = p.id AND sl.sort_order = v.sort_order
+JOIN rarities r ON r.code = v.rarity;
 ```
 
-I numeri del Dream Pack sono quelli confermati il 31/10. Gli altri tipi di pacchetti in vendita (prezzi, slot, pesi) li decidono Maie e Nicolas e diventano righe in più, senza cambiare le tabelle.
+Set iniziali (uno per fazione, slot 14 COMMON e 6 RARE) e Welcome Pack (gli slot del Dream Pack; il "Welcome Pack Epico" ha lo slot speciale con la sola EPIC) seguono lo stesso schema. Prezzi e pesi si cambiano con una migration nuova o dal backoffice, senza cambiare le tabelle.
 
 Al primo avvio dopo il merge, Flyway esegue i file una sola volta: le carte e i pacchetti compaiono nel negozio.
 
@@ -946,7 +940,6 @@ Quello che resta da decidere prima delle migration. Le decisioni già prese, con
 
 | Punto | Da decidere | Proposta | Chi |
 |-------|-------------|----------|-----|
-| Nuovi pacchetti in vendita | Tipi, nomi, prezzi, slot e pesi dei pacchetti oltre al Dream Pack (richiesta del cliente) | Un pacchetto più caro con lo slot speciale più ricco; eventuali pacchetti di fazione o a tempo | Maie + Nicolas |
 | Numero di carte del catalogo | 99 o 102 (risposta del cliente) | 102, cioè 34 per fazione | Nicolas + Maie |
 | Punti vita e limite di round | 20 punti vita confermati dal cliente, da verificare con le simulazioni del motore (#87) | 20 punti vita e 60 round finché non si decide | Marco + Maie |
 | Leghe | Punteggio minimo di ogni lega e premio in DC | Le quattro leghe sono già in `V10` con le soglie proposte (Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500) e premio 0: soglie e premi si cambiano dal backoffice | Maie |

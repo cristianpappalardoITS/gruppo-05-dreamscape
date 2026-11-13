@@ -67,10 +67,10 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 
 | Cosa | Valore | Dove sta |
 |------|--------|----------|
-| Dream Pack | 5 carte, **500 DC**, tre copertine (una per Lord). Si apre subito, all'acquisto | `packs`, `pack_covers` |
-| Altri pacchetti | Il cliente ne vuole di più tipi, a prezzi diversi: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il codice non dà per scontato un solo pacchetto | `packs`, `pack_slots` |
+| Dream Pack | 5 carte, **500 DC**, una sola immagine (il retro delle carte), nessuna copertina da scegliere. Si apre subito, all'acquisto | `packs` (`V101`) |
+| Altri pacchetti | Nap Pack 300 DC, Lucid, Faceless e Still Time Pack 600 DC (uno per fazione), REM Pack 1.000 DC ([decisione 030](../decisioni/030-nuovi-pacchetti.md)). Il codice non dà per scontato un solo pacchetto | `packs`, `pack_slots` (`V101`) |
 | Slot del Dream Pack | 3 Comuni · 1 Rara · 1 slot speciale: Rara 70, Epica 25, Leggendaria 5 | `pack_slots`, `pack_slot_rarities` |
-| Full art | 20% delle Leggendarie, cioè 1% del Dream Pack | `packs.full_art_chance` |
+| Full art | 20% delle Leggendarie, cioè 1% del Dream Pack; 10% nei pacchetti di fazione | `packs.full_art_chance` |
 | Registrazione | 500 DC alla registrazione. Nella pagina Benvenuto il Dreamweaver sceglie una fazione e riceve il set iniziale di quella fazione (14 Comuni, 6 Rare) + 2 pacchetti di benvenuto (uno con Epica garantita) | `POST /me/welcome` ([guida](../api/guida-frontend.md#benvenuto-dopo-la-registrazione)) |
 | Accesso giornaliero | 50 DC. Il giorno inizia a mezzanotte, ora italiana (`Europe/Rome`); nel database le date restano in UTC | `credit_transactions` (`DAILY_REWARD`) |
 | Vittoria | 30 DC, massimo 3 al giorno, solo nelle partite classificate e non contro un amico | `credit_transactions` (`MATCH_REWARD`) |

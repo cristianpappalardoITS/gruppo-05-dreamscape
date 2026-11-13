@@ -30,7 +30,7 @@ Per **Sara, Valerio e Maie**. Dal 2 novembre quello che preparate diventa parte 
 | Catalogo delle carte | `carte/compositore/carte.csv` | #74 |
 | Illustrazioni | `carte/illustrazioni/` | #84 |
 | Testi per generare le illustrazioni | `carte/testi-generazione/illustrazioni.md` | #84 |
-| Copertine dei Dream Pack | `carte/copertine/` (proposta) | #91 |
+| Immagini dei pacchetti | `carte/copertine/` (proposta) | #91 |
 | Testi delle pagine pubbliche | `docs/testi-sito/`, un file `.md` per pagina (proposta) | #85 |
 | Identità visiva definitiva | `docs/identita/` (proposta) | #75 |
 
@@ -47,7 +47,9 @@ Le cartelle segnate "proposta" le sceglie chi porta i file nel repository: a voi
 | **Lord** | Boss, Re | La Leggendaria più iconica di ogni fazione |
 | **Comune, Rara, Epica, Leggendaria** | Mitica, Ultra Rara, TIER | Le quattro rarità |
 | **full art** | alternate art, versione oro | Versione rara di una Leggendaria, con l'illustrazione su tutta la carta. È una carta a parte (codice `-FA`, es. `BASE-004-FA`) con le stesse statistiche |
-| **Dream Pack** | Pack Base, Pack Elite, bustina premium | Il pacchetto da 500 DC. Il cliente vuole anche altri tipi di pacchetti: nomi e prezzi li decidono Maie e Nicolas |
+| **Dream Pack** | Pack Base, bustina premium | Il pacchetto base da 500 DC |
+| **Nap Pack**, **REM Pack** | Pack piccolo, Pack Elite | Il pacchetto piccolo (300 DC) e quello grande (1.000 DC). Nomi presi dal sonno: Nap è un pisolino, REM la fase in cui si sogna di più |
+| **Lucid Pack**, **Faceless Pack**, **Still Time Pack** | Dreams Pack, Pack Fazione | I pacchetti di una sola fazione (600 DC), dal nome del loro Lord. Mai "Dreams Pack": si confonde con il Dream Pack |
 | **Dream Credits (DC)** | crediti oro, gemme, CR | La moneta del gioco |
 | **creatura** | mostro, unità | Come nella lista degli effetti |
 | **mazzo** | deck | |
@@ -73,14 +75,20 @@ Sono quelli della presentazione al cliente e del documento di Sara confermato il
 
 **Dreams batte Memories, Memories batte Nightmares, Nightmares batte Dreams.** Chi è in vantaggio attacca con **+1 ATT**. Vale il giro del regolamento, non quello inverso.
 
-### Dream Pack e Dream Credits
+### Pacchetti e Dream Credits
 
-| Dream Pack | |
-|------------|--|
-| Prezzo | 500 DC |
-| Carte | 5: 3 Comuni, 1 Rara, 1 slot speciale |
-| Slot speciale | Rara 70% · Epica 25% · Leggendaria 4% · Leggendaria full art 1% |
-| Copertine | Tre, una per Lord, con lo stesso contenuto |
+Sei pacchetti nel negozio, tutti a circa 100 DC a carta ([decisione 030](../decisioni/030-nuovi-pacchetti.md)). Lo slot speciale dà una Rara, un'Epica o una Leggendaria.
+
+| Pacchetto | Prezzo | Carte | Slot speciale (Rara / Epica / Leggendaria) | Full art nel pacchetto | Immagine |
+|-----------|--------|-------|--------------------------------------------|------------------------|----------|
+| Nap Pack | 300 DC | 3: 2 Comuni, 1 slot speciale | 85% / 12% / 3% | 0,6% | Da decidere |
+| Dream Pack | 500 DC | 5: 3 Comuni, 1 Rara, 1 slot speciale | 70% / 25% / 5% | 1% | Il retro delle carte |
+| Lucid Pack (Dreams) | 600 DC | 6 di Dreams: 3 Comuni, 2 Rare, 1 slot speciale | 70% / 25% / 5% | 0,5% | Il Sogno Lucido |
+| Faceless Pack (Nightmares) | 600 DC | 6 di Nightmares, come sopra | 70% / 25% / 5% | 0,5% | L'Uomo Senza Volto |
+| Still Time Pack (Memories) | 600 DC | 6 di Memories, come sopra | 70% / 25% / 5% | 0,5% | La Custode del Tempo Fermo |
+| REM Pack | 1.000 DC | 10: 6 Comuni, 2 Rare, 2 slot speciali | 65% / 29% / 6% in tutti e due | 2,4% | Da decidere |
+
+Le percentuali sono provvisorie: si rivedono con i test e le simulazioni. Il pacchetto si apre subito, all'acquisto, e non si sceglie la copertina.
 
 | Come si guadagnano i DC | DC |
 |-------------------------|----|
@@ -165,11 +173,20 @@ Dopo la scelta del cliente del 2/11 (anche il retro delle carte):
 - Palette e caratteri restano quelli del design system di Gaia: Midnight `#111522`, Antique Gold `#C9955D`, Ivory `#E8D9C4`, Dream Blue `#8FC8F4`; Cinzel, Cormorant Garamond, Inter. Se un colore cambia, si decide con Gaia, perché è già nel codice del sito.
 - Nomi dei file in minuscolo con i trattini: `logo-dreamscape.svg`, `retro-carte.png`.
 
-## 8. Copertine dei Dream Pack (#91)
+## 8. Immagini dei pacchetti (#91)
 
-- Tre copertine, una per Lord, con l'illustrazione full art del Lord, come le bustine della presentazione.
-- Nomi: `base-dreams.png`, `base-nightmares.png`, `base-memories.png`.
+Un'immagine per pacchetto ([decisione 030](../decisioni/030-nuovi-pacchetti.md)):
+
+| Pacchetto | Immagine | File |
+|-----------|----------|------|
+| Dream Pack | Il retro delle carte | `dream-pack.png` |
+| Lucid Pack | Il Sogno Lucido, con l'illustrazione full art del Lord, come le bustine della presentazione | `lucid-pack.png` |
+| Faceless Pack | L'Uomo Senza Volto, come sopra | `faceless-pack.png` |
+| Still Time Pack | La Custode del Tempo Fermo, come sopra | `still-time-pack.png` |
+| Nap Pack, REM Pack | Da decidere | `nap-pack.png`, `rem-pack.png` |
+
 - In PNG originale: le copie per il sito le crea SWD.
+- Finché le immagini non ci sono, il negozio mostra un'immagine generica.
 
 ## 9. A chi chiedere
 

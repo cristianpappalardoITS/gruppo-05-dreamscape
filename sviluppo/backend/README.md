@@ -19,6 +19,14 @@ cp .env.example .env
 - Le email del backend (recupero password) non partono davvero: si leggono in Mailpit, su `http://localhost:8025`.
 - Nel profilo `dev` la chiave JWT è finta e scritta in `application-dev.properties`: alla consegna serve `JWT_SECRET`.
 
+### Dopo una migration nuova
+I dati finti (`V900` e seguenti) hanno numeri più alti delle migration vere. Se arriva una migration vera nuova (per esempio `V101`) e il database di sviluppo ha già i dati finti, Flyway non la applica e `bootRun` si ferma con un errore di validazione. Si ricrea il database di sviluppo, che riparte con tutti i dati finti:
+```bash
+docker compose down -v
+./gradlew bootRun
+```
+I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno bisogno: Testcontainers crea ogni volta un database nuovo.
+
 ## Test
 ```bash
 ./gradlew test
@@ -38,15 +46,15 @@ cp .env.example .env
 
 ## Struttura
 - `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).
-- `src/main/resources/db/migration/`: tabelle (`V1`–`V10`) e dati del regolamento (`V100`). Una migration già eseguita non si modifica.
-- `src/main/resources/db/testdata/`: dati finti (`V900`–`V902`), caricati solo nel profilo `dev` e nei test.
+- `src/main/resources/db/migration/`: tabelle (`V1`–`V10`), dati del regolamento (`V100`) e pacchetti (`V101`). Una migration già eseguita non si modifica.
+- `src/main/resources/db/testdata/`: dati finti (`V900`–`V903`), caricati solo nel profilo `dev` e nei test.
 
 Lo schema è spiegato in [docs/database/schema.md](../../docs/database/schema.md).
 
 ## Dati finti (profilo `dev` e test)
 - **Carte:** 39 carte del Set di prova (`TEST-001`–`TEST-039`): per ogni fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art (`TEST-013-FA`, `TEST-026-FA`, `TEST-039-FA`). Ognuno dei 19 effetti è su almeno una carta.
-- **Pacchetti:** Pacchetto di prova (500 DC), tre set iniziali di prova (uno per fazione), due pacchetti di benvenuto di prova.
-- **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere, quindi possono provare la pagina Benvenuto (`POST /me/welcome`) e poi comprare il Pacchetto di prova. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
+- **Pacchetti:** valgono quelli veri di `V101` (decisioni 014 e 030: Nap Pack, Dream Pack, Lucid, Faceless e Still Time Pack, REM Pack, tre set iniziali e due Welcome Pack), che pescano anche dalle carte di prova. I pacchetti di prova di `V901` sono spenti da `V903`.
+- **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere, quindi possono provare la pagina Benvenuto (`POST /me/welcome`) e poi comprare un Dream Pack. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
 
 | Username | Email | Password |
 |----------|-------|----------|

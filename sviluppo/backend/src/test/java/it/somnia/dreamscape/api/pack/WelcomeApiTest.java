@@ -29,7 +29,7 @@ import jakarta.persistence.EntityManager;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-// Pagina Benvenuto (GET e POST /me/welcome) con i pacchetti di prova di V901: un set iniziale per fazione
+// Pagina Benvenuto (GET e POST /me/welcome) con i pacchetti veri di V101: un set iniziale per fazione
 // (14 Comuni e 6 Rare) e due pacchetti di benvenuto da 5 carte, il secondo con l'Epica garantita.
 // Nelle carte di prova ogni fazione ha 7 Comuni e 3 Rare: con al massimo 2 copie il set è sempre lo stesso.
 @Import(TestcontainersConfiguration.class)
@@ -81,9 +81,9 @@ class WelcomeApiTest {
                 .andExpect(jsonPath("$.starterFaction").value("DREAMS"))
                 .andExpect(jsonPath("$.starterCards.length()").value(20))
                 .andExpect(jsonPath("$.welcomeOpenings.length()").value(2))
-                .andExpect(jsonPath("$.welcomeOpenings[0].packName").value("Benvenuto di prova"))
+                .andExpect(jsonPath("$.welcomeOpenings[0].packName").value("Welcome Pack"))
                 .andExpect(jsonPath("$.welcomeOpenings[0].cards.length()").value(5))
-                .andExpect(jsonPath("$.welcomeOpenings[1].packName").value("Benvenuto di prova con Epica"))
+                .andExpect(jsonPath("$.welcomeOpenings[1].packName").value("Welcome Pack Epico"))
                 .andExpect(jsonPath("$.welcomeOpenings[1].cards[4].card.rarity.code").value("EPIC"));
     }
 

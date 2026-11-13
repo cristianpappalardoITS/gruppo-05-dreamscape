@@ -26,7 +26,7 @@ import jakarta.persistence.EntityManager;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-// Acquisto di un pacchetto (POST /packs/{packId}/open) con il pacchetto di prova di V901 (500 DC, 5 carte).
+// Acquisto di un pacchetto (POST /packs/{packId}/open) con il Dream Pack di V101 (500 DC, 5 carte).
 // anna_test dopo l'accesso ha 550 DC: 500 della registrazione e 50 della ricompensa giornaliera.
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -35,7 +35,7 @@ import tools.jackson.databind.ObjectMapper;
 class PackPurchaseApiTest {
 
     private static final String TEST_PASSWORD = "prova-dreamscape";
-    private static final String TEST_PACK = "Pacchetto di prova";
+    private static final String TEST_PACK = "Dream Pack";
 
     @Autowired
     private MockMvc mockMvc;
@@ -152,7 +152,7 @@ class PackPurchaseApiTest {
     @Test
     void openPack_welcomePack_returns404() throws Exception {
         // Given: i pacchetti di benvenuto si regalano, non si comprano
-        UUID welcomePack = packId("Benvenuto di prova");
+        UUID welcomePack = packId("Welcome Pack");
 
         // When / Then
         mockMvc.perform(post(openUrl(welcomePack)).header(HttpHeaders.AUTHORIZATION, bearer))
@@ -188,7 +188,7 @@ class PackPurchaseApiTest {
     @Test
     void openPack_coverOfAnotherPack_returns400() throws Exception {
         // Given
-        UUID otherCover = insertCover("Benvenuto di prova", "Copertina del benvenuto", true);
+        UUID otherCover = insertCover("Welcome Pack", "Copertina del benvenuto", true);
 
         // When / Then
         mockMvc.perform(post(openUrl(packId(TEST_PACK))).header(HttpHeaders.AUTHORIZATION, bearer)

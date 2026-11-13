@@ -48,7 +48,7 @@ class PackPurchaseConcurrencyTest {
                 INSERT INTO users (username, email, password_hash, credits, privacy_accepted_at, terms_accepted_at)
                 VALUES (?, ?, 'non-usata', 500, now(), now()) RETURNING id""",
                 UUID.class, USERNAME, USERNAME + "@example.test");
-        packId = jdbcTemplate.queryForObject("SELECT id FROM packs WHERE name = 'Pacchetto di prova'", UUID.class);
+        packId = jdbcTemplate.queryForObject("SELECT id FROM packs WHERE name = 'Dream Pack'", UUID.class);
     }
 
     @AfterEach

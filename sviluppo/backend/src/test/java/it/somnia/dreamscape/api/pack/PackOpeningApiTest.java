@@ -71,7 +71,7 @@ class PackOpeningApiTest {
                         .header(HttpHeaders.AUTHORIZATION, bearer("anna_test")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openingId").value(openingId.toString()))
-                .andExpect(jsonPath("$.packName").value("Pacchetto di prova"))
+                .andExpect(jsonPath("$.packName").value("Dream Pack"))
                 .andExpect(jsonPath("$.openedAt").exists())
                 .andExpect(jsonPath("$.cards.length()").value(5))
                 .andExpect(jsonPath("$.cards[0].card.code").value("TEST-003"))
@@ -139,12 +139,12 @@ class PackOpeningApiTest {
         mockMvc.perform(get("/api/v1/pack-openings/" + UUID.randomUUID())).andExpect(status().isUnauthorized());
     }
 
-    // Salva un'apertura del pacchetto di prova con le carte indicate, poi svuota la cache di Hibernate
+    // Salva un'apertura del Dream Pack con le carte indicate, poi svuota la cache di Hibernate
     // perché l'API rilegga tutto dal database
     private UUID saveOpening(String username, String... cardCodes) {
         User user = userRepository.findByUsernameIgnoreCase(username).orElseThrow();
         Pack pack = packRepository.findAll().stream()
-                .filter(candidate -> candidate.getName().equals("Pacchetto di prova"))
+                .filter(candidate -> candidate.getName().equals("Dream Pack"))
                 .findFirst().orElseThrow();
         PackOpening opening = new PackOpening(user, pack, null, PackOpeningSource.PURCHASE, 500);
         List.of(cardCodes).forEach(code -> opening.addCard(cardRepository.findByCode(code).orElseThrow()));

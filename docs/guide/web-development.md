@@ -86,8 +86,8 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Vantaggio di fazione | **+1 ATT** a chi è in vantaggio | "+1 Attacco/Difesa", malus |
 | Rarità | Comune, Rara, Epica, Leggendaria. Le Leggendarie hanno una versione rara **full art**, che è una carta a parte con il suo id | "Mitica", "TIER" mostrato all'utente |
 | Lord | Il Sogno Lucido (Dreams), L'Uomo Senza Volto (Nightmares), La Custode del Tempo Fermo (Memories): sono anche le copertine | |
-| Pacchetto | Oggi c'è il **Dream Pack**: 5 carte, **500 DC**, con tre copertine (una per Lord) e lo stesso contenuto. Si apre subito, all'acquisto. Il cliente vuole **più tipi di pacchetti a prezzi diversi**: tipi, prezzi e probabilità li decidono Maie e Nicolas. Il negozio va pensato per più pacchetti | Pack Base 200, Pack Fazione 350, Pack Elite 500 (nomi e prezzi vecchi), inventario dei pacchetti chiusi |
-| Contenuto del Dream Pack | 3 Comuni, 1 Rara, 1 slot speciale: Rara 70%, Epica 25%, Leggendaria 4%, Leggendaria full art 1% | |
+| Pacchetti | Sei nel negozio ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): **Nap Pack** 300 DC, **Dream Pack** 500 DC, **Lucid Pack**, **Faceless Pack** e **Still Time Pack** 600 DC (uno per fazione), **REM Pack** 1.000 DC. Ognuno ha **una sola immagine**: il Dream Pack il retro delle carte, quelli di fazione il loro Lord. Non si sceglie la copertina. Si apre subito, all'acquisto | Pack Base 200, Pack Fazione 350, Pack Elite 500, "Dreams Pack" (nomi e prezzi vecchi), tre copertine del Dream Pack, inventario dei pacchetti chiusi |
+| Contenuto dei pacchetti | Nap: 2 Comuni + slot speciale 85/12/3. Dream: 3 Comuni, 1 Rara + slot speciale 70/25/5. Pacchetti di fazione: 3 Comuni, 2 Rare + slot speciale 70/25/5, solo carte di quella fazione. REM: 6 Comuni, 2 Rare + 2 slot speciali 65/29/6 (Rara/Epica/Leggendaria). Le percentuali arrivano da `GET /packs`: non si scrivono a mano | |
 | Moneta | **Dream Credits (DC)**, numeri interi | "CR", decimali, prezzi in euro |
 | Ricompense | Registrazione 500 · accesso giornaliero 50 · missione giornaliera 100 · vittoria classificata 30 (max 3 al giorno, non contro un amico) · obiettivo settimanale 250 · premio di lega | Bonus di 1.000, vittoria +150, DC nelle partite rapide |
 | Denaro reale | Non c'è in fase 1: il riquadro "Acquista crediti" si mostra solo come "in arrivo" | Pagamenti, prezzi in euro |
@@ -100,7 +100,7 @@ Queste decisioni valgono anche dove il SiteMap o un documento più vecchio dicon
 | Giorno delle ricompense | Inizia a **mezzanotte, ora italiana**. Le date arrivano in UTC e si mostrano nell'ora locale | |
 | Partita | 20 punti vita (confermati dal cliente, da verificare con le simulazioni), max 60 round, poi pareggio. Si dice **round**, non turni | "Turni" |
 
-Skin e animazioni per il retro e per le carte (altra richiesta del cliente) sono nel **Backlog**: non si costruiscono in fase 1. Ancora da decidere, quindi da non dare per scontato: tipi e prezzi dei nuovi pacchetti, soglie e premi delle leghe, quali partite contano per le missioni. Fino alla decisione, chiedete prima di costruire queste parti. Le decisioni, con il perché, sono in [docs/decisioni/](../decisioni/README.md).
+Skin e animazioni per il retro e per le carte (altra richiesta del cliente) sono nel **Backlog**: non si costruiscono in fase 1. Ancora da decidere, quindi da non dare per scontato: le immagini di Nap Pack e REM Pack, soglie e premi delle leghe, quali partite contano per le missioni. Fino alla decisione, chiedete prima di costruire queste parti. Le decisioni, con il perché, sono in [docs/decisioni/](../decisioni/README.md).
 
 ## 4. Il design system
 
@@ -166,7 +166,7 @@ const res = await fetch("http://localhost:8080/api/decks", {
 | ✅ Il frontend | ❌ Il frontend non |
 |----------------|-------------------|
 | Controlla i campi del form per aiutare l'utente (email, lunghezza della password, 20 carte nel mazzo) | Decide se il mazzo è valido: lo ricontrolla sempre il server |
-| Manda l'id del pacchetto e della copertina scelta | Estrae le carte del pacchetto |
+| Manda l'id del pacchetto | Estrae le carte del pacchetto |
 | Mostra la cronaca della partita arrivata dal server | Simula la partita o calcola il vincitore |
 | Mostra i crediti di `/me/summary` | Calcola il saldo da solo |
 
@@ -230,7 +230,7 @@ Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e access
 | #73 Registrazione e accesso | Alessandro | 3 | [Accesso con JWT](../api/guida-frontend.md#3-accesso-con-jwt): consensi, errori, pagina Benvenuto con la scelta della fazione |
 | #112 Wireframe Amici, Benvenuto, Profilo, backoffice | Daniele | 3 | [Pagine e chiamate](../api/guida-frontend.md#6-pagine-e-chiamate) |
 | #81 Componente della carta | Yuri, Gaia | 4 | [Come si monta una carta](../api/guida-frontend.md#7-come-si-monta-una-carta) |
-| #82 Negozio e apertura | Daniele | 4 | Dream Pack (sezione 3), apertura con l'id nell'URL |
+| #82 Negozio e apertura | Daniele | 4 | I sei pacchetti (sezione 3), apertura con l'id nell'URL |
 | #83 Collezione e dettaglio | Alessandro | 4 | Filtri, paginazione, altre versioni della carta (full art) |
 
 ## 8. A chi chiedere

@@ -446,16 +446,12 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
   {
     "id": "019a1f31-0000-7000-8000-000000000001",
     "name": "Dream Pack",
-    "description": "5 carte di tutte le fazioni.",
+    "description": "Il pacchetto di ogni Dreamweaver: 5 carte, con una Rara sicura e uno slot speciale.",
     "priceCredits": 500,
     "fullArtChance": 20.0,
     "factionCode": null,
     "availableUntil": null,
-    "covers": [
-      { "id": "019a1f31-0000-7000-8000-0000000000c1", "name": "Dreams Lord", "factionCode": "DREAMS", "imageUrl": "/images/packs/base-dreams-v1.webp" },
-      { "id": "019a1f31-0000-7000-8000-0000000000c2", "name": "Nightmares Lord", "factionCode": "NIGHTMARES", "imageUrl": "/images/packs/base-nightmares-v1.webp" },
-      { "id": "019a1f31-0000-7000-8000-0000000000c3", "name": "Memories Lord", "factionCode": "MEMORIES", "imageUrl": "/images/packs/base-memories-v1.webp" }
-    ],
+    "covers": [],
     "slots": [
       { "cardCount": 3, "rarities": [ { "code": "COMMON", "chance": 100.0 } ] },
       { "cardCount": 1, "rarities": [ { "code": "RARE", "chance": 100.0 } ] },
@@ -466,12 +462,13 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 ```
 
 - Arrivano solo i pacchetti **in vendita in questo momento**, dal più economico. Set iniziale e pacchetti di benvenuto non ci sono: si ricevono nella pagina Benvenuto.
-- Il giocatore sceglie una delle copertine: il contenuto è lo stesso. `covers` può essere vuoto (pacchetto senza copertine, o copertine non ancora pronte): in quel caso si mostra un'immagine generica del pacchetto.
+- Oggi nessun pacchetto ha copertine da scegliere ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): `covers` arriva vuoto e si mostra un'immagine generica del pacchetto. Se in futuro un pacchetto ne avrà più di una, il giocatore ne sceglie una e il contenuto resta lo stesso.
 - `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)". Le rarità di uno slot arrivano dalla più comune alla più rara; `chance` è già in percentuale.
 - `fullArtChance` è la percentuale delle **Leggendarie** che escono in full art, non del pacchetto: con 5% di Leggendaria e 20 di `fullArtChance` la full art esce nell'1% dei pacchetti (5 × 20 / 100).
-- Oggi c'è solo il Dream Pack, ma il negozio va fatto per **più pacchetti**: il cliente ne vuole di più tipi, a prezzi diversi. `factionCode` dice se il pacchetto ha carte di una sola fazione (`null` = tutte); `availableUntil` (UTC) se è in vendita solo fino a una data (`null` = nessun limite).
+- Nel negozio ci sono **sei pacchetti** ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): Nap Pack (300 DC), Dream Pack (500), Faceless, Lucid e Still Time Pack (600, uno per fazione), REM Pack (1.000). Nomi, prezzi e percentuali si leggono sempre da `GET /packs`, mai scritti a mano nel frontend.
+- `factionCode` dice se il pacchetto ha carte di una sola fazione (`null` = tutte); `availableUntil` (UTC) se è in vendita solo fino a una data (`null` = nessun limite). Nei pacchetti di fazione `fullArtChance` è 10.
 
-Acquisto: `POST /packs/{packId}/open` con `{ "coverId": "019a1f31-0000-7000-8000-0000000000c2" }` (il corpo si può omettere se il pacchetto non ha copertine). Risponde `201`:
+Acquisto: `POST /packs/{packId}/open`, senza corpo (un pacchetto con più copertine vorrebbe `{ "coverId": "..." }`, con l'id di una di `covers`). Risponde `201`:
 
 ```json
 {
@@ -825,5 +822,5 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**,
 | DC a chi viene scelto dal matchmaking e vince | No: i DC della vittoria vanno solo a chi ha avviato la partita | Maie + SWD |
 | Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
 | Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
-| Tipi di pacchetti e prezzi (richiesta del cliente del 2/11) | Oggi c'è solo il Dream Pack da 500 DC. Proposta della #129: Pacchetto di fazione (6 carte, 600 DC), piccolo (3 carte, 300 DC), grande (10 carte, 1.000 DC). Sono solo righe di dati: il negozio li mostra senza cambiare il codice | Maie, Sara, Valerio |
+| Immagini di Nap Pack e REM Pack | Da proporre ([decisione 030](../decisioni/030-nuovi-pacchetti.md)) | Digital |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |

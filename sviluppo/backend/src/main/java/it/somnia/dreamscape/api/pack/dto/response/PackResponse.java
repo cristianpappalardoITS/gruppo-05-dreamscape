@@ -10,6 +10,7 @@ import it.somnia.dreamscape.api.pack.model.PackCover;
 
 // Un pacchetto in vendita nel negozio (guida ai dati, "Negozio e apertura dei pacchetti").
 // factionCode non è null se il pacchetto ha carte di una sola fazione; availableUntil (UTC) se è a tempo.
+// imageUrl è l'immagine del pacchetto (decisione 030), null finché non c'è: il negozio ne mostra una generica.
 public record PackResponse(
         UUID id,
         String name,
@@ -18,6 +19,7 @@ public record PackResponse(
         BigDecimal fullArtChance,
         String factionCode,
         Instant availableUntil,
+        String imageUrl,
         List<PackCoverResponse> covers,
         List<PackSlotResponse> slots) {
 
@@ -29,6 +31,6 @@ public record PackResponse(
                 .toList();
         List<PackSlotResponse> slots = pack.getSlots().stream().map(PackSlotResponse::from).toList();
         return new PackResponse(pack.getId(), pack.getName(), pack.getDescription(), pack.getPriceCredits(),
-                pack.getFullArtChance(), factionCode, pack.getAvailableUntil(), covers, slots);
+                pack.getFullArtChance(), factionCode, pack.getAvailableUntil(), pack.getImageUrl(), covers, slots);
     }
 }

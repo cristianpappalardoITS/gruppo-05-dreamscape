@@ -451,6 +451,7 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
     "fullArtChance": 20.0,
     "factionCode": null,
     "availableUntil": null,
+    "imageUrl": null,
     "covers": [],
     "slots": [
       { "cardCount": 3, "rarities": [ { "code": "COMMON", "chance": 100.0 } ] },
@@ -462,7 +463,8 @@ Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`,
 ```
 
 - Arrivano solo i pacchetti **in vendita in questo momento**, dal più economico. Set iniziale e pacchetti di benvenuto non ci sono: si ricevono nella pagina Benvenuto.
-- Oggi nessun pacchetto ha copertine da scegliere ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): `covers` arriva vuoto e si mostra un'immagine generica del pacchetto. Se in futuro un pacchetto ne avrà più di una, il giocatore ne sceglie una e il contenuto resta lo stesso.
+- `imageUrl` è l'immagine del pacchetto (Dream Pack il retro delle carte, i pacchetti di fazione il loro Lord). Finché le immagini non ci sono arriva `null`: si mostra un'immagine generica del pacchetto.
+- Oggi nessun pacchetto ha copertine da scegliere ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): `covers` arriva vuoto. Se in futuro un pacchetto ne avrà più di una, il giocatore ne sceglie una e il contenuto resta lo stesso.
 - `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)". Le rarità di uno slot arrivano dalla più comune alla più rara; `chance` è già in percentuale.
 - `fullArtChance` è la percentuale delle **Leggendarie** che escono in full art, non del pacchetto: con 5% di Leggendaria e 20 di `fullArtChance` la full art esce nell'1% dei pacchetti (5 × 20 / 100).
 - Nel negozio ci sono **sei pacchetti** ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): Nap Pack (300 DC), Dream Pack (500), Faceless, Lucid e Still Time Pack (600, uno per fazione), REM Pack (1.000). Nomi, prezzi e percentuali si leggono sempre da `GET /packs`, mai scritti a mano nel frontend.

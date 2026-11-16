@@ -20,7 +20,8 @@ import it.somnia.dreamscape.api.TestcontainersConfiguration;
 
 // Le regole dei mazzi che controlla PostgreSQL (V3): nomi unici, una riga per carta con le copie in
 // quantity, mazzo classificato e cancellazioni a catena (#88). Le regole del regolamento (20 carte,
-// copie massime per rarità, possesso) stanno nel service e si provano con le API della #80.
+// copie massime per rarità, possesso) stanno nel service: le provano DeckApiTest e DeckValidatorTest (#80)
+// e, con il commit di ogni richiesta, DeckIntegrationTest.
 // Ogni test finisce con un rollback, quindi una sola violazione per test.
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest

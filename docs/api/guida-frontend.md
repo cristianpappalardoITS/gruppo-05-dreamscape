@@ -2,6 +2,8 @@
 
 Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e come mandarli, pagina per pagina, così la sitemap e le pagine restano coerenti con il database.
 
+L'elenco di tutti gli endpoint, con quelli già pronti, e la guida passo passo per le chiamate da React sono in [endpoint-e-fetch.md](endpoint-e-fetch.md).
+
 > 🚧 **Proposta di SWD da confermare insieme.** I dati vengono dalla [proposta di database](../database/schema.md). I nomi delle API seguono [naming.md](../naming.md) e sono una proposta: quelli definitivi saranno in **Swagger** quando il backend esiste. Se qualcosa non torna con quello che vi serve, ditelo a Marco o Cristian.
 
 ## Indice
@@ -160,6 +162,8 @@ Codici di errore dell'accesso:
 ## 4. Il file api.js
 
 Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Pagine e componenti non usano mai `fetch()` direttamente.
+
+Qui sotto c'è l'idea di base. La versione da usare, che non fa mai partire due rinnovi del token insieme, è in [endpoint-e-fetch.md, passo 6](endpoint-e-fetch.md#passo-6-il-file-apijs).
 
 ```js
 // api.js: unico punto da cui passano le chiamate al backend

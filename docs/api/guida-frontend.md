@@ -163,7 +163,7 @@ Codici di errore dell'accesso:
 
 Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Pagine e componenti non usano mai `fetch()` direttamente.
 
-Qui sotto c'è l'idea di base. La versione da usare, che non fa mai partire due rinnovi del token insieme, è in [endpoint-e-fetch.md, passo 4](endpoint-e-fetch.md#passo-4-il-file-apijs).
+Qui sotto c'è l'idea di base. La versione da usare, che non fa mai partire due rinnovi del token insieme, è in [endpoint-e-fetch.md, passo 6](endpoint-e-fetch.md#passo-6-il-file-apijs).
 
 ```js
 // api.js: unico punto da cui passano le chiamate al backend

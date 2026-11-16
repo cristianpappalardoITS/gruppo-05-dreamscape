@@ -2,7 +2,8 @@
 
 Per il team **WMD**. Qui c'è tutto quello che serve per collegare le pagine React al backend:
 
-- come preparare il progetto e il file `api.js`, passo per passo;
+- come installare i programmi, scaricare il progetto e avviarlo, con i link per scaricare tutto;
+- come preparare il file `api.js` e fare le chiamate, passo per passo;
 - l'elenco completo degli endpoint, quelli già pronti e quelli ancora da fare;
 - per ognuno, cosa mandate voi e cosa vi rimanda il backend;
 - i dati della carta, per montarla con il componente `Card`.
@@ -20,31 +21,157 @@ Se qualcosa non torna, o vi serve un dato che non c'è, ditelo a Marco o Cristia
 
 ## Indice
 
-1. [Passo 1: avviare il backend](#passo-1-avviare-il-backend)
-2. [Passo 2: collegare Vite al backend](#passo-2-collegare-vite-al-backend)
-3. [Passo 3: le regole delle chiamate](#passo-3-le-regole-delle-chiamate)
-4. [Passo 4: il file api.js](#passo-4-il-file-apijs)
-5. [Passo 5: usare api.js nelle pagine](#passo-5-usare-apijs-nelle-pagine)
-6. [Elenco completo degli endpoint](#elenco-completo-degli-endpoint)
-7. [Endpoint pronti, nel dettaglio](#endpoint-pronti-nel-dettaglio)
-8. [Endpoint da fare, nel dettaglio](#endpoint-da-fare-nel-dettaglio)
-9. [I dati per montare la carta](#i-dati-per-montare-la-carta)
-10. [Tutti i codici di errore](#tutti-i-codici-di-errore)
-11. [Controllo finale](#controllo-finale)
+1. [Passo 1: installare i programmi](#passo-1-installare-i-programmi)
+2. [Passo 2: scaricare il progetto](#passo-2-scaricare-il-progetto)
+3. [Passo 3: avviare il backend](#passo-3-avviare-il-backend)
+4. [Passo 4: avviare il frontend collegato al backend](#passo-4-avviare-il-frontend-collegato-al-backend)
+5. [Passo 5: le regole delle chiamate](#passo-5-le-regole-delle-chiamate)
+6. [Passo 6: il file api.js](#passo-6-il-file-apijs)
+7. [Passo 7: usare api.js nelle pagine](#passo-7-usare-apijs-nelle-pagine)
+8. [Elenco completo degli endpoint](#elenco-completo-degli-endpoint)
+9. [Endpoint pronti, nel dettaglio](#endpoint-pronti-nel-dettaglio)
+10. [Endpoint da fare, nel dettaglio](#endpoint-da-fare-nel-dettaglio)
+11. [I dati per montare la carta](#i-dati-per-montare-la-carta)
+12. [Tutti i codici di errore](#tutti-i-codici-di-errore)
+13. [Controllo finale](#controllo-finale)
 
 ---
 
-## Passo 1: avviare il backend
+## Passo 1: installare i programmi
 
-Serve Docker Desktop acceso e Java 25. Poi, dalla cartella del backend:
+Si fa **una volta sola** per computer. Servono cinque programmi: quattro obbligatori e un editor consigliato.
+
+| Programma | A cosa serve | Versione | Dove si scarica |
+|-----------|--------------|----------|-----------------|
+| **Git** | Scaricare il progetto e mandare le modifiche | Qualsiasi recente | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Java (Temurin)** | Far partire il backend | **25**, non un'altra | [adoptium.net/temurin/releases/?version=25](https://adoptium.net/temurin/releases/?version=25) |
+| **Docker Desktop** | Far partire il database (PostgreSQL) e Mailpit, che il backend avvia da solo | Qualsiasi recente | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
+| **Node.js** | Far partire il frontend (Vite) | La **LTS**; almeno la 22.12 | [nodejs.org/en/download](https://nodejs.org/en/download) |
+| Visual Studio Code (consigliato) | Scrivere il codice | Qualsiasi recente | [code.visualstudio.com/download](https://code.visualstudio.com/download) |
+
+**Prima di iniziare, sul Mac:** controllate che chip avete. Menu Apple (la mela in alto a sinistra) → **Informazioni su questo Mac**. Se alla voce "Chip" c'è scritto "Apple M1", "M2", "M3" o simili avete un **Mac Apple Silicon**; se c'è "Intel" avete un **Mac Intel**. Vi serve per scegliere i file giusti di Java e Docker.
+
+**Dove si scrivono i comandi:**
+
+- **Mac:** l'app **Terminale**: premete Cmd+Spazio, scrivete "Terminale" e premete Invio (si trova anche in Applicazioni → Utility).
+- **Windows:** **Git Bash**, che si installa insieme a Git (Start → scrivete "Git Bash"). Usate Git Bash e non PowerShell: così i comandi di questa guida sono identici per Mac e Windows.
+
+Dopo aver installato un programma, **chiudete e riaprite il terminale**: altrimenti il terminale non lo trova.
+
+### 1.1 Git
+
+- **Mac:** aprite il Terminale e scrivete `git --version`. Se Git non c'è, il Mac propone di installare gli "Strumenti della riga di comando": cliccate **Installa** e aspettate la fine.
+- **Windows:** andate su [git-scm.com/downloads/win](https://git-scm.com/downloads/win), cliccate "Click here to download" e aprite il file. Nell'installazione lasciate tutte le opzioni come sono e cliccate sempre **Next**, poi **Install**. Insieme a Git si installa **Git Bash**.
+
+### 1.2 Java 25 (Temurin)
+
+1. Andate su [adoptium.net/temurin/releases/?version=25](https://adoptium.net/temurin/releases/?version=25). In alto dev'essere scelto **JDK 25 - LTS**.
+2. Scorrete fino a "All platforms and packages" e cercate il vostro sistema:
+   - **Mac:** nel riquadro **macOS** scegliete **Apple Silicon** oppure **Intel** (in base al vostro chip) e **JDK**, poi scaricate il file **PKG**;
+   - **Windows:** nel riquadro **Windows** scegliete **x64** e **JDK**, poi scaricate il file **MSI**.
+3. Aprite il file scaricato.
+4. **Solo su Windows:** nella schermata "Custom Setup" cliccate su **Set JAVA_HOME variable** e scegliete "Will be installed on local hard drive". Senza questa opzione il backend potrebbe non trovare Java.
+5. Finite l'installazione con **Next** (o **Continua** sul Mac) e **Install**.
+
+Guida ufficiale, se serve: [adoptium.net/installation](https://adoptium.net/installation/).
+
+### 1.3 Docker Desktop
+
+1. Andate su [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) e cliccate **Download Docker Desktop**. Scegliete:
+   - **Mac:** "Download for Mac – Apple Silicon" oppure "Download for Mac – Intel Chip", in base al vostro chip;
+   - **Windows:** "Download for Windows – AMD64" (quasi tutti i PC).
+2. **Mac:** aprite il file `.dmg` e trascinate Docker nella cartella **Applicazioni**. Poi aprite Docker dalle Applicazioni.
+3. **Windows:** aprite il file `.exe` e lasciate spuntata l'opzione **Use WSL 2 instead of Hyper-V**. Alla fine riavviate il computer, poi aprite Docker Desktop dal menu Start.
+4. Al primo avvio accettate le condizioni d'uso. L'accesso con un account Docker **non serve**: potete saltarlo.
+5. Aspettate che in basso a sinistra Docker Desktop scriva **Engine running** (sul Mac, la balena nella barra in alto smette di muoversi).
+
+Docker Desktop **deve essere aperto** ogni volta che avviate il backend.
+
+Guide ufficiali, se serve: [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) e [Windows](https://docs.docker.com/desktop/setup/install/windows-install/). Su Windows, se Docker dice che manca WSL, seguite [questa guida](https://learn.microsoft.com/it-it/windows/wsl/install): aprite PowerShell come amministratore, scrivete `wsl --install`, riavviate.
+
+### 1.4 Node.js
+
+1. Andate su [nodejs.org/en/download](https://nodejs.org/en/download).
+2. Lasciate selezionata la versione con scritto **LTS** e il vostro sistema (macOS o Windows).
+3. Scaricate l'installatore (**`.pkg`** sul Mac, **`.msi`** su Windows), apritelo e installate con le opzioni già scelte.
+
+Con Node.js si installa anche `npm`, il programma che scarica le librerie del frontend.
+
+### 1.5 Visual Studio Code (consigliato)
+
+Da [code.visualstudio.com/download](https://code.visualstudio.com/download). Dentro VS Code conviene l'estensione **ESLint** (pannello Estensioni, a sinistra, cercate "ESLint"): segnala gli errori con le regole già messe nel progetto.
+
+### 1.6 Controllo: è tutto installato?
+
+Chiudete e riaprite il terminale (Terminale sul Mac, Git Bash su Windows) e scrivete un comando alla volta:
 
 ```bash
-cd sviluppo/backend
-cp .env.example .env
-./gradlew bootRun
+git --version
+java -version
+docker --version
+node -v
+npm -v
 ```
 
-Al primo avvio ci mette un po'. Quando è pronto:
+| Comando | Va bene se scrive | Se non va |
+|---------|-------------------|-----------|
+| `git --version` | `git version 2.` e un numero | Rifate il punto 1.1 |
+| `java -version` | una riga con **`25`**, es. `openjdk version "25.0.1"` | Se c'è un altro numero (es. 17 o 21) o "command not found", rifate il punto 1.2 |
+| `docker --version` | `Docker version` e un numero | Aprite Docker Desktop e riprovate; altrimenti rifate il punto 1.3 |
+| `node -v` | `v22.12` o un numero più alto (es. `v24...`) | Rifate il punto 1.4 |
+| `npm -v` | un numero, es. `11.6.2` | Rifate il punto 1.4 |
+
+---
+
+## Passo 2: scaricare il progetto
+
+Il progetto è su GitHub: [github.com/cristianpappalardoITS/gruppo-05-dreamscape](https://github.com/cristianpappalardoITS/gruppo-05-dreamscape).
+
+**La prima volta**, nel terminale, scaricatelo nella vostra cartella utente:
+
+```bash
+cd ~
+git clone https://github.com/cristianpappalardoITS/gruppo-05-dreamscape.git
+cd gruppo-05-dreamscape
+git switch develop
+```
+
+Si crea la cartella `gruppo-05-dreamscape` dentro la cartella utente: sul Mac `/Users/vostro-nome/gruppo-05-dreamscape`, su Windows `C:\Users\vostro-nome\gruppo-05-dreamscape`. Si lavora sempre partendo da `develop`.
+
+**Se il progetto ce l'avete già** (anche in un'altra cartella), entrate nella sua cartella e aggiornatelo prima di iniziare:
+
+```bash
+cd ~/gruppo-05-dreamscape
+git switch develop
+git pull
+```
+
+Se l'avete messo altrove, cambiate il percorso del `cd` (es. `cd ~/Desktop/gruppo-05-dreamscape`).
+
+In VS Code: **File → Apri cartella** e scegliete `gruppo-05-dreamscape`. Il terminale si apre anche dentro VS Code (**Terminale → Nuovo terminale**; su Windows scegliete "Git Bash" dalla freccia accanto al +).
+
+Per creare i branch e aprire le pull request seguite [workflow-github.md](../workflow-github.md).
+
+---
+
+## Passo 3: avviare il backend
+
+1. Aprite **Docker Desktop** e aspettate **Engine running**.
+2. Nel terminale, dalla cartella del progetto:
+
+   ```bash
+   cd sviluppo/backend
+   cp .env.example .env
+   ./gradlew bootRun
+   ```
+
+   `cp .env.example .env` si fa **solo la prima volta**: crea il file con i dati del database del vostro computer. Le volte dopo bastano `cd sviluppo/backend` e `./gradlew bootRun`.
+
+3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit. Serve internet.
+4. Il backend è pronto quando nel terminale compare una riga con **`Started DreamscapeApiApplication`**. **Lasciate aperto quel terminale**: se lo chiudete, il backend si ferma. Per fermarlo voi: **Ctrl+C**.
+5. Controllo: aprite [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) nel browser. Deve comparire `{"status":"UP"}`.
+
+Quando il backend è acceso:
 
 | Cosa | Indirizzo |
 |------|-----------|
@@ -64,11 +191,13 @@ Sono password di prova, valide solo sul database del vostro computer. Le carte d
 
 ---
 
-## Passo 2: collegare Vite al backend
+## Passo 4: avviare il frontend collegato al backend
+
+### 4.1 Collegare Vite al backend (una volta sola)
 
 Il frontend (Vite, `http://localhost:5173`) e il backend (`http://localhost:8080`) in sviluppo sono su due indirizzi diversi. Alla consegna invece sono sullo **stesso indirizzo**. Per avere in sviluppo la stessa situazione si dice a Vite di passare al backend tutto quello che inizia con `/api` e `/images`.
 
-In `sviluppo/frontend/vite.config.js`:
+Sostituite il contenuto di `sviluppo/frontend/vite.config.js` con questo:
 
 ```js
 import react from "@vitejs/plugin-react";
@@ -87,17 +216,61 @@ export default defineConfig({
 });
 ```
 
+Basta farlo una volta per tutto il gruppo: chi lo fa per primo lo mette in una pull request, gli altri lo ricevono con `git pull`.
+
 Perché serve:
 
 - **Niente CORS:** per il browser le chiamate partono dallo stesso indirizzo della pagina.
 - **Il cookie del refresh token funziona:** il backend lo manda con `SameSite=Strict`, quindi il browser lo rimanda solo allo stesso sito.
 - Negli indirizzi si scrive sempre `/api/v1/...`, mai `http://localhost:8080/...`: lo stesso codice funziona in sviluppo e alla consegna.
 
-In sviluppo usate **Chrome o Firefox**. Il cookie ha l'opzione `Secure`: questi due browser lo accettano anche su `http://localhost`. Se dopo l'accesso il cookie non si salva (può succedere con Safari), ditelo a SWD.
+### 4.2 Avviare il frontend
+
+Con il backend acceso, aprite un **secondo terminale** (il primo resta occupato dal backend) e, dalla cartella del progetto:
+
+```bash
+cd sviluppo/frontend
+npm install
+npm run dev
+```
+
+- `npm install` scarica le librerie del frontend. Serve la prima volta e ogni volta che `package.json` cambia (es. dopo un `git pull` che aggiunge una libreria). Se non siete sicuri, rifatelo: non fa danni.
+- `npm run dev` avvia Vite. Quando scrive `Local: http://localhost:5173/`, aprite quell'indirizzo nel browser. Ogni modifica ai file si vede subito, senza ricaricare.
+- Per fermarlo: **Ctrl+C** nel suo terminale.
+
+In sviluppo usate **Chrome o Firefox**. Il cookie del refresh token ha l'opzione `Secure`: questi due browser lo accettano anche su `http://localhost`. Se dopo l'accesso il cookie non si salva (può succedere con Safari), ditelo a SWD.
+
+### 4.3 Controllo: frontend e backend si parlano?
+
+Con tutti e due accesi, aprite nel browser [http://localhost:5173/api/v1/packs](http://localhost:5173/api/v1/packs). Deve comparire:
+
+```json
+{"status":401,"code":"UNAUTHORIZED","message":"Accesso scaduto o mancante. Accedi di nuovo.","fieldErrors":[]}
+```
+
+È giusto così: la richiesta è passata da Vite al backend, che risponde "serve l'accesso". Se invece compare la pagina del frontend, un 404 o una pagina vuota, il proxy del punto 4.1 manca o il backend è spento.
+
+### 4.4 Se qualcosa non parte
+
+| Cosa succede | Cosa fare |
+|--------------|-----------|
+| `./gradlew bootRun` dà un errore che parla di **Java**, di **toolchain** o di **languageVersion 25** | Manca Java 25 o il terminale non lo vede. Controllate `java -version` (punto 1.6); se serve reinstallate Java 25 (punto 1.2) e riaprite il terminale |
+| `./gradlew bootRun` dà un errore che parla di **Docker** | Docker Desktop è chiuso o non ancora pronto: apritelo, aspettate **Engine running** e riprovate |
+| Sul Mac `docker --version` funziona ma il backend dice che **non trova `docker`** | In Docker Desktop: **Settings** (l'ingranaggio) → **Advanced** → scegliete **System** → **Apply & restart**. Poi riaprite il terminale |
+| Dopo un `git pull`, `./gradlew bootRun` si ferma con **Validate failed** o **Migrations have failed validation** | È arrivata una migration nuova e il database di sviluppo è vecchio. Da `sviluppo/backend`: `docker compose down -v`, poi di nuovo `./gradlew bootRun`. Il database di sviluppo si ricrea con i dati di prova (quello che avevate scritto a mano si perde) |
+| **Port 8080 was already in use** | Il backend è già acceso in un altro terminale: usate quello, oppure fermatelo con Ctrl+C |
+| `./gradlew: Permission denied` (Mac) | Scrivete `chmod +x gradlew` una volta, poi riprovate |
+| `npm` o `node`: **command not found** | Chiudete e riaprite il terminale. Se non basta, reinstallate Node.js (punto 1.4) |
+| Vite dice che serve **Node.js 20.19+ o 22.12+** | Node.js è vecchio: installate la LTS (punto 1.4) |
+| Nel terminale di Vite compare **ECONNREFUSED** o **proxy error** | Il backend è spento: avviatelo (passo 3) |
+| Dopo l'accesso, ricaricando la pagina si torna al login | Il cookie non si è salvato: usate Chrome o Firefox (punto 4.2) |
+| Su Windows Docker Desktop dice che manca **WSL** | PowerShell come amministratore → `wsl --install` → riavviate (punto 1.3) |
+
+Se dopo questi passi qualcosa ancora non va, mandate a Marco o Cristian la foto dell'errore con le ultime righe del terminale.
 
 ---
 
-## Passo 3: le regole delle chiamate
+## Passo 5: le regole delle chiamate
 
 Sono le regole già decise ([guida ai dati, capitolo 2](guida-frontend.md#2-regole-comuni-delle-api)), in breve.
 
@@ -126,7 +299,7 @@ Una lista a pagine arriva così:
 
 **Le cinque regole del codice**
 
-1. Tutte le chiamate passano da **un solo file**, `api.js` (passo 4). Mai `fetch()` nelle pagine o nei componenti.
+1. Tutte le chiamate passano da **un solo file**, `api.js` (passo 6). Mai `fetch()` nelle pagine o nei componenti.
 2. Il **server decide**: contenuto dei pacchetti, esito delle partite, validità dei mazzi, scambi. Il frontend mostra quello che riceve.
 3. **I controlli si fanno due volte:** nel frontend per aiutare l'utente (campo vuoto, password corta), nel backend per sicurezza.
 4. **Mai dati personali negli indirizzi**: niente email o password nella barra degli indirizzi o nei parametri `?`.
@@ -160,7 +333,7 @@ Una lista a pagine arriva così:
 
 ---
 
-## Passo 4: il file api.js
+## Passo 6: il file api.js
 
 Create `sviluppo/frontend/src/api.js` e copiate questo codice. Fa quattro cose:
 
@@ -286,9 +459,9 @@ Due cose da sapere:
 
 ---
 
-## Passo 5: usare api.js nelle pagine
+## Passo 7: usare api.js nelle pagine
 
-### 5.1 All'apertura del sito: l'utente è ancora collegato?
+### 7.1 All'apertura del sito: l'utente è ancora collegato?
 
 Il token è in memoria, quindi si perde quando si ricarica la pagina. Il cookie invece resta. All'avvio si chiama `refresh()` una volta, prima di mostrare le pagine dell'area utente. In `main.jsx`:
 
@@ -311,7 +484,7 @@ refresh().then((isLoggedIn) => {
 
 Il primo accesso del giorno, anche con questo `refresh()`, dà i 50 DC della ricompensa giornaliera.
 
-### 5.2 Leggere dati: GET in un useEffect
+### 7.2 Leggere dati: GET in un useEffect
 
 Esempio della pagina Negozio. È lo schema da usare per ogni pagina che **legge** dati: stato di caricamento, errore, dati.
 
@@ -342,7 +515,7 @@ export default function ShopPage() {
 }
 ```
 
-### 5.3 Mandare dati: un form con gli errori accanto ai campi
+### 7.3 Mandare dati: un form con gli errori accanto ai campi
 
 Esempio della pagina di accesso già fatta (`LoginPage.jsx`). Ai campi serve un `name`, e il campo "Email" accetta **username o email**: conviene chiamarlo "Username o email".
 
@@ -424,7 +597,7 @@ export default function RegisterPage() {
 }
 ```
 
-### 5.4 Azioni che cambiano dati: comprare un pacchetto
+### 7.4 Azioni che cambiano dati: comprare un pacchetto
 
 ```jsx
 const [buying, setBuying] = useState(false);
@@ -452,7 +625,7 @@ async function buy(pack) {
 
 **Regola importante:** una chiamata che cambia dati (`POST`, `PUT`, `DELETE`) parte **solo da un clic** dell'utente, mai da un `useEffect`. In sviluppo React esegue due volte gli `useEffect`: si comprerebbero due pacchetti.
 
-### 5.5 Liste a pagine: i crediti
+### 7.5 Liste a pagine: i crediti
 
 ```jsx
 const [page, setPage] = useState(0);
@@ -467,7 +640,7 @@ useEffect(() => {
 <button disabled={!data || page + 1 >= data.totalPages} onClick={() => setPage(page + 1)}>Avanti</button>
 ```
 
-### 5.6 Date e numeri
+### 7.6 Date e numeri
 
 ```js
 // "2026-11-11T10:15:00Z" -> "11/11/2026, 11:15"

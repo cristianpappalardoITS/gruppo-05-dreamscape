@@ -10,35 +10,40 @@ const SelectedCardDetail = ({ card }) => {
     );
   }
 
-  const getRarityColor = (rarity) => {
-    switch(rarity) {
-      case 'Comune': return '#9c95a8';
-      case 'Rara': return '#4da6ff';
-      case 'Epica': return '#b366ff';
-      case 'Leggendaria': return '#dca466';
+  const getRarityColor = (rarityCode) => {
+    switch(rarityCode) {
+      case 'COMMON': return '#9c95a8';
+      case 'RARE': return '#4da6ff';
+      case 'EPIC': return '#b366ff';
+      case 'LEGENDARY': return '#dca466';
       default: return '#333';
     }
   };
 
-  // Controlli di sicurezza per evitare "undefined" a schermo
-  const loreText = card.lore ? card.lore : "Nessuna descrizione disponibile.";
-  const effectText = card.effect ? card.effect : "Effetto non indicato.";
+  const loreText = card.description ? card.description : "Nessuna descrizione disponibile.";
+  const effectText = card.effect?.text ? card.effect.text : "Effetto non indicato.";
 
   return (
     <div 
       className="selected-card-container" 
-      style={{ borderColor: getRarityColor(card.rarity) }}
+      style={{ borderColor: getRarityColor(card.rarity.code) }}
     >
       <div className="card-header-detail">
-        <span className="card-id">{card.id}</span>
-        <span className="card-faction">{card.faction}</span>
-        <span className="card-rarity" style={{ color: getRarityColor(card.rarity) }}>{card.rarity}</span>
+        <span className="card-id">{card.code}</span>
+        <span className="card-faction">{card.faction.name}</span>
+        <span className="card-rarity" style={{ color: getRarityColor(card.rarity.code) }}>
+          {card.rarity.name}
+        </span>
       </div>
 
       <h2 className="selected-card-title">{card.name}</h2>
       
       <div className="selected-card-image">
-        <div className="image-placeholder">X</div>
+        {card.illustrationUrl ? (
+          <img src={card.illustrationUrl} alt={card.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div className="image-placeholder">X</div>
+        )}
       </div>
       
       <div className="selected-card-lore">

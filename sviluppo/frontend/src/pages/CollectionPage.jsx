@@ -1,58 +1,52 @@
 // src/pages/CollectionPage.jsx
 import React, { useState, useEffect } from 'react';
-import { fetchUserCollection } from '../services/cardService'; // Importa il servizio
+import { api } from '../api'; // <-- Importa da src/api.js
 import CardGridItem from '../components/Collezione/CardGridItem';
 import SelectedCardDetail from '../components/Collezione/SelectedCardDetail';
-import './CollectionPage.css';
+import '../components/Collezione/Collezione.css';
 
 const CollectionPage = () => {
-  // Stati per i dati che arrivano dal DB
-  const [cards, setCards] = useState([]);
-  const [stats, setStats] = useState({ owned_count: 0, total_count: 0 });
+  const [cards, setCards] = useState([]); // Array di { card, quantity }
   const [selectedCard, setSelectedCard] = useState(null);
-  
-  // Stati per gestire il caricamento
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Per la paginazione (es. pagina 0, 20 carte per pagina)
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const size = 20; // Carte per pagina
 
-  // Al caricamento della pagina, chiamiamo il DB
   useEffect(() => {
-    const loadData = async () => {
+    const loadCollection = async () => {
       try {
         setIsLoading(true);
-        const data = await fetchUserCollection(); // Chiamata al DB
+        // Chiamata all'endpoint corretto: GET /me/cards?page=0&size=20
+        const data = await api(`/me/cards?page=${page}&size=${size}`);
         
-        setCards(data.cards);
-        setStats(data.stats);
+        // data.items è un array di { card: {...}, quantity: 2 }
+        setCards(data.items);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.totalItems);
         
-        // Seleziona la prima carta di default (se c'è)
-        if (data.cards.length > 0) {
-          setSelectedCard(data.cards[0]);
+        // Seleziona la prima carta della pagina (se c'è)
+        if (data.items.length > 0) {
+          setSelectedCard(data.items[0].card);
         }
       } catch (err) {
-        setError("Impossibile caricare la collezione.");
+        setError(err.message || "Impossibile caricare la collezione.");
       } finally {
         setIsLoading(false);
       }
     };
+    loadCollection();
+  }, [page]); // Ricarica quando cambia la pagina
 
-    loadData();
-  }, []);
-
-  // Se sta caricando, mostra un messaggio
-  if (isLoading) {
-    return <div className="loading-state">Caricamento collezione...</div>;
-  }
-
-  // Se c'è un errore, mostralo
-  if (error) {
-    return <div className="error-state">{error}</div>;
-  }
+  if (isLoading) return <div className="loading-state">Caricamento collezione...</div>;
+  if (error) return <div className="error-state">{error}</div>;
 
   return (
     <div className="collection-page">
-      
-      {/* HEADER */}
       <header className="collection-header">
         <div className="logo-area">
           <span className="logo-icon">🏰</span>
@@ -70,38 +64,40 @@ const CollectionPage = () => {
         </div>
       </header>
 
-      {/* CONTENUTO PRINCIPALE */}
       <main className="collection-content">
-        
-        {/* COLONNA SINISTRA */}
         <aside className="left-column">
           <SelectedCardDetail card={selectedCard} />
         </aside>
 
-        {/* COLONNA DESTRA */}
         <section className="right-column">
           <div className="grid-header">
             <button className="filter-btn">filtro</button>
-            
-            {/* CONTATORE: Usa i dati del DB! */}
             <span className="counter">
-              POSsedute {stats.owned_count}/{stats.total_count}
+              POSsedute {totalItems} / 100
             </span>
           </div>
 
-          {/* Griglia: mostriamo tutte le carte che il DB ci ha inviato */}
           <div className="cards-grid">
-            {cards.map((card) => (
+            {cards.map((item) => (
               <CardGridItem 
-                key={card.id} 
-                card={card} 
-                isSelected={selectedCard?.id === card.id}
+                key={item.card.id} 
+                card={item.card} 
+                quantity={item.quantity}
+                isSelected={selectedCard?.id === item.card.id}
                 onSelect={setSelectedCard} 
               />
             ))}
           </div>
-        </section>
 
+          {/* Paginazione */}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button disabled={page === 0} onClick={() => setPage(page - 1)}>Indietro</button>
+              <span>Pagina {page + 1} di {totalPages}</span>
+              <button disabled={page + 1 >= totalPages} onClick={() => setPage(page + 1)}>Avanti</button>
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

@@ -1,52 +1,93 @@
-// src/services/api.js
+// src/api.js
+// api.js: l'unico file che parla con il backend.
+// Il token di accesso resta in memoria; il refresh token è nel cookie HttpOnly.
 
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE = "/api/v1";
+// Pagina di accesso: cambiatela se il percorso è un altro
+const LOGIN_PAGE = "/login";
 
-/**
- * Funzione unica per fare chiamate al backend.
- * Aggiunge automaticamente il token di accesso, se presente.
- */
-export const apiFetch = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token'); 
+let accessToken = null;
+let refreshing = null;
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
-    ...options.headers,
-  };
+export class ApiError extends Error {
+  constructor({ status, code, message, fieldErrors }) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.fieldErrors = fieldErrors ?? [];
+  }
+}
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
+const NETWORK_ERROR = {
+  status: 0,
+  code: "NETWORK_ERROR",
+  message: "Il server non risponde. Riprova tra poco.",
+};
+
+function send(path, method, body) {
+  const headers = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  return fetch(API_BASE + path, {
+    method,
     headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
   });
+}
 
-  if (!response.ok) {
-    throw new Error(`Errore API: ${response.status}`);
+export function refresh() {
+  if (!refreshing) {
+    refreshing = fetch(API_BASE + "/auth/refresh", { method: "POST", credentials: "same-origin" })
+      .then(async (response) => {
+        accessToken = response.ok ? (await response.json()).accessToken : null;
+        return accessToken !== null;
+      })
+      .catch(() => false)
+      .finally(() => {
+        refreshing = null;
+      });
+  }
+  return refreshing;
+}
+
+export async function api(path, { method = "GET", body } = {}) {
+  const isAuthCall = path.startsWith("/auth/");
+  let response;
+  try {
+    response = await send(path, method, body);
+    if (response.status === 401 && !isAuthCall && (await refresh())) {
+      response = await send(path, method, body);
+    }
+  } catch {
+    throw new ApiError(NETWORK_ERROR);
   }
 
-  return response.json();
-};
+  if (response.status === 401 && !isAuthCall) {
+    window.location.href = LOGIN_PAGE;
+    return new Promise(() => {});
+  }
+  if (response.status === 202 || response.status === 204) return null;
 
-/**
- * Recupera la collezione dell'utente dal backend.
- */
-export const fetchUserCollection = async () => {
-  // --- VERSIONE REALE (da usare quando il backend è pronto) ---
-  // return apiFetch('/user/collection');
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiError(data ?? { ...NETWORK_ERROR, status: response.status });
+  return data;
+}
 
-  // --- VERSIONE FINTIA PER TEST (da rimuovere poi) ---
-  return new Promise(resolve => setTimeout(() => {
-    resolve({
-      cards: [
-        // Esempio di carta, sostituisci con i tuoi dati o importa mockCards
-        { id: 'BASE-005', name: 'Il Dente Che Cade', faction: 'Nightmares', rarity: 'Comune', attack: 4, defense: 3, lore: 'Un incubo piccolo...', effect: 'Ultimo respiro 1...', owned: true },
-        { id: 'BASE-006', name: 'La Caduta Senza Fine', faction: 'Nightmares', rarity: 'Rara', attack: 7, defense: 3, lore: 'La sensazione di perdere il controllo...', effect: 'Vendetta 2...', owned: true },
-        // ... aggiungi altre carte ...
-      ],
-      stats: {
-        owned_count: 32,
-        total_count: 100
-      }
-    });
-  }, 500));
-};
+export async function login(loginName, password) {
+  const data = await api("/auth/login", { method: "POST", body: { login: loginName, password } });
+  accessToken = data.accessToken;
+  return data.user;
+}
+
+export async function logout() {
+  try {
+    await api("/auth/logout", { method: "POST" });
+  } finally {
+    accessToken = null;
+  }
+}
+
+export function errorsByField(error) {
+  return Object.fromEntries((error?.fieldErrors ?? []).map((item) => [item.field, item.message]));
+}

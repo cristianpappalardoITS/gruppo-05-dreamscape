@@ -55,9 +55,9 @@ Si apre con Excel, Numbers o Fogli Google (separatore punto e virgola, codifica 
 | `nome` | `Il Rifugio Sicuro` | |
 | `fazione` | `Dreams` | `Dreams`, `Nightmares` o `Memories` |
 | `rarita` | `Comune` | `Comune`, `Rara`, `Epica` o `Leggendaria` |
-| `attacco`, `difesa` | `2`, `8` | |
+| `attacco`, `difesa` | `5`, `13` | |
 | `descrizione` | `Il desiderio di un posto...` | In corsivo, sopra la riga |
-| `effetto` | `Guscio 1: subisce 1 danno...` | La parte prima dei due punti va in grassetto |
+| `effetto` | `Barriera: il primo colpo che subisce...` | La parte prima dei due punti va in grassetto |
 | `illustrazione` | `base-001.png` | Nome del file in `../illustrazioni/` |
 | `zoom` | vuoto | Facoltativo. Lasciare vuoto (decisione del gruppo: niente zoom) |
 | `centro_y` | `0,27` | Facoltativo. Sposta il ritaglio in verticale: 0 = alto, 1 = basso. Vuoto = 0,4 |

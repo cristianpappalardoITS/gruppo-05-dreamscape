@@ -37,7 +37,12 @@ public abstract class ApiException extends RuntimeException {
         return fieldErrors;
     }
 
+    // Elenco dei problemi per gli errori che ne hanno più di uno (es. mazzo non valido); null negli altri
+    public List<String> getProblems() {
+        return null;
+    }
+
     public ErrorResponse toResponse() {
-        return new ErrorResponse(status.value(), code, getMessage(), fieldErrors);
+        return new ErrorResponse(status.value(), code, getMessage(), fieldErrors, getProblems());
     }
 }

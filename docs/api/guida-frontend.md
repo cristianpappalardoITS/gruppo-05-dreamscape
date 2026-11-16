@@ -538,6 +538,8 @@ Poi si va su `/negozio/apertura/{openingId}`, che legge `GET /pack-openings/{ope
 
 Il dettaglio mostra anche contro chi la fazione è forte o debole (da `GET /rules`) e le altre versioni della carta che l'utente possiede (es. la full art), con le loro copie.
 
+La collezione è una lista paginata di voci [Carta della collezione](#carta-della-collezione), in ordine di codice: la full art viene subito dopo la sua carta normale (`BASE-004`, `BASE-004-FA`). Ci sono anche le carte disattivate: chi le possiede le tiene. I parametri sono tutti facoltativi e funzionano come in `GET /cards`; fazione, rarità e nome di una full art sono quelli della sua carta normale. `fullArt=true` mostra solo le full art, `fullArt=false` solo le carte normali, senza il parametro tutte.
+
 #### Mazzi
 
 | Azione | Chiamata |
@@ -563,10 +565,43 @@ Cosa si riceve:
   "name": "Incubi veloci",
   "totalCards": 20,
   "isValid": true,
+  "isRanked": false,
   "problems": [],
   "cards": [ { "card": { "...": "..." }, "quantity": 2 } ]
 }
 ```
+
+`GET /decks` restituisce i mazzi in ordine di nome, ognuno in questa forma; le carte di un mazzo sono in ordine di codice. `POST /decks` risponde `201`, `PUT /decks/{deckId}` `200` e `DELETE /decks/{deckId}` `204`. Le carte di `PUT` sostituiscono quelle di prima. Se nella richiesta la stessa carta compare due volte, le copie si sommano.
+
+Errori dei mazzi:
+
+| Codice | Stato | Quando |
+|--------|-------|--------|
+| `INVALID_DECK` | `400` | Il mazzo non rispetta le regole. `message` è il primo problema, `problems` li elenca tutti |
+| `VALIDATION_ERROR` | `400` | Nome vuoto o più lungo di 40 caratteri, carte mancanti, copie minori di 1 (con `fieldErrors`) |
+| `DECK_NOT_FOUND` | `404` | Il mazzo non esiste o è di un altro giocatore |
+| `DECK_NAME_TAKEN` | `409` | Hai già un altro mazzo con questo nome (con `fieldErrors` su `name`) |
+
+Un mazzo non valido al salvataggio:
+
+```json
+{
+  "status": 400,
+  "code": "INVALID_DECK",
+  "message": "Il mazzo ha 18 carte: ne servono 20.",
+  "fieldErrors": [],
+  "problems": [ "Il mazzo ha 18 carte: ne servono 20.", "Le Rare sono 9: il massimo è 8." ]
+}
+```
+
+`problems` c'è solo in questo errore. Le frasi sono le stesse di `problems` nella lista dei mazzi, per esempio:
+
+- `"Il mazzo ha 18 carte: ne servono 20."`
+- `"Le copie di Il Sogno Lucido sono 2: il massimo è 1 (normale e full art contano insieme)."`
+- `"Le Rare sono 9: il massimo è 8."`
+- `"Non possiedi la carta Lucciola."` / `"Possiedi 1 copia di Lucciola: nel mazzo ce ne sono 2."`
+- `"La carta Il Faro nella Nebbia non è più disponibile."`
+- `"Una delle carte scelte non esiste."`
 
 - **Full art nel mazzo:** la full art è una carta a parte (nell'esempio sopra `…0108` è la full art di `BASE-008`). Nell'editor è una voce della collezione come le altre: il giocatore mette nel mazzo la versione che vuole mostrare, e quella si vede nella lista dei mazzi e nel replay. Normale e full art della stessa carta **contano insieme** per le copie massime: una Leggendaria al massimo 1, normale o full art. Se ne mette tutte e due, il salvataggio risponde `400` con il problema.
 

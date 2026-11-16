@@ -309,6 +309,18 @@ Per ogni pagina: le chiamate da fare e cosa mostrare. 🔓 = pagina pubblica, �
 | Contatti | `POST /contact-messages` | Form: `name`, `email`, `message` → `201` e messaggio di conferma |
 | Chi siamo, FAQ, Glossario, Privacy, Cookie, Termini, 404 | Nessuna | Pagine statiche |
 
+Il catalogo `GET /cards` è una lista paginata (`{ items, page, size, totalItems, totalPages }`) di oggetti [Carta](#carta), in ordine di codice. Ci sono solo le carte normali attive: niente full art e niente carte disattivate. Parametri, tutti facoltativi:
+
+| Parametro | Cosa fa | Esempio |
+|-----------|---------|---------|
+| `faction` | Solo le carte di una fazione | `DREAMS` |
+| `rarity` | Solo le carte di una rarità | `RARE` |
+| `search` | Parte del nome, senza badare a maiuscole e minuscole (al massimo 80 caratteri) | `sogno` |
+| `featured` | `true` = solo le carte in evidenza della Home: le Leggendarie, Lord compresi | `true` |
+| `page`, `size` | Pagina (da 0) e carte per pagina (da 1 a 100, di solito 24) | `page=0&size=24` |
+
+Un codice di fazione o di rarità che non esiste restituisce una pagina vuota. `GET /cards/{cardId}` restituisce una sola carta, anche una full art o una carta disattivata (chi la possiede ne vede ancora il dettaglio); se non esiste risponde `404` con `CARD_NOT_FOUND`.
+
 Risposta di `GET /rules`:
 
 ```json

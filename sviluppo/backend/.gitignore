@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Immagini servite in locale (IMAGES_DIR) ###
+/data/

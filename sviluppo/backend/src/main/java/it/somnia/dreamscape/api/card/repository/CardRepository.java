@@ -5,11 +5,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import it.somnia.dreamscape.api.card.model.Card;
 import it.somnia.dreamscape.api.card.model.CardVariantType;
 
-public interface CardRepository extends JpaRepository<Card, UUID> {
+// I filtri del catalogo (GET /cards) sono in CardSpecifications
+public interface CardRepository extends JpaRepository<Card, UUID>, JpaSpecificationExecutor<Card> {
 
     Optional<Card> findByCode(String code);
 

@@ -406,7 +406,11 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 }
 ```
 
+- È anche il modo per avere i crediti dopo un ricaricamento della pagina: `GET /me` non li ha.
+- `latestCards` sono le carte dell'ultima apertura (comprata o regalata), nell'ordine di uscita, con la stessa forma di `GET /pack-openings/{openingId}`. Lista vuota se il giocatore non ha mai aperto pacchetti.
+- `league` è la lega del punteggio attuale; nella lega più alta `nextLeagueName` e `nextLeagueMinRating` sono `null`.
 - `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
+- Per ora `missions` è una lista vuota e i tre contatori valgono `0`: si riempiono quando sono pronte missioni (#125), amici e scambi (#93) e sfide. La forma della risposta non cambia, quindi la pagina si può già fare tutta.
 - `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
 - Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 

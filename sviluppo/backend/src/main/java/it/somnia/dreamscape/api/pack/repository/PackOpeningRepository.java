@@ -16,4 +16,7 @@ public interface PackOpeningRepository extends JpaRepository<PackOpening, UUID> 
 
     // Le aperture regalate (set iniziale e benvenuto), nell'ordine in cui sono state fatte
     List<PackOpening> findByUserIdAndSourceOrderByIdAsc(UUID userId, PackOpeningSource source);
+
+    // L'ultima apertura dell'utente, comprata o regalata: gli id UUID v7 crescono nel tempo
+    Optional<PackOpening> findFirstByUserIdOrderByIdDesc(UUID userId);
 }

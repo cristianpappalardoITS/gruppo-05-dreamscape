@@ -21,15 +21,18 @@ import it.somnia.dreamscape.api.user.dto.request.ChangePasswordRequest;
 import it.somnia.dreamscape.api.user.dto.request.DeleteAccountRequest;
 import it.somnia.dreamscape.api.user.dto.request.UpdateProfileRequest;
 import it.somnia.dreamscape.api.user.dto.response.CreditTransactionResponse;
+import it.somnia.dreamscape.api.user.dto.response.DashboardResponse;
 import it.somnia.dreamscape.api.user.dto.response.ProfileResponse;
 import it.somnia.dreamscape.api.user.service.CreditService;
+import it.somnia.dreamscape.api.user.service.DashboardService;
 import it.somnia.dreamscape.api.user.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 
-// Profilo, password, cancellazione dell'account e movimenti di crediti dell'utente collegato
+// Profilo, riepilogo della Dashboard, password, cancellazione dell'account e movimenti di crediti
+// dell'utente collegato
 @Validated
 @RestController
 @RequestMapping("/api/v1/me")
@@ -38,11 +41,17 @@ public class MeController {
 
     private final UserService userService;
     private final CreditService creditService;
+    private final DashboardService dashboardService;
     private final RefreshCookies refreshCookies;
 
     @GetMapping
     public ProfileResponse getProfile(@AuthenticationPrincipal Jwt jwt) {
         return userService.getProfile(CurrentUser.id(jwt));
+    }
+
+    @GetMapping("/summary")
+    public DashboardResponse getSummary(@AuthenticationPrincipal Jwt jwt) {
+        return dashboardService.getSummary(CurrentUser.id(jwt));
     }
 
     @PutMapping

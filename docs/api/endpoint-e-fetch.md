@@ -484,6 +484,8 @@ refresh().then((isLoggedIn) => {
 
 Il primo accesso del giorno, anche con questo `refresh()`, dà i 50 DC della ricompensa giornaliera.
 
+Il `refresh()` restituisce solo il token, non il saldo: dopo un ricaricamento i crediti per l'intestazione si leggono con [`GET /me/summary`](#dashboard-get-mesummary).
+
 ### 7.2 Leggere dati: GET in un useEffect
 
 Esempio della pagina Negozio. È lo schema da usare per ogni pagina che **legge** dati: stato di caricamento, errore, dati.
@@ -677,6 +679,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /packs` | utente | Pacchetti in vendita nel negozio |
 | `POST /packs/{packId}/open` | utente | Compra e apre un pacchetto |
 | `GET /pack-openings/{openingId}` | utente | Rilegge un'apertura |
+| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte (missioni e contatori arrivano con #125 e #93) |
 
 ### Da fare
 
@@ -692,7 +695,6 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /decks` | utente | Nuovo mazzo | #80 | Cristian | 4 |
 | `PUT /decks/{deckId}` | utente | Modifica di un mazzo | #80 | Cristian | 4 |
 | `DELETE /decks/{deckId}` | utente | Elimina un mazzo | #80 | Cristian | 4 |
-| `GET /me/summary` | utente | Dashboard: crediti, lega, missioni, contatori | #115 (+ #125, #106) | Marco (+ Cristian) | 5 (missioni e lega: 6) |
 | `GET /friends` | utente | I miei amici | #93 | Marco | 6 |
 | `DELETE /friends/{userId}` | utente | Togli un amico | #93 | Marco | 6 |
 | `GET /users?search=` | utente | Cerca un Dreamweaver per username | #93 | Marco | 6 |
@@ -787,7 +789,7 @@ Ricevete `200`, e il refresh token arriva nel cookie:
 
 - `expiresIn` è in secondi (900 = 15 minuti).
 - `role`: `PLAYER` o `ADMIN`. Con `ADMIN` si va al backoffice. L'admin entra dalla stessa pagina.
-- `credits` è il saldo: si mostra nell'intestazione.
+- `credits` è il saldo: si mostra nell'intestazione. Dopo un ricaricamento della pagina si rilegge con `GET /me/summary`.
 
 Errori: `401 INVALID_CREDENTIALS` (stesso messaggio se l'utente non esiste o la password è sbagliata), `401 ACCOUNT_DISABLED` (account cancellato).
 
@@ -846,7 +848,7 @@ Ricevete:
 }
 ```
 
-Qui **non** ci sono i crediti: arrivano con l'accesso e, quando sarà pronto, con `GET /me/summary`.
+Qui **non** ci sono i crediti: arrivano con l'accesso e con `GET /me/summary`.
 
 ### Cambio email: `PUT /me`
 
@@ -1020,6 +1022,38 @@ Ricevete:
 
 Errori: `404 PACK_OPENING_NOT_FOUND` (non esiste o è di un altro utente): "Apertura non trovata" e un link al negozio. `400 MALFORMED_REQUEST` se l'id nell'indirizzo è scritto male.
 
+### Dashboard: `GET /me/summary`
+
+Ricevete:
+
+```json
+{
+  "username": "lucida",
+  "credits": 750,
+  "rating": 1040,
+  "league": { "code": "DORMANT", "name": "Dormiente", "nextLeagueName": "Sognatore", "nextLeagueMinRating": 1100 },
+  "hasRankedDeck": true,
+  "missions": [],
+  "pendingFriendRequests": 0,
+  "pendingTrades": 0,
+  "pendingChallenges": 0,
+  "latestCards": [ { "card": { "...": "..." } } ]
+}
+```
+
+- È anche il modo per avere i crediti dopo un ricaricamento della pagina: `GET /me` non li ha.
+- `rating` è il punteggio del rank: si parte da 1000.
+- `league` è la lega del punteggio attuale. Nella lega più alta (Dreamweaver) `nextLeagueName` e `nextLeagueMinRating` sono `null`: al posto di "prossima lega" si mostra che è la più alta.
+- `hasRankedDeck`: se è `false`, conviene un invito a scegliere il mazzo classificato. Senza, il giocatore non può essere scelto come avversario.
+- `latestCards` sono le carte dell'ultima apertura (comprata o regalata), nell'ordine di uscita, con la stessa forma di [`GET /pack-openings/{openingId}`](#rileggere-unapertura-get-pack-openingsopeningid). Lista vuota se il giocatore non ha mai aperto pacchetti.
+- **Per ora** `missions` è una lista vuota e i tre contatori valgono `0`: si riempiono quando sono pronte le missioni (#125), amici e scambi (#93) e le sfide. La forma della risposta non cambia, quindi la Dashboard si può già fare tutta. Una missione avrà questa forma:
+
+```json
+{ "code": "DAILY_PLAY", "name": "Missione giornaliera", "description": "Gioca una partita.", "progress": 0, "goalCount": 1, "rewardCredits": 100, "isCompleted": false, "resetsAt": "2026-11-17T23:00:00Z" }
+```
+
+`resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte. I contatori `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il numero nel menu: non ci sono altre notifiche.
+
 ---
 
 ## Endpoint da fare, nel dettaglio
@@ -1116,29 +1150,6 @@ Tutti i filtri sono facoltativi. La full art è una voce a parte, con il suo `ca
 - Un mazzo salvato può diventare non valido (scambio, carta disattivata): `isValid: false` e `problems` vanno mostrati bene nella lista.
 
 `DELETE /decks/{deckId}`: `204`.
-
-### Riepilogo per la Dashboard (#115, #125, #106)
-
-`GET /me/summary`:
-
-```json
-{
-  "username": "lucida",
-  "credits": 750,
-  "rating": 1040,
-  "league": { "code": "DORMANT", "name": "Dormiente", "nextLeagueName": "Sognatore", "nextLeagueMinRating": 1100 },
-  "hasRankedDeck": true,
-  "missions": [
-    { "code": "DAILY_PLAY", "name": "Missione giornaliera", "description": "Gioca una partita.", "progress": 0, "goalCount": 1, "rewardCredits": 100, "isCompleted": false, "resetsAt": "2026-11-17T23:00:00Z" }
-  ],
-  "pendingFriendRequests": 1,
-  "pendingTrades": 2,
-  "pendingChallenges": 0,
-  "latestCards": [ { "card": { "...": "..." } } ]
-}
-```
-
-Arriva a pezzi: nello Sprint 5 username, crediti e ultime carte; missioni, punti, lega e contatori quando sono pronte le loro parti (Sprint 6). È anche il modo per avere il saldo dopo un ricaricamento della pagina.
 
 ### Amici (#93)
 

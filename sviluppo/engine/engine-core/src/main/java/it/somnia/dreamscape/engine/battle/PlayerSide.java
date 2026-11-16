@@ -92,6 +92,7 @@ final class PlayerSide {
         if (creature == null) {
             throw new IllegalStateException(side + " non ha una creatura da scartare");
         }
+        creature.leaveField();
         creature = null;
         cardsInDiscard++;
     }
@@ -103,6 +104,24 @@ final class PlayerSide {
      */
     void loseLifePoints(int amount) {
         lifePoints = Math.max(0, lifePoints - amount);
+    }
+
+    /**
+     * Aggiunge punti vita al giocatore, anche oltre quelli iniziali (Riposo, Ninna nanna, Assorbimento).
+     *
+     * @param amount i punti vita in più, almeno 0
+     */
+    void gainLifePoints(int amount) {
+        lifePoints += amount;
+    }
+
+    /**
+     * Restituisce quante carte ci sono nella pila degli scarti (serve a Vendetta).
+     *
+     * @return le carte negli scarti, almeno 0
+     */
+    int cardsInDiscard() {
+        return cardsInDiscard;
     }
 
     /**

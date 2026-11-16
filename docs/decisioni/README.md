@@ -36,6 +36,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [028](028-catalogo-degli-effetti.md) | Catalogo degli effetti: 19 effetti, versione provvisoria | 4/11 | Approvata come provvisoria: da bilanciare, effetti da aggiungere o togliere in corso d'opera |
 | [029](029-motore-di-gioco.md) | Motore di gioco: microservizio in `sviluppo/engine`, seed, log a eventi | 4/11 | Approvata; regole del round da confermare |
 | [030](030-nuovi-pacchetti.md) | Nuovi pacchetti: Nap Pack, pacchetti dei Lord, REM Pack; Dream Pack con il retro delle carte | 9/11, 13/11 | Approvata, sostituisce le copertine del Dream Pack di 012; percentuali provvisorie |
+| [031](031-effetti-nel-motore.md) | Effetti nel motore: Culla, Non Sequitur, Immunità e gli altri casi lasciati aperti | 16/11 | Approvata come proposta, da confermare |
 
 ## Ancora da decidere
 
@@ -49,6 +50,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | Punti vita dopo le simulazioni | Marco, Maie | [008](008-regole-della-partita.md) |
 | Bilanciamento degli effetti: valori di X, effetti da aggiungere o togliere | Nicolas, Maie | [028](028-catalogo-degli-effetti.md) |
 | Regole del round lasciate aperte dal regolamento (punti a–f) | Nicolas, Maie | [029](029-motore-di-gioco.md) |
+| Casi degli effetti lasciati aperti dal catalogo (Culla, Non Sequitur, Immunità) | Nicolas, Maie | [031](031-effetti-nel-motore.md) |
 | Effetti unici per i tre Lord | Tutto il gruppo | [028](028-catalogo-degli-effetti.md) (cambierebbe [001](001-tema-e-nomi.md)) |
 
 Le proposte di partenza sono nei [punti aperti dello schema](../database/schema.md#punti-aperti).

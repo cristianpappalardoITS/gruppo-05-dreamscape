@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'it.somnia'
-version = '0.1.0'
+version = '0.2.0'
 description = 'Nucleo del motore di gioco di Dreamscape'
 
 java {

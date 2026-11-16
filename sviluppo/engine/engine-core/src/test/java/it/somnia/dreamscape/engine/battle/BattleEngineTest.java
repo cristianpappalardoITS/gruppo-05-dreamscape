@@ -346,19 +346,21 @@ class BattleEngineTest {
         assertEquals(result.coinTossWinner(), result.log().coinTossWinner());
     }
 
-    // Gli effetti arrivano con la #86: fino ad allora una carta con effetto gioca come una senza
+    // I test dei singoli effetti sono in BattleEngineEffectsTest
     @Test
-    void simulate_cardWithEffect_ignoresEffectForNow() {
-        // Given
+    void simulate_cardWithEffect_appliesTheEffect() {
+        // Given: Indebolimento 2 sull'Uomo Senza Volto
         CardSnapshot withEffect = new CardSnapshot(FACELESS_MAN.cardId(), FACELESS_MAN.name(), 8, 5,
                 Faction.NIGHTMARES, 1, List.of(new CardEffect("WEAKENING", 2)));
 
         // When
-        BattleResult plain = engine.simulate(deck(LIGHTHOUSE), deck(FACELESS_MAN), RULES, 42L, true);
-        BattleResult withIgnoredEffect = engine.simulate(deck(LIGHTHOUSE), deck(withEffect), RULES, 42L, true);
+        List<GameEvent> events = engine.simulate(deck(LIGHTHOUSE), deck(withEffect), RULES, 42L, true)
+                .log().rounds().getFirst().events();
 
-        // Then
-        assertEquals(plain, withIgnoredEffect);
+        // Then: il colpo del Faro scende da 4 a 2, come nell'esempio di schema.md
+        Attack lighthouseHit = findAttack(events, Side.CHALLENGER);
+        assertEquals(-2, lighthouseHit.attackModifier());
+        assertEquals(2, lighthouseHit.damage());
     }
 
     @Test

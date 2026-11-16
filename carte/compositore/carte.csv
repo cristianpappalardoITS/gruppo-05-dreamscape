@@ -2,7 +2,7 @@ codice;nome;fazione;rarita;attacco;difesa;descrizione;effetto;illustrazione;zoom
 BASE-001;Il Rifugio Sicuro;Dreams;Comune;5;13;Il desiderio di un posto dove nulla può raggiungerti.;Barriera: il primo colpo che subisce non le fa danni.;base-001.png;;
 BASE-002;Il Volo Sopra la Città;Dreams;Rara;9;11;Per una notte, la gravità smette di contare.;Immunità: è immune agli effetti delle carte avversarie che colpiscono la creatura.;base-002.png;;
 BASE-003;Il Faro nella Nebbia;Dreams;Epica;7;13;Una luce lontana che indica sempre la strada di casa.;Riposo 4: quando entra, il tuo giocatore guadagna 4 punti vita.;base-003.png;;
-BASE-004;Il Sogno Lucido;Dreams;Leggendaria;12;16;Sai di sognare, e il sogno ti obbedisce.;Neutralità: non subisce il vantaggio di fazione dell'avversario.;base-004.png;;0,27
+BASE-004;Il Sogno Lucido;Dreams;Leggendaria;12;16;Sai di sognare, e il sogno ti obbedisce.;Neutralità: non subisce il vantaggio di fazione dell'avversario.;base-004.png;;
 BASE-005;Il Dente Che Cade;Nightmares;Comune;10;6;Un incubo piccolo, ma che ritorna sempre.;Ultimo respiro 4: quando viene uccisa, la creatura che l'ha uccisa subisce 4 danni alla difesa.;base-005.png;;
 BASE-006;La Caduta Senza Fine;Nightmares;Rara;12;7;La sensazione di perdere il controllo, senza mai toccare terra.;Vendetta 6: quando entra, +6 attacco nel primo round dello scontro, se hai almeno 5 carte negli scarti.;base-006.png;;
 BASE-007;La Stanza Senza Porte;Nightmares;Epica;11;11;Quattro muri, nessuna uscita, e il respiro che accelera.;Miasma 1: alla fine di ogni round, 1 danni ai punti vita dell'avversario.;base-007.png;;

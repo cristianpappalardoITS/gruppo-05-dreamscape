@@ -1,4 +1,166 @@
-/* --- Nuovi stili per i dettagli delle carte --- */
+/* =========================================
+   LAYOUT GENERALE E HEADER
+   ========================================= */
+.collection-page {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #e5e5e5;
+  min-height: 100vh;
+  color: #333;
+}
+
+.collection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background-color: #d9d9d9;
+  border-bottom: 1px solid #ccc;
+}
+
+.logo-area { display: flex; align-items: center; gap: 10px; }
+.logo-icon { font-size: 24px; }
+.logo-area h1 { font-size: 1.2rem; letter-spacing: 2px; margin: 0; }
+
+.nav-links { display: flex; gap: 30px; }
+.nav-links a { text-decoration: none; color: #555; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+.nav-links a.active { color: #000; font-weight: bold; }
+
+.header-icons { display: flex; gap: 20px; font-size: 20px; }
+
+/* =========================================
+   CONTENUTO PRINCIPALE (2 COLONNE)
+   ========================================= */
+.collection-content {
+  display: flex;
+  padding: 40px;
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Colonna Sinistra (Carta Grande) */
+.left-column {
+  flex: 0 0 350px;
+  position: sticky;
+  top: 40px;
+  height: fit-content;
+}
+
+.selected-card-container {
+  background-color: #f0f0f0;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.selected-card-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #999;
+  border: 1px solid #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.image-placeholder {
+  font-size: 1.5rem;
+  color: #333;
+  font-weight: bold;
+}
+
+/* Colonna Destra (Griglia) */
+.right-column { flex: 1; }
+
+.grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filter-btn {
+  background-color: #ccc;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.counter { font-size: 1.2rem; color: #555; }
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+/* =========================================
+   CARTE PICCOLE (GRIGLIA)
+   ========================================= */
+.grid-card {
+  background-color: #f0f0f0;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.grid-card.selected {
+  border: 2px solid #333 !important;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #333;
+}
+
+.grid-card-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #999;
+  border: 1px solid #333;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid-card-ability {
+  background-color: #ccc;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  text-align: center;
+  margin-bottom: 10px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.grid-card-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #333;
+}
+
+/* =========================================
+   STILI SPECIFICI DELLE CARTE (Dettaglio)
+   ========================================= */
 .card-header-grid {
   display: flex;
   justify-content: space-between;
@@ -97,4 +259,90 @@
   font-size: 1.1rem;
   font-weight: bold;
   color: #000;
+}
+
+/* =========================================
+   STATI DI CARICAMENTO ED ERRORE
+   ========================================= */
+.loading-state, .error-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #555;
+  background-color: #e5e5e5;
+}
+
+.error-state { color: #cc0000; font-weight: bold; }
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+/* --- TABLET (Schermi fino a 1024px) --- */
+@media (max-width: 1024px) {
+  .collection-content {
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .left-column {
+    flex: none;
+    width: 100%;
+    position: relative;
+    top: 0;
+  }
+
+  .selected-card-container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- SMARTPHONE (Schermi fino a 768px) --- */
+@media (max-width: 768px) {
+  .collection-header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 20px;
+    text-align: center;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .nav-links a { font-size: 0.85rem; }
+  .header-icons { font-size: 18px; }
+
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .selected-card-title { font-size: 1.2rem; }
+  .selected-card-ability { font-size: 0.75rem; padding: 10px; }
+  .stat-box { min-width: 60px; padding: 8px; }
+}
+
+/* --- SMARTPHONE PICCOLI (fino a 480px) --- */
+@media (max-width: 480px) {
+  .collection-content { padding: 10px; }
+
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grid-card {
+    max-width: 250px;
+    margin: 0 auto;
+  }
 }

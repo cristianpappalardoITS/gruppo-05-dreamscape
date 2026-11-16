@@ -12,6 +12,10 @@ const CardGridItem = ({ card, isSelected, onSelect }) => {
     }
   };
 
+  // Controllo di sicurezza: se effect è vuoto o non esiste, mostra un testo di default
+  const effectText = card.effect ? card.effect : "Effetto non indicato";
+  const shortEffect = effectText.length > 35 ? effectText.substring(0, 35) + '...' : effectText;
+
   return (
     <div 
       className={`grid-card ${isSelected ? 'selected' : ''}`} 
@@ -27,6 +31,10 @@ const CardGridItem = ({ card, isSelected, onSelect }) => {
       
       <div className="grid-card-image">
         <div className="image-placeholder">X</div>
+      </div>
+      
+      <div className="grid-card-ability">
+        <p>{shortEffect}</p>
       </div>
       
       <div className="grid-card-stats">

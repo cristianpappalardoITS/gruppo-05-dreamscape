@@ -20,6 +20,10 @@ const SelectedCardDetail = ({ card }) => {
     }
   };
 
+  // Controlli di sicurezza per evitare "undefined" a schermo
+  const loreText = card.lore ? card.lore : "Nessuna descrizione disponibile.";
+  const effectText = card.effect ? card.effect : "Effetto non indicato.";
+
   return (
     <div 
       className="selected-card-container" 
@@ -38,12 +42,12 @@ const SelectedCardDetail = ({ card }) => {
       </div>
       
       <div className="selected-card-lore">
-        <p><em>"{card.lore}"</em></p>
+        <p><em>"{loreText}"</em></p>
       </div>
 
       <div className="selected-card-ability">
         <strong>Effetto:</strong>
-        <p>{card.effect}</p>
+        <p>{effectText}</p>
       </div>
       
       <div className="selected-card-stats">

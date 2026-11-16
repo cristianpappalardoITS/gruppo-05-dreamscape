@@ -1,0 +1,100 @@
+/* --- Nuovi stili per i dettagli delle carte --- */
+.card-header-grid {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  margin-bottom: 5px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.card-header-detail {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.75rem;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  color: #555;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.card-faction {
+  font-weight: bold;
+  color: #333;
+}
+
+.grid-card-title {
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 5px 0;
+  min-height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.selected-card-title {
+  font-size: 1.4rem;
+  margin: 10px 0 15px 0;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.selected-card-lore {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+  margin-bottom: 15px;
+  padding: 0 10px;
+  font-style: italic;
+}
+
+.selected-card-ability {
+  background-color: #e0e0e0;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+.selected-card-ability strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.selected-card-stats {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #d9d9d9;
+  padding: 10px;
+  border-radius: 8px;
+  min-width: 80px;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #000;
+}

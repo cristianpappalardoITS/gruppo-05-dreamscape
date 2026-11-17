@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,9 +46,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({ HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class })
+            MissingServletRequestParameterException.class, MissingServletRequestPartException.class })
     public ResponseEntity<ErrorResponse> handleMalformed(Exception exception) {
         return badRequest("MALFORMED_REQUEST", "Richiesta non valida.");
+    }
+
+    // File del backoffice oltre spring.servlet.multipart.max-file-size
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTooLarge(MaxUploadSizeExceededException exception) {
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(ErrorResponse.of(
+                HttpStatus.CONTENT_TOO_LARGE.value(), "FILE_TOO_LARGE", "Il file è troppo grande: al massimo 15 MB."));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

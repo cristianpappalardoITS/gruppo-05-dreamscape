@@ -49,4 +49,11 @@ public class PackCover {
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
+
+    public PackCover(Pack pack, String name, String imageUrl, int sortOrder) {
+        this.pack = pack;
+        this.name = name;
+        this.imageUrl = imageUrl;
+        this.sortOrder = sortOrder;
+    }
 }

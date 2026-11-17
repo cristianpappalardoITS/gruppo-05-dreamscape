@@ -43,7 +43,8 @@ I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno b
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Server SMTP per le email alla consegna. Senza `SPRING_MAIL_HOST` il link di recupero si scrive solo nel log | `smtp.example.com` |
 | `MAIL_FROM` | Mittente delle email | `noreply@dreamscape.local` |
 | `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password.html?token=` |
-| `IMAGES_DIR` | Cartella delle immagini caricate dal backoffice, servite su `/images/...` (vedi [Immagini](#immagini)). In sviluppo `./data/images`, fuori da git | `/srv/dreamscape/images` |
+| `IMAGES_DIR` | Cartella delle immagini caricate dal backoffice (copie WebP), servite su `/images/...` (vedi [Immagini](#immagini)). In sviluppo `./data/images`, fuori da git | `/srv/dreamscape/images` |
+| `ORIGINALS_DIR` | Cartella dei PNG e JPEG originali caricati dal backoffice: non si serve al pubblico. In sviluppo `./data/originals`, fuori da git | `/srv/dreamscape/originals` |
 | `GOOGLE_CLIENT_ID` | Client id OAuth di Google Cloud per l'accesso con Google (decisione 032). Vuota = accesso con Google spento (`503 GOOGLE_LOGIN_DISABLED`) | `123…apps.googleusercontent.com` |
 
 ## Immagini

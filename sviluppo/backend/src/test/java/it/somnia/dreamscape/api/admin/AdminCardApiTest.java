@@ -22,7 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import it.somnia.dreamscape.api.TestcontainersConfiguration;
 
-// Carte nel backoffice (GET, POST, PUT /admin/cards), con le carte di prova di V900
+// Carte nel backoffice (GET, POST, PUT /admin/cards), con le carte di prova di V900. Le liste si limitano
+// alle carte di prova (search "TEST-"), così non dipendono da quante carte ha il catalogo vero
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest(properties = {
         "dreamscape.admin.username=admin_test",
@@ -49,12 +50,13 @@ class AdminCardApiTest extends AdminApiTestSupport {
     }
 
     @Test
-    void listCards_noFilters_includesFullArtsAndInactiveCards() throws Exception {
+    void listCards_testSet_includesFullArtsAndInactiveCards() throws Exception {
         // Given
         jdbcTemplate.update("UPDATE cards SET is_active = FALSE WHERE code = 'TEST-001'");
 
         // When / Then: 39 carte normali + 3 full art
-        mockMvc.perform(get("/api/v1/admin/cards").param("size", "100").header(HttpHeaders.AUTHORIZATION, admin))
+        mockMvc.perform(get("/api/v1/admin/cards").param("search", "TEST-").param("size", "100")
+                        .header(HttpHeaders.AUTHORIZATION, admin))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalItems").value(42))
                 .andExpect(jsonPath("$.items[0].code").value("TEST-001"))
@@ -64,7 +66,7 @@ class AdminCardApiTest extends AdminApiTestSupport {
     @Test
     void listCards_legendaryFilter_findsFullArtsThroughTheirBaseCard() throws Exception {
         mockMvc.perform(get("/api/v1/admin/cards").param("rarity", "LEGENDARY").param("faction", "DREAMS")
-                        .header(HttpHeaders.AUTHORIZATION, admin))
+                        .param("search", "TEST-").header(HttpHeaders.AUTHORIZATION, admin))
                 .andExpect(jsonPath("$.totalItems").value(2))
                 .andExpect(jsonPath("$.items[0].code").value("TEST-013"))
                 .andExpect(jsonPath("$.items[1].code").value("TEST-013-FA"))

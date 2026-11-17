@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import it.somnia.dreamscape.api.admin.dto.response.ImageUploadResponse;
@@ -39,6 +40,8 @@ public class AdminImageService {
     private static final Pattern CODE = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9-]{0,39}$");
     private static final String FULL_ART_SUFFIX = "-fa";
     private static final Map<String, String> EXTENSIONS = Map.of("png", "png", "jpeg", "jpg");
+    // Le immagini servite anche da dentro il jar (ImageResourceConfig)
+    private static final String BUNDLED_IMAGES = "images/";
 
     private final FileStorage fileStorage;
     private final WebpImageWriter webpImageWriter;
@@ -87,12 +90,18 @@ public class AdminImageService {
         return name;
     }
 
+    // Una versione è occupata se il file c'è in IMAGES_DIR o tra le immagini che arrivano con il backend
+    // (classpath images/, il catalogo ufficiale della #165): stesso indirizzo vorrebbe dire coprire quella vecchia
     private int nextVersion(String folder, String name) {
         int version = 1;
-        while (fileStorage.imageExists(folder + "/" + name + "-v" + version + ".webp")) {
+        while (versionTaken(folder + "/" + name + "-v" + version + ".webp")) {
             version++;
         }
         return version;
+    }
+
+    private boolean versionTaken(String path) {
+        return fileStorage.imageExists(path) || new ClassPathResource(BUNDLED_IMAGES + path).exists();
     }
 
     // Il formato si legge dal contenuto, non dal nome del file: "png" o "jpeg"

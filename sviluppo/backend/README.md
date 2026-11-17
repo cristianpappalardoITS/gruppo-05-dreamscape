@@ -18,7 +18,18 @@ cp .env.example .env
 - API su `http://localhost:8080/api/v1`, documentazione Swagger su `http://localhost:8080/swagger-ui.html`, stato su `/actuator/health`.
 - Le email del backend (recupero password) non partono davvero: si leggono in Mailpit, su `http://localhost:8025`.
 - Nel profilo `dev` la chiave JWT è finta e scritta in `application-dev.properties`: alla consegna serve `JWT_SECRET`.
+- Le immagini caricate dal backoffice finiscono in `data/images` (copie WebP, servite su `/images/...`) e `data/originals` (originali), fuori da git.
 - Il motore di gioco ([decisione 029](../../docs/decisioni/029-motore-di-gioco.md)) gira nel container `engine`, costruito a ogni avvio da `sviluppo/engine` (la prima volta circa un minuto, poi pochi secondi) e raggiungibile solo da questo computer su `http://localhost:8081`. Backend e motore usano la stessa chiave di prova, quindi in sviluppo non serve impostare niente.
+
+### Con un admin
+Il backoffice (`/api/v1/admin/...`) vuole un utente con `role: ADMIN`. Il primo admin si crea all'avvio con tre variabili d'ambiente (non stanno nel file `.env`, che serve solo a Docker Compose); se esiste già, non cambia:
+```bash
+ADMIN_USERNAME=admin ADMIN_EMAIL=admin@example.test ADMIN_PASSWORD=una-password-lunga ./gradlew bootRun
+```
+In PowerShell:
+```powershell
+$env:ADMIN_USERNAME="admin"; $env:ADMIN_EMAIL="admin@example.test"; $env:ADMIN_PASSWORD="una-password-lunga"; ./gradlew bootRun
+```
 
 ### Dopo una migration nuova
 I dati finti (`V900` e seguenti) hanno numeri più alti delle migration vere. Se arriva una migration vera nuova (per esempio `V101`) e il database di sviluppo ha già i dati finti, Flyway non la applica e `bootRun` si ferma con un errore di validazione. Si ricrea il database di sviluppo, che riparte con tutti i dati finti:
@@ -28,10 +39,23 @@ docker compose down -v
 ```
 I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno bisogno: Testcontainers crea ogni volta un database nuovo.
 
+## Documentazione delle API (Swagger)
+Con il backend avviato, `http://localhost:8080/swagger-ui.html` elenca tutti gli endpoint, divisi in gruppi (Accesso, Profilo, Benvenuto, Catalogo, Negozio, Collezione, Mazzi, Amici, Scambi e i tre del Backoffice). Ogni endpoint ha una descrizione, i campi con un esempio e le risposte possibili con i codici di errore. La descrizione in formato OpenAPI è su `/v3/api-docs`.
+
+Per provare un endpoint con il lucchetto:
+1. Apri **Accesso** → `POST /api/v1/auth/login` → **Try it out**: l'esempio è già `anna_test` con `prova-dreamscape`. Premi **Execute**.
+2. Copia `accessToken` dalla risposta, premi **Authorize** in alto a destra e incollalo (senza la parola Bearer).
+3. Ora rispondono anche gli endpoint con il lucchetto. Il token dura 15 minuti: poi si rifà l'accesso. Swagger lo ricorda anche se ricarichi la pagina.
+
+Per il backoffice si fa l'accesso con l'admin (vedi sopra). Le pagine del frontend, con gli esempi in JavaScript, sono spiegate nella [guida per il frontend](../../docs/api/guida-frontend.md).
+
+Gli endpoint nuovi vanno documentati nel controller, come gli altri: `@Tag` sulla classe (uno dei gruppi esistenti o uno nuovo, in italiano), `@Operation` con `summary` su ogni metodo e un `@ApiResponse` per ogni risposta, con i codici di errore. Gli endpoint pubblici hanno anche `@SecurityRequirements` (senza lucchetto). Il `401`, il `403` del backoffice e il formato degli errori li aggiunge da solo `OpenApiConfig`. Se manca il titolo o il gruppo, `OpenApiDocsTest` fallisce.
+
 ## Test
 ```bash
 ./gradlew test
 ```
+Serve Docker acceso: Testcontainers avvia un PostgreSQL nuovo per i test, con le migration e i dati finti. Un test solo, o una classe: `./gradlew test --tests "*DeckApiTest"`. Il resoconto si apre da `build/reports/tests/test/index.html`.
 
 ## Configurazione
 | Variabile | Descrizione | Esempio |
@@ -61,7 +85,7 @@ Il backend serve le immagini su `/images/...`, senza accesso e con la cache per 
 Le copie del catalogo le crea `carte/compositore/crea_webp.py` dai PNG di `carte/illustrazioni/` ([README del compositore](../../carte/compositore/README.md#copie-webp-per-il-backend)). Un'illustrazione cambiata si salva con una versione nuova nel nome (`-v2`) e una migration nuova aggiorna gli URL della carta.
 
 ## Struttura
-- `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).
+- `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)). Oggi hanno le API `user` (accesso, profilo, crediti), `card` (catalogo), `deck` (collezione e mazzi), `pack` (benvenuto, negozio, aperture), `friend` (amici), `trade` (scambi) e `admin` (backoffice); `match` ha per ora la chiamata al motore, le altre cartelle (sfide, leghe, missioni, contatti) sono ancora quasi vuote. In `common/` ci sono configurazione (anche `OpenApiConfig` per Swagger), errori, sicurezza e salvataggio dei file.
 - `src/main/resources/db/migration/`: tabelle (`V1`–`V11`), dati del regolamento (`V100`), pacchetti (`V101`) e le 99 carte del set base (`V102`). Una migration già eseguita non si modifica.
 - `src/main/resources/db/testdata/`: dati finti (`V900`–`V903`), caricati solo nel profilo `dev` e nei test.
 - `src/main/resources/db/devdata/`: `V950` spegne le carte di prova, solo nel profilo `dev`.

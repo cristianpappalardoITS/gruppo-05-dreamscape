@@ -45,8 +45,13 @@ public class User {
     @Column(name = "email", nullable = false, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    // null per chi entra solo con Google e non ha ancora scelto una password (V11)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    // Id dell'account Google collegato (claim "sub" dell'id token); null se non è collegato
+    @Column(name = "google_subject", length = 255)
+    private String googleSubject;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
@@ -103,5 +108,9 @@ public class User {
 
     public boolean isAdmin() {
         return role == UserRole.ADMIN;
+    }
+
+    public boolean hasPassword() {
+        return passwordHash != null;
     }
 }

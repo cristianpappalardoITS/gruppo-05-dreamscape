@@ -19,6 +19,7 @@ import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.repository.UserRepository;
 import it.somnia.dreamscape.api.user.service.UserExceptions.AccountDisabledException;
 import it.somnia.dreamscape.api.user.service.UserExceptions.EmailTakenException;
+import it.somnia.dreamscape.api.user.service.UserExceptions.PasswordNotSetException;
 import it.somnia.dreamscape.api.user.service.UserExceptions.WrongPasswordException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -98,6 +99,9 @@ public class UserService {
     @Transactional
     public void changePassword(UUID userId, ChangePasswordRequest request, String currentRefreshToken) {
         User user = getActiveUser(userId);
+        if (!user.hasPassword()) {
+            throw new PasswordNotSetException("currentPassword");
+        }
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new WrongPasswordException("currentPassword");
         }
@@ -113,6 +117,9 @@ public class UserService {
     @Transactional
     public void deleteAccount(UUID userId, DeleteAccountRequest request) {
         User user = getActiveUserForUpdate(userId);
+        if (!user.hasPassword()) {
+            throw new PasswordNotSetException("password");
+        }
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new WrongPasswordException("password");
         }
@@ -120,6 +127,8 @@ public class UserService {
         user.setUsername(anonymous);
         user.setEmail(anonymous + "@deleted.invalid");
         user.setPasswordHash(DISABLED_PASSWORD_HASH);
+        // Scollega Google: con lo stesso account Google ci si può registrare di nuovo
+        user.setGoogleSubject(null);
         user.setEnabled(false);
         user.setRankedDeck(null);
         eventPublisher.publishEvent(new AccountDeletedEvent(user.getId()));

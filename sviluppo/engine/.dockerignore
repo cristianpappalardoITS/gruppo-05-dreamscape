@@ -1,0 +1,6 @@
+# Nel contesto di Docker solo quello che serve a compilare il motore
+**/build
+.gradle
+.idea
+*.iml
+README.md

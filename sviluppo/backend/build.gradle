@@ -29,6 +29,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.flywaydb:flyway-database-postgresql'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0'
+    // Classi del motore per la richiesta a engine-service (decisione 029): arriva da ../engine, incluso in settings.gradle
+    implementation 'it.somnia:engine-core'
     // Scrive le copie WebP delle illustrazioni caricate dal backoffice (decisione 007); ha le librerie native per Windows, macOS e Linux
     implementation 'com.github.usefulness:webp-imageio:0.10.0'
     compileOnly 'org.projectlombok:lombok'

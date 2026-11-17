@@ -2,6 +2,7 @@ package it.somnia.dreamscape.engine.battle;
 
 import it.somnia.dreamscape.engine.BattleResult;
 import it.somnia.dreamscape.engine.EndReason;
+import it.somnia.dreamscape.engine.SimulationRequest;
 import it.somnia.dreamscape.engine.Side;
 import it.somnia.dreamscape.engine.input.CardSnapshot;
 import it.somnia.dreamscape.engine.input.DeckSnapshot;
@@ -67,6 +68,20 @@ public final class BattleEngine {
 
     /** La difesa sotto cui Castigo non fa scendere la creatura avversaria: Castigo non uccide. */
     static final int PUNISHMENT_MIN_DEFENSE = 1;
+
+    /**
+     * Simula la partita descritta da una richiesta di engine-service.
+     *
+     * @param request mazzi, regole, seed e se serve il log, non {@code null}
+     * @return il risultato della partita, con il log se richiesto
+     * @throws NullPointerException     se la richiesta è {@code null}
+     * @throws IllegalArgumentException se una carta giocata ha un effetto che il motore non conosce
+     */
+    public BattleResult simulate(SimulationRequest request) {
+        Objects.requireNonNull(request, "request");
+        return simulate(request.challengerDeck(), request.opponentDeck(), request.rules(), request.seed(),
+                request.withLog());
+    }
 
     /**
      * Simula una partita.

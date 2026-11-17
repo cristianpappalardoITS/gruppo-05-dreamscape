@@ -6,7 +6,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import it.somnia.dreamscape.api.friend.service.FriendService;
 import it.somnia.dreamscape.api.pack.dto.response.OpenedCardResponse;
+import it.somnia.dreamscape.api.trade.service.TradeService;
 import it.somnia.dreamscape.api.pack.repository.PackOpeningRepository;
 import it.somnia.dreamscape.api.pack.service.OpenedCardMapper;
 import it.somnia.dreamscape.api.pack.service.PackOpener;
@@ -20,8 +22,9 @@ import lombok.RequiredArgsConstructor;
 /**
  * Il riepilogo della Dashboard (GET /me/summary): crediti, punteggio, lega e ultime carte trovate.
  *
- * <p>Missioni e contatori delle richieste in attesa hanno già il loro posto nella risposta, ma per ora
- * sono vuoti: si riempiono con le missioni (#125), gli amici e gli scambi (#93) e le sfide.
+ * <p>I contatori delle richieste di amicizia e degli scambi ricevuti in attesa sono veri (#93). Missioni e
+ * sfide hanno già il loro posto nella risposta, ma per ora sono vuoti: si riempiono con le missioni (#125)
+ * e le sfide (#94).
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,8 @@ public class DashboardService {
     private final UserRepository userRepository;
     private final PackOpeningRepository packOpeningRepository;
     private final OpenedCardMapper openedCardMapper;
+    private final FriendService friendService;
+    private final TradeService tradeService;
 
     /**
      * Restituisce il riepilogo dell'utente collegato.
@@ -49,8 +54,8 @@ public class DashboardService {
                 leagueOf(user.getRating()),
                 user.getRankedDeck() != null,
                 List.of(),
-                0,
-                0,
+                friendService.countPendingReceived(userId),
+                tradeService.countPendingReceived(userId),
                 0,
                 latestCards(userId));
     }

@@ -102,6 +102,17 @@ class AdminImageApiTest extends AdminApiTestSupport {
     }
 
     @Test
+    void upload_cardWithBundledImage_skipsItsVersion() throws Exception {
+        // Given: src/test/resources/images/cards/catalogo-prova-v1.webp fa da immagine del catalogo nel jar
+        code = "CATALOGO-PROVA";
+
+        // When / Then: la v1 è già usata, anche se non è in IMAGES_DIR
+        upload(png(600, 400), code, "ILLUSTRATION", admin)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.url").value("/images/cards/catalogo-prova-v2.webp"));
+    }
+
+    @Test
     void upload_fullArtWithFaCode_usesTheFullartName() throws Exception {
         upload(png(400, 600), code + "-FA", "FULL_ART", admin)
                 .andExpect(status().isCreated())

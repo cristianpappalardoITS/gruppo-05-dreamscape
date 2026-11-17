@@ -665,6 +665,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 |--------------------|---------|--------------|
 | `POST /auth/register` | pubblico | Registrazione |
 | `POST /auth/login` | pubblico | Accesso |
+| `POST /auth/google` | pubblico | Accesso e registrazione con Google (#159; serve `GOOGLE_CLIENT_ID` sul backend) |
 | `POST /auth/refresh` | pubblico (cookie) | Token di accesso nuovo |
 | `POST /auth/logout` | pubblico (cookie) | Uscita |
 | `POST /auth/password-reset-requests` | pubblico | Password dimenticata: manda l'email |

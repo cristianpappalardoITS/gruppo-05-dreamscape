@@ -93,7 +93,8 @@ erDiagram
         uuid id PK
         varchar username UK
         varchar email UK
-        varchar password_hash
+        varchar password_hash "NULL se entra solo con Google"
+        varchar google_subject UK "id dell'account Google, NULL se non collegato"
         varchar role "PLAYER, ADMIN"
         int credits "saldo, mai negativo"
         int rating "rank, parte da 1000"
@@ -655,6 +656,7 @@ Al primo accesso del giorno (ora italiana): `UPDATE users SET credits = credits 
 
 - **Cancellazione dell'account:** non si cancella la riga. Si anonimizza: username `deleted-` + id senza trattini (40 caratteri, per questo la colonna è `VARCHAR(40)`; alla registrazione il limite resta 30) ed email sostituita da un valore unico senza dati personali, `password_hash` non più valido, refresh token revocati, `is_enabled = FALSE`. Amicizie tolte e scambi e sfide in attesa annullati, come quando si toglie un'amicizia. Lo storico di sfide, scambi e partite resta valido.
 - **Primo admin:** creato all'avvio da username e password letti da variabili d'ambiente.
+- **Accesso con Google** ([decisione 032](../decisioni/032-accesso-con-google.md), `V11`): `google_subject` è l'id stabile dell'account Google (claim `sub`), unico. Chi si registra con Google ha `password_hash` a `NULL` finché non sceglie una password con il recupero; `chk_users_login_method` vuole almeno uno dei due. Alla cancellazione dell'account `google_subject` torna `NULL`.
 - **Email:** il portale invia solo l'email di recupero password, se c'è tempo di farla. Se non si fa, `password_reset_tokens` si toglie con una migration.
 
 ### Contatti

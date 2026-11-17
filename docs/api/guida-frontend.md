@@ -108,6 +108,7 @@ Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio
 |--------|----------|--------------|---------------|
 | Registrazione | `POST /auth/register` | `username`, `email`, `password`, `privacyAccepted`, `termsAccepted` | `201` + i dati dell'utente. Poi si fa l'accesso |
 | Accesso | `POST /auth/login` | `login` (username **o** email), `password` | `accessToken` + dati dell'utente; il refresh token arriva nel cookie |
+| Accesso con Google | `POST /auth/google` | `idToken` (dal pulsante di Google); per registrarsi anche `username`, `privacyAccepted`, `termsAccepted` | `200` come l'accesso, `201` se l'account è nuovo, `202` se serve la registrazione (vedi sotto) |
 | Nuovo token di accesso | `POST /auth/refresh` | Niente: il cookie parte da solo | Un nuovo `accessToken` |
 | Uscita | `POST /auth/logout` | Niente | `204`; il backend revoca il refresh token e cancella il cookie |
 | Chi sono | `GET /me` | — | I dati dell'utente collegato |
@@ -115,6 +116,25 @@ Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio
 | Cambio password | `PUT /me/password` | `currentPassword`, `newPassword` | `204`; per sicurezza gli altri dispositivi vengono scollegati |
 | Password dimenticata (facoltativa) | `POST /auth/password-reset-requests` | `email` | Sempre `202`, anche se l'email non esiste (per non rivelare chi è registrato) |
 | Nuova password (facoltativa) | `POST /auth/password-resets` | `token` (dal link dell'email), `newPassword` | `204` |
+
+#### Accesso con Google
+
+Il pulsante "Continua con Google" usa la libreria ufficiale di Google (Google Identity Services), che dà al JavaScript un **id token**. Il frontend lo manda al backend, che lo verifica e risponde come `POST /auth/login`: stesso `accessToken`, stesso cookie. Il client id di Google lo dà SWD (decisione 032).
+
+1. `POST /auth/google` con `{ "idToken": "…" }`.
+2. Le risposte possibili:
+
+| Stato | Quando | Cosa fa il frontend |
+|-------|--------|---------------------|
+| `200` | L'account Google è già collegato, oppure c'è già un account con la stessa email (verificata da Google), che viene collegato | Come dopo `POST /auth/login` |
+| `202` | Nessun account Dreamscape: serve la registrazione. Arriva `{ "signupRequired": true, "email": "mario.rossi@gmail.com", "suggestedUsername": "mario_rossi" }` | Mostra un piccolo form con l'username proposto (modificabile) e le caselle di Privacy e Termini, poi rimanda `POST /auth/google` con `idToken`, `username`, `privacyAccepted` e `termsAccepted` |
+| `201` | L'account è stato creato (500 DC di registrazione): la persona è già dentro | Come dopo l'accesso, poi pagina **Benvenuto** |
+
+L'id token di Google scade dopo circa un'ora: tra il `202` e il secondo invio si può riusare lo stesso. Se è scaduto si ripremi il pulsante.
+
+Errori: `401 INVALID_GOOGLE_TOKEN` (token non valido o scaduto), `403 GOOGLE_EMAIL_NOT_VERIFIED`, `409 GOOGLE_ACCOUNT_CONFLICT` (l'account con quell'email è collegato a un altro account Google), `409 USERNAME_TAKEN`, `400 VALIDATION_ERROR` (username non valido o consensi mancanti), `401 ACCOUNT_DISABLED`, `503 GOOGLE_LOGIN_DISABLED` (manca il client id: si nasconde il pulsante).
+
+Chi si è registrato con Google **non ha una password**: `POST /auth/login`, `PUT /me/password` e `DELETE /me` non funzionano (`PUT` e `DELETE` rispondono `400 PASSWORD_NOT_SET`). La password si sceglie con "Password dimenticata", e da lì si entra in tutti e due i modi.
 
 Esempio di registrazione:
 

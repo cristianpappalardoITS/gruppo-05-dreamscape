@@ -29,4 +29,7 @@ public interface PackRepository extends JpaRepository<Pack, UUID> {
 
     // I pacchetti di benvenuto attivi, nell'ordine in cui si aprono
     List<Pack> findByPackTypeAndActiveTrueOrderByNameAsc(PackType type);
+
+    // Nome già usato da un altro pacchetto (uq_packs_name), per il backoffice
+    Optional<Pack> findByName(String name);
 }

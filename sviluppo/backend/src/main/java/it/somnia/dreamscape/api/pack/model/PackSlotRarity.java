@@ -40,4 +40,10 @@ public class PackSlotRarity {
 
     @Column(name = "weight", nullable = false)
     private int weight;
+
+    public PackSlotRarity(PackSlot slot, Rarity rarity, int weight) {
+        this.slot = slot;
+        this.rarity = rarity;
+        this.weight = weight;
+    }
 }

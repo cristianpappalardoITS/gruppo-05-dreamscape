@@ -188,7 +188,7 @@ La proposta è in `docs/proposte/rilascio-aws.md`, sul branch `docs/rilascio-aws
 | #68 Progetto Spring Boot con Docker | Cristian | 3 | [Configurazione Spring Boot](../database/schema.md#configurazione-spring-boot); verificare che Flyway supporti PostgreSQL 18 |
 | #70 Modulo del motore | Cristian | 3 | Sezione 4; [template della classe del motore](../template.md#template-classe-del-motore-di-gioco) |
 | #69 Migration e dati finti | Marco | 3 | [Migration Flyway](../database/schema.md#migration-flyway), [schema.sql](../database/schema.sql) |
-| #71 Registrazione e accesso JWT | Marco | 3 | [Accesso con JWT](../api/guida-frontend.md#3-accesso-con-jwt); durata dei token (domanda 22) |
+| #71 Registrazione e accesso JWT | Marco | 3 | [Accesso con JWT](../api/guida-frontend.md#7-accesso-con-jwt); durata dei token (domanda 22) |
 | #76 Decisioni del colloquio | Nicolas | 3 | Le risposte del cliente (domanda 11) vanno in `docs/decisioni/` |
 | #74 Catalogo della fase 1, con Digital | Nicolas | 3 | [Guida di Digital](digital-strategy.md#4-il-catalogo-delle-carte-74); rarità e statistiche (domanda 14) |
 | #77 API del catalogo | Cristian | 4 | Cache delle immagini nella [guida](../api/guida-frontend.md#cache-cosa-resta-nel-browser) |

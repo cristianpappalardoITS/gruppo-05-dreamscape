@@ -29,7 +29,8 @@ import tools.jackson.databind.ObjectMapper;
 class OpenApiDocsTest {
 
     private static final Set<String> TAGS = Set.of("Accesso", "Profilo", "Benvenuto", "Catalogo", "Negozio",
-            "Collezione", "Mazzi", "Backoffice: carte", "Backoffice: immagini", "Backoffice: pacchetti");
+            "Collezione", "Mazzi", "Amici", "Scambi", "Backoffice: carte", "Backoffice: immagini",
+            "Backoffice: pacchetti");
     private static final Set<String> METHODS = Set.of("get", "post", "put", "patch", "delete");
     private static final String ERROR_REF = "#/components/schemas/ErrorResponse";
 

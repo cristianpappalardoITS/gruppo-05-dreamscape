@@ -40,7 +40,7 @@ docker compose down -v
 I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno bisogno: Testcontainers crea ogni volta un database nuovo.
 
 ## Documentazione delle API (Swagger)
-Con il backend avviato, `http://localhost:8080/swagger-ui.html` elenca tutti gli endpoint, divisi in gruppi (Accesso, Profilo, Benvenuto, Catalogo, Negozio, Collezione, Mazzi e i tre del Backoffice). Ogni endpoint ha una descrizione, i campi con un esempio e le risposte possibili con i codici di errore. La descrizione in formato OpenAPI è su `/v3/api-docs`.
+Con il backend avviato, `http://localhost:8080/swagger-ui.html` elenca tutti gli endpoint, divisi in gruppi (Accesso, Profilo, Benvenuto, Catalogo, Negozio, Collezione, Mazzi, Amici, Scambi e i tre del Backoffice). Ogni endpoint ha una descrizione, i campi con un esempio e le risposte possibili con i codici di errore. La descrizione in formato OpenAPI è su `/v3/api-docs`.
 
 Per provare un endpoint con il lucchetto:
 1. Apri **Accesso** → `POST /api/v1/auth/login` → **Try it out**: l'esempio è già `anna_test` con `prova-dreamscape`. Premi **Execute**.

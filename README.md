@@ -42,9 +42,9 @@ Il pagamento con denaro reale non fa parte della fase 1: i crediti sono solo vir
 
 ## Stato (17/11)
 
-- **Pronti nel backend:** registrazione e accesso (anche con Google), profilo e crediti, pagina Benvenuto, catalogo pubblico, negozio con apertura dei pacchetti, collezione, mazzi e backoffice per carte, immagini e pacchetti. Tutti documentati in Swagger.
-- **Pronto nel motore:** la partita completa con i 19 effetti delle carte (`engine-core`, versione 0.2.0).
-- **In lavorazione:** collegamento del motore al backend, partite, amici e scambi, classifica e missioni, pagine del frontend.
+- **Pronti nel backend:** registrazione e accesso (anche con Google), profilo e crediti, pagina Benvenuto, catalogo pubblico con le 99 carte del set base, negozio con apertura dei pacchetti, collezione, mazzi, amici e scambi, backoffice per carte, immagini e pacchetti. Tutti documentati in Swagger.
+- **Pronto nel motore:** la partita completa con i 19 effetti delle carte (`engine-core`, versione 0.2.0) e il servizio HTTP che il backend chiama (`engine-service`).
+- **In lavorazione:** partite e sfide (con il replay), classifica, leghe e missioni, pagine del frontend.
 
 L'avanzamento giorno per giorno è sulla board del progetto (GitHub Projects).
 

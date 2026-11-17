@@ -440,6 +440,7 @@ erDiagram
 | **Ricompensa giornaliera con una colonna** (`users.last_daily_reward_on`) | Un `UPDATE ... WHERE last_daily_reward_on < :oggi` atomico dà la ricompensa una volta sola anche con due richieste nello stesso momento. Il giorno inizia a mezzanotte, ora italiana. |
 | **Consensi alla registrazione** (`privacy_accepted_at`, `terms_accepted_at`) | La registrazione ha la checkbox di Privacy Policy e Termini di servizio: si salva quando sono stati accettati. Un `CHECK` li rende obbligatori per i giocatori; l'admin, creato all'avvio, non passa dalla registrazione. |
 | **Messaggi dei contatti in tabella** (`contact_messages`) | Il form della pagina Contatti salva il messaggio e l'admin lo legge nel backoffice. Non serve configurare l'invio di email. |
+| **Accesso con Google** (`users.google_subject`, `password_hash` facoltativa) | Si riconosce l'account Google dal suo id stabile (claim `sub`), non dall'email, che su Google può cambiare. Chi entra solo con Google non ha una password; un `CHECK` vuole almeno un modo di accesso ([decisione 032](../decisioni/032-accesso-con-google.md)). |
 | **Accesso con token JWT** (`refresh_tokens`) | Il token di accesso dura poco e non si salva. Il refresh token serve a ottenerne uno nuovo: si salva come hash e si revoca al logout (`revoked_at`). Il frontend in HTML/CSS/JavaScript manda il token nell'header `Authorization`. |
 | **Username ed email senza distinguere maiuscole** (indici `UNIQUE` su `LOWER()`) | "Marco" e "marco" sono lo stesso utente. In PostgreSQL si ottiene con un indice sull'espressione, senza colonne in più. |
 | **Utenti si disattivano, non si cancellano** (`is_enabled`) | Lo storico di sfide e scambi resta completo. Per questo le chiavi esterne di `trades` e `challenges` verso `users` non hanno `ON DELETE CASCADE`. |
@@ -775,6 +776,7 @@ Campi comuni degli eventi: `phase` (`START` = fase iniziale, `COMBAT` = combatti
 | `V8__create_contact_messages.sql` | `contact_messages` |
 | `V9__create_missions.sql` | `missions` (+ le due missioni fisse), `user_missions` |
 | `V10__create_leagues.sql` | `leagues` (+ le quattro leghe), `user_league_rewards` |
+| `V11__add_google_login.sql` | Nessuna tabella nuova: `users.google_subject` e `password_hash` facoltativa, per l'accesso con Google ([decisione 032](../decisioni/032-accesso-con-google.md)) |
 
 L'ordine conta: ogni file crea tabelle che dipendono solo da quelle dei file precedenti. I riferimenti "all'indietro" si aggiungono con un `ALTER TABLE` appena esiste la tabella di arrivo: `factions.lord_card_id` dopo `cards` (V2), `users.starter_faction_id` dopo `factions` (V2), `users.ranked_deck_id` dopo `decks` (V3).
 
@@ -788,7 +790,7 @@ Con le 12 carte di prova non si forma un mazzo valido (al massimo 18 carte). Per
 
 | Cartella | Contenuto | Quando si esegue |
 |----------|-----------|------------------|
-| `db/migration/` | Tabelle (`V1`–`V10`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
+| `db/migration/` | Tabelle (`V1`–`V11`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
 | `db/testdata/` | 39 carte finte (per fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art), pacchetti di prova (spenti da `V903`: valgono quelli veri di `V101`) e tre utenti di prova (`V900`–`V903`) | Solo nel profilo `dev` e nei test |
 
 - Numerazione da `V900` in su (es. `V900__seed_test_cards.sql`), così non si scontra mai con le migration vere.
@@ -1009,6 +1011,14 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### 17 novembre 2026: accesso con Google (#159)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| `users.password_hash` | Obbligatoria | Facoltativa: `NULL` per chi entra solo con Google, finché non sceglie una password con il recupero |
+| `users.google_subject` | Non c'era | Id dell'account Google collegato (claim `sub`), unico (`uq_users_google_subject`); `NULL` se non collegato o dopo la cancellazione dell'account |
+| Modi di accesso | Solo la password | Password, Google o tutti e due: `chk_users_login_method` vuole almeno uno dei due. Migration `V11` ([decisione 032](../decisioni/032-accesso-con-google.md)) |
 
 ### Correzioni prima delle migration (#69)
 

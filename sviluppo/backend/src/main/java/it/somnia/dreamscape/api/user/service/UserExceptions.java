@@ -63,6 +63,53 @@ public final class UserExceptions {
         }
     }
 
+    // Account senza password (registrato con Google): la password si sceglie con "Password dimenticata"
+    public static class PasswordNotSetException extends ApiException {
+        public PasswordNotSetException(String field) {
+            super(HttpStatus.BAD_REQUEST, "PASSWORD_NOT_SET",
+                    "Il tuo account non ha ancora una password: sceglila con \"Password dimenticata\".",
+                    List.of(new FieldErrorResponse(field, "Il tuo account non ha ancora una password.")));
+        }
+    }
+
+    // Accesso con Google spento: manca GOOGLE_CLIENT_ID
+    public static class GoogleLoginDisabledException extends ApiException {
+        public GoogleLoginDisabledException() {
+            super(HttpStatus.SERVICE_UNAVAILABLE, "GOOGLE_LOGIN_DISABLED",
+                    "L'accesso con Google non è attivo. Accedi con email e password.");
+        }
+    }
+
+    // Id token di Google falso, scaduto o per un altro sito
+    public static class InvalidGoogleTokenException extends ApiException {
+        public InvalidGoogleTokenException() {
+            super(HttpStatus.UNAUTHORIZED, "INVALID_GOOGLE_TOKEN", "Accesso con Google non riuscito. Riprova.");
+        }
+    }
+
+    // Senza email verificata non si crea un account e non se ne collega uno esistente
+    public static class GoogleEmailNotVerifiedException extends ApiException {
+        public GoogleEmailNotVerifiedException() {
+            super(HttpStatus.FORBIDDEN, "GOOGLE_EMAIL_NOT_VERIFIED",
+                    "L'email del tuo account Google non è verificata. Verificala su Google e riprova.");
+        }
+    }
+
+    // L'account Dreamscape con questa email è già collegato a un altro account Google
+    public static class GoogleAccountConflictException extends ApiException {
+        public GoogleAccountConflictException() {
+            super(HttpStatus.CONFLICT, "GOOGLE_ACCOUNT_CONFLICT",
+                    "Questo account è già collegato a un altro account Google. Accedi con email e password.");
+        }
+    }
+
+    // Registrazione con Google: username scelto ma consensi mancanti
+    public static class ConsentsRequiredException extends ApiException {
+        public ConsentsRequiredException(List<FieldErrorResponse> missing) {
+            super(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", missing.getFirst().message(), missing);
+        }
+    }
+
     public static class NotEnoughCreditsException extends ApiException {
         public NotEnoughCreditsException() {
             super(HttpStatus.CONFLICT, "NOT_ENOUGH_CREDITS", "Non hai abbastanza Dream Credits.");

@@ -37,6 +37,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [029](029-motore-di-gioco.md) | Motore di gioco: microservizio in `sviluppo/engine`, seed, log a eventi | 4/11 | Approvata; regole del round da confermare |
 | [030](030-nuovi-pacchetti.md) | Nuovi pacchetti: Nap Pack, pacchetti dei Lord, REM Pack; Dream Pack con il retro delle carte | 9/11, 13/11 | Approvata, sostituisce le copertine del Dream Pack di 012; percentuali provvisorie |
 | [031](031-effetti-nel-motore.md) | Effetti nel motore: Culla, Non Sequitur, Immunità e gli altri casi lasciati aperti | 16/11 | Approvata come proposta, da confermare |
+| [032](032-accesso-con-google.md) | Accesso con Google: id token al backend, form al primo accesso, collegamento con email verificata | 17/11 | Approvata |
 
 ## Ancora da decidere
 

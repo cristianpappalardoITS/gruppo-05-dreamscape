@@ -16,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmailIgnoreCase(String email);
 
+    // L'utente collegato a un account Google (accesso con Google, #159)
+    Optional<User> findByGoogleSubject(String googleSubject);
+
     boolean existsByUsernameIgnoreCase(String username);
 
     boolean existsByEmailIgnoreCase(String email);

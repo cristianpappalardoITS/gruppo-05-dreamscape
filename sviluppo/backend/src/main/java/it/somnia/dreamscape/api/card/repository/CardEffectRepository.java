@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import it.somnia.dreamscape.api.card.model.Card;
@@ -16,6 +17,7 @@ public interface CardEffectRepository extends JpaRepository<CardEffect, UUID> {
     // Al massimo un effetto per carta (regolamento attuale, controllato dal service)
     Optional<CardEffect> findByCard(Card card);
 
-    // Per le liste di carte, con una sola query
+    // Per le liste di carte, con una sola query (anche per l'effetto di ognuna)
+    @EntityGraph(attributePaths = "effect")
     List<CardEffect> findByCardIn(Collection<Card> cards);
 }

@@ -61,7 +61,8 @@ public record AdminPackRequest(
         @NotEmpty(message = "Il pacchetto ha almeno uno slot.")
         @Size(max = 10, message = "Al massimo 10 slot.") List<@NotNull @Valid Slot> slots,
 
-        @Schema(description = "Con id si modificano, senza id si aggiungono, quelle che mancano si spengono")
+        @Schema(description = "Con id si modificano, senza id si aggiungono, quelle che mancano dalla lista si "
+                + "spengono. Senza il campo restano come sono; con una lista vuota si spengono tutte")
         @Size(max = 10, message = "Al massimo 10 copertine.") List<@NotNull @Valid Cover> covers) {
 
     /**

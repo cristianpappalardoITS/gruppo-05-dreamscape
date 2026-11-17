@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,14 +102,17 @@ public class AdminPackService {
         validate(request);
         Pack pack = new Pack(name, request.packType());
         applyData(pack, request);
-        packRepository.saveAndFlush(pack);
+        savePack(pack);
         saveSlots(pack, request.slots());
-        saveCovers(pack, request.covers());
+        if (request.covers() != null) {
+            saveCovers(pack, request.covers());
+        }
         return reload(pack.getId());
     }
 
     /**
-     * Modifica un pacchetto. Gli slot sostituiscono quelli di prima.
+     * Modifica un pacchetto. Gli slot sostituiscono quelli di prima. Le copertine cambiano solo se la richiesta
+     * ha il campo {@code covers}: senza, restano come sono; con una lista vuota si spengono tutte.
      *
      * @param packId  il pacchetto da modificare
      * @param request i dati nuovi
@@ -130,11 +134,27 @@ public class AdminPackService {
         pack.setName(name);
         pack.setPackType(request.packType());
         applyData(pack, request);
+        savePack(pack);
         packSlotRepository.deleteAllSlotsOf(pack);
         Pack reloaded = findPack(packId);
         saveSlots(reloaded, request.slots());
-        saveCovers(reloaded, request.covers());
+        if (request.covers() != null) {
+            saveCovers(reloaded, request.covers());
+        }
         return reload(packId);
+    }
+
+    // Due richieste nello stesso momento con lo stesso nome superano tutte e due il controllo: il vincolo
+    // uq_packs_name del database ferma la seconda, che riceve lo stesso errore del controllo
+    private void savePack(Pack pack) {
+        try {
+            packRepository.saveAndFlush(pack);
+        } catch (DataIntegrityViolationException e) {
+            if (String.valueOf(e.getMostSpecificCause().getMessage()).contains("uq_packs_name")) {
+                throw new PackNameTakenException();
+            }
+            throw e;
+        }
     }
 
     // Le regole che il database controlla con i CHECK, scritte prima perché l'admin veda un messaggio chiaro
@@ -208,8 +228,7 @@ public class AdminPackService {
     }
 
     // Copertine con id: si modificano; senza id: si aggiungono; quelle che mancano nella richiesta si spengono
-    private void saveCovers(Pack pack, List<AdminPackRequest.Cover> requests) {
-        List<AdminPackRequest.Cover> covers = requests != null ? requests : List.of();
+    private void saveCovers(Pack pack, List<AdminPackRequest.Cover> covers) {
         Map<UUID, PackCover> existing = packCoverRepository.findByPackOrderBySortOrderAsc(pack).stream()
                 .collect(Collectors.toMap(PackCover::getId, Function.identity()));
         Set<UUID> kept = new HashSet<>();

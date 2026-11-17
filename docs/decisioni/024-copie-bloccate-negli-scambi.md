@@ -1,7 +1,7 @@
 # 024 · Copie bloccate negli scambi e avviso sui mazzi
 
 - **Data:** 2026-11-04
-- **Stato:** approvata, sostituisce la parte "carte non bloccate" di [009](009-amici-e-scambi.md)
+- **Stato:** approvata, sostituisce la parte "carte non bloccate" di [009](009-amici-e-scambi.md); completata da [033](033-scambi-ultima-copia-e-copie-mancanti.md) (carte richieste, copie mancanti all'accettazione, ultima copia)
 - **Referenti:** Marco
 - **Task:** #93, #96
 

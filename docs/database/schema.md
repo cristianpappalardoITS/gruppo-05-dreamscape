@@ -596,19 +596,25 @@ WHERE t.proposer_id = :userId AND t.status = 'PENDING'
 
 Alla proposta il service blocca le righe di `user_cards` delle carte offerte (`SELECT ... FOR UPDATE`), così due proposte nello stesso momento non offrono le stesse copie, e rifiuta lo scambio (`409`) se offre più copie di quelle disponibili. Le carte **richieste** all'amico non si bloccano: lui non ha ancora accettato. Il blocco finisce da solo quando lo scambio non è più `PENDING` (accettato, rifiutato o annullato).
 
-**Avviso sui mazzi.** Alla proposta e all'accettazione il service dice se una carta che esce sta in un mazzo del giocatore e se quel mazzo diventerà non valido (anche se è il mazzo classificato). Lo scambio si può fare lo stesso: il mazzo resta salvato, non valido, finché il giocatore non lo sistema.
+Alla proposta il service controlla anche che il destinatario abbia **oggi** abbastanza copie disponibili delle carte richieste (copie possedute meno quelle che lui ha offerto in altri scambi in attesa), senza bloccarle ([decisione 033](../decisioni/033-scambi-ultima-copia-e-copie-mancanti.md)).
+
+**Avvisi.** Alla proposta e prima di accettare il service avvisa, per le carte che il giocatore dà (lo scambio si può fare lo stesso):
+- **mazzi:** se una carta che esce sta in un suo mazzo valido e quel mazzo diventerà non valido (anche se è il mazzo classificato). Il mazzo resta salvato, non valido, finché il giocatore non lo sistema;
+- **ultima copia:** se dopo lo scambio non avrà più nessuna copia di quella carta (la full art si conta da sola, con il suo `card_id`). Decisione 033.
 
 **Full art che esce da un mazzo.** Se il giocatore cede una full art che usa in un mazzo e possiede una copia libera della versione normale, il mazzo passa alla versione normale (`deck_cards.card_id` = la carta base) e resta valido. Se non ce l'ha, il mazzo diventa non valido. In tutti e due i casi l'avviso lo dice prima dello scambio.
 
 Quando il destinatario accetta:
-1. Ricontrolla che siano ancora amici.
+1. Ricontrolla che siano ancora amici. Se non lo sono, lo scambio passa a `CANCELLED`.
 2. Blocca le righe di `user_cards` coinvolte (`SELECT ... FOR UPDATE`).
 3. Ricontrolla che entrambi abbiano ancora tutte le carte nelle quantità previste (la full art si conta a parte, con il suo `card_id`). Per il destinatario contano solo le copie disponibili: quelle che ha offerto in altri scambi in attesa sono bloccate.
 4. Sposta le carte: scala `quantity`, cancella le righe che arrivano a 0, aggiunge o incrementa quelle del ricevente.
 5. Per ogni full art ceduta che stava in un mazzo, passa il mazzo alla versione normale se il giocatore ne ha una copia libera (vedi sopra).
 6. Imposta `status = 'ACCEPTED'` e `resolved_at`.
 
-Se un controllo fallisce, la transazione si annulla e nessuna carta si muove: lo scambio passa a `CANCELLED` e chi prova ad accettare riceve un messaggio. Lo stesso succede se l'amicizia è stata tolta. Ogni scambio deve avere almeno una carta per lato.
+Se mancano copie, la transazione si annulla e nessuna carta si muove: chi prova ad accettare riceve un `409` con il motivo e **lo scambio resta `PENDING`**. Il destinatario può rifiutarlo, oppure liberare le copie (annullando un suo altro scambio) e riprovare; chi propone può annullarlo ([decisione 033](../decisioni/033-scambi-ultima-copia-e-copie-mancanti.md)). Solo l'amicizia tolta annulla lo scambio da sola. Ogni scambio deve avere almeno una carta per lato.
+
+Il passaggio della full art alla versione normale usa lo stesso calcolo dell'avviso: una copia normale è **libera** se non è già usata in quel mazzo. Le righe di `user_cards` dei due giocatori si bloccano partendo dal giocatore con l'id più basso, così due accettazioni tra gli stessi giocatori non si aspettano a vicenda. L'annullamento automatico (amicizia tolta, account cancellato) blocca gli scambi `PENDING` con `SELECT ... FOR UPDATE`: uno scambio appena accettato non torna `CANCELLED`.
 
 Gli scambi in attesa **non scadono**: chi propone può annullare quando vuole, e le copie offerte tornano disponibili.
 
@@ -1012,6 +1018,16 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### 17 novembre 2026: scambi, ultima copia e copie mancanti (#93)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Accettazione con copie mancanti | Lo scambio passava a `CANCELLED` | Risposta `409`, nessuna carta si muove e lo scambio resta `PENDING`. Solo l'amicizia tolta lo annulla ([decisione 033](../decisioni/033-scambi-ultima-copia-e-copie-mancanti.md)) |
+| Carte richieste alla proposta | Ricontrollate solo all'accettazione | Controllate anche alla proposta (copie disponibili del destinatario), senza bloccarle |
+| Avvisi | Solo mazzi che diventano non validi | Anche l'ultima copia di una carta che esce |
+
+Nessuna migration: cambiano solo le regole del service.
 
 ### 17 novembre 2026: accesso con Google (#159)
 

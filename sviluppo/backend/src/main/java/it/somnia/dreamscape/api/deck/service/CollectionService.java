@@ -20,6 +20,7 @@ import it.somnia.dreamscape.api.deck.dto.response.CollectionCardResponse;
 import it.somnia.dreamscape.api.deck.model.UserCards;
 import it.somnia.dreamscape.api.deck.repository.UserCardsRepository;
 import it.somnia.dreamscape.api.deck.repository.UserCardsSpecifications;
+import it.somnia.dreamscape.api.trade.service.LockedCopies;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -31,6 +32,7 @@ public class CollectionService {
 
     private final UserCardsRepository userCardsRepository;
     private final CardMapper cardMapper;
+    private final LockedCopies lockedCopies;
 
     /**
      * Restituisce una pagina della collezione ({@code GET /me/cards}), in ordine di codice della carta.
@@ -69,9 +71,13 @@ public class CollectionService {
                 PageRequest.of(page, size, Sort.by("card.code")));
         List<CardResponse> cards = cardMapper.toResponses(
                 userCards.getContent().stream().map(UserCards::getCard).toList());
+        Map<UUID, Integer> locked = lockedCopies.of(userId);
         List<CollectionCardResponse> items = new ArrayList<>();
         for (int i = 0; i < cards.size(); i++) {
-            items.add(new CollectionCardResponse(cards.get(i), userCards.getContent().get(i).getQuantity()));
+            UserCards userCard = userCards.getContent().get(i);
+            int quantity = userCard.getQuantity();
+            int availableForTrade = Math.max(0, quantity - locked.getOrDefault(userCard.getCard().getId(), 0));
+            items.add(new CollectionCardResponse(cards.get(i), quantity, availableForTrade));
         }
         return new PageResponse<>(items, userCards.getNumber(), userCards.getSize(), userCards.getTotalElements(),
                 userCards.getTotalPages());

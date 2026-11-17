@@ -24,8 +24,11 @@ import it.somnia.dreamscape.api.TestcontainersConfiguration;
 @Transactional
 class CatalogApiTest {
 
-    // Le carte normali di V900: 13 per fazione; le 3 full art non sono nella lista
+    // Le carte normali di V900 (13 per fazione) e quelle del set base di V102 (33 per fazione).
+    // Le full art non sono nella lista. In ordine di codice le BASE- vengono prima delle TEST-.
     private static final int TEST_BASE_CARDS = 39;
+    private static final int BASE_SET_CARDS = 99;
+    private static final int CATALOG_CARDS = TEST_BASE_CARDS + BASE_SET_CARDS;
 
     @Autowired
     private MockMvc mockMvc;
@@ -39,11 +42,11 @@ class CatalogApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(24))
-                .andExpect(jsonPath("$.totalItems").value(TEST_BASE_CARDS))
-                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.totalItems").value(CATALOG_CARDS))
+                .andExpect(jsonPath("$.totalPages").value(6))
                 .andExpect(jsonPath("$.items.length()").value(24))
-                .andExpect(jsonPath("$.items[0].code").value("TEST-001"))
-                .andExpect(jsonPath("$.items[1].code").value("TEST-002"));
+                .andExpect(jsonPath("$.items[0].code").value("BASE-001"))
+                .andExpect(jsonPath("$.items[1].code").value("BASE-002"));
     }
 
     @Test
@@ -71,7 +74,7 @@ class CatalogApiTest {
 
     @Test
     void listCards_cardWithoutEffect_returnsNullEffect() throws Exception {
-        mockMvc.perform(get("/api/v1/cards").param("search", "Lucciola"))
+        mockMvc.perform(get("/api/v1/cards").param("search", "Lucciola (prova)"))
                 .andExpect(jsonPath("$.items[0].code").value("TEST-001"))
                 .andExpect(jsonPath("$.items[0].effect").doesNotExist());
     }
@@ -80,10 +83,11 @@ class CatalogApiTest {
     void listCards_factionAndRarity_returnsOnlyMatchingCards() throws Exception {
         mockMvc.perform(get("/api/v1/cards").param("faction", "NIGHTMARES").param("rarity", "RARE"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalItems").value(3))
-                .andExpect(jsonPath("$.items[0].code").value("TEST-021"))
-                .andExpect(jsonPath("$.items[1].code").value("TEST-022"))
-                .andExpect(jsonPath("$.items[2].code").value("TEST-023"));
+                // 8 Rare Nightmares del set base, poi le 3 di prova
+                .andExpect(jsonPath("$.totalItems").value(11))
+                .andExpect(jsonPath("$.items[8].code").value("TEST-021"))
+                .andExpect(jsonPath("$.items[9].code").value("TEST-022"))
+                .andExpect(jsonPath("$.items[10].code").value("TEST-023"));
     }
 
     @Test
@@ -112,20 +116,25 @@ class CatalogApiTest {
 
     @Test
     void listCards_featured_returnsTheLegendaryCardsWithLordTitleOnlyForLords() throws Exception {
-        // Given: la Leggendaria Dreams di prova diventa il Lord della sua fazione
+        // Given: i Lord di V102 sono BASE-004, BASE-008 e BASE-012; la Leggendaria Dreams di prova
+        // prende il posto di BASE-004 come Lord di Dreams
         jdbcTemplate.update("""
                 UPDATE factions SET lord_card_id = (SELECT id FROM cards WHERE code = 'TEST-013')
                 WHERE code = 'DREAMS'""");
 
-        // When / Then
+        // When / Then: 12 Leggendarie del set base, poi le 3 di prova
         mockMvc.perform(get("/api/v1/cards").param("featured", "true"))
-                .andExpect(jsonPath("$.totalItems").value(3))
-                .andExpect(jsonPath("$.items[0].code").value("TEST-013"))
-                .andExpect(jsonPath("$.items[0].rarity.code").value("LEGENDARY"))
-                .andExpect(jsonPath("$.items[0].lordTitle").value("Dreams Lord"))
-                .andExpect(jsonPath("$.items[1].code").value("TEST-026"))
-                .andExpect(jsonPath("$.items[1].lordTitle").doesNotExist())
-                .andExpect(jsonPath("$.items[2].code").value("TEST-039"));
+                .andExpect(jsonPath("$.totalItems").value(15))
+                .andExpect(jsonPath("$.items[0].code").value("BASE-004"))
+                .andExpect(jsonPath("$.items[0].lordTitle").doesNotExist())
+                .andExpect(jsonPath("$.items[1].code").value("BASE-008"))
+                .andExpect(jsonPath("$.items[1].lordTitle").value("Nightmares Lord"))
+                .andExpect(jsonPath("$.items[12].code").value("TEST-013"))
+                .andExpect(jsonPath("$.items[12].rarity.code").value("LEGENDARY"))
+                .andExpect(jsonPath("$.items[12].lordTitle").value("Dreams Lord"))
+                .andExpect(jsonPath("$.items[13].code").value("TEST-026"))
+                .andExpect(jsonPath("$.items[13].lordTitle").doesNotExist())
+                .andExpect(jsonPath("$.items[14].code").value("TEST-039"));
     }
 
     @Test
@@ -135,16 +144,18 @@ class CatalogApiTest {
 
         // When / Then
         mockMvc.perform(get("/api/v1/cards"))
-                .andExpect(jsonPath("$.totalItems").value(TEST_BASE_CARDS - 1))
-                .andExpect(jsonPath("$.items[0].code").value("TEST-002"));
+                .andExpect(jsonPath("$.totalItems").value(CATALOG_CARDS - 1));
+        mockMvc.perform(get("/api/v1/cards").param("search", "Lucciola (prova)"))
+                .andExpect(jsonPath("$.totalItems").value(0));
     }
 
     @Test
     void listCards_secondPage_returnsTheRemainingCards() throws Exception {
-        mockMvc.perform(get("/api/v1/cards").param("page", "1").param("size", "24"))
-                .andExpect(jsonPath("$.page").value(1))
-                .andExpect(jsonPath("$.items.length()").value(TEST_BASE_CARDS - 24))
-                .andExpect(jsonPath("$.items[0].code").value("TEST-025"));
+        // Ultima pagina: dalla 121esima carta, cioè la 22esima di prova
+        mockMvc.perform(get("/api/v1/cards").param("page", "5").param("size", "24"))
+                .andExpect(jsonPath("$.page").value(5))
+                .andExpect(jsonPath("$.items.length()").value(CATALOG_CARDS - 120))
+                .andExpect(jsonPath("$.items[0].code").value("TEST-022"));
     }
 
     @Test
@@ -217,7 +228,7 @@ class CatalogApiTest {
                 .andExpect(jsonPath("$[0].code").value("DREAMS"))
                 .andExpect(jsonPath("$[0].name").value("Dreams"))
                 .andExpect(jsonPath("$[0].lordTitle").value("Dreams Lord"))
-                .andExpect(jsonPath("$[0].lordCardId").doesNotExist())
+                .andExpect(jsonPath("$[0].lordCardId").value(cardId("BASE-004").toString()))
                 .andExpect(jsonPath("$[0].strongAgainst[0]").value("MEMORIES"))
                 .andExpect(jsonPath("$[0].weakAgainst[0]").value("NIGHTMARES"))
                 .andExpect(jsonPath("$[1].code").value("MEMORIES"))

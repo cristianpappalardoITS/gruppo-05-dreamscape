@@ -117,4 +117,10 @@ public class Pack {
                 && (availableFrom == null || !now.isBefore(availableFrom))
                 && (availableUntil == null || now.isBefore(availableUntil));
     }
+
+    // Un pacchetto nuovo del backoffice; gli altri dati si impostano con i setter
+    public Pack(String name, PackType packType) {
+        this.name = name;
+        this.packType = packType;
+    }
 }

@@ -15,6 +15,9 @@ public interface CardRepository extends JpaRepository<Card, UUID>, JpaSpecificat
 
     Optional<Card> findByCode(String code);
 
+    // Nome già usato da un'altra carta (uq_cards_name), per il backoffice
+    Optional<Card> findByName(String name);
+
     // Le carte normali attive (senza le versioni), es. per il catalogo pubblico
     List<Card> findByBaseCardIsNullAndActiveTrueOrderByCodeAsc();
 

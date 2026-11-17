@@ -1,1 +1,5 @@
 rootProject.name = 'dreamscape-api'
+
+// Il motore di gioco (decisione 029) è un progetto Gradle a parte: il backend lo include per usare
+// le classi di engine-core nella richiesta al motore, senza ricopiarle. I comandi restano gli stessi
+includeBuild '../engine'

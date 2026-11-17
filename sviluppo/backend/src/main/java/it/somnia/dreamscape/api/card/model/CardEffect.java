@@ -39,4 +39,10 @@ public class CardEffect {
     // Valore X; null per gli effetti senza numero (es. Neutralità)
     @Column(name = "effect_value")
     private Integer effectValue;
+
+    public CardEffect(Card card, Effect effect, Integer effectValue) {
+        this.card = card;
+        this.effect = effect;
+        this.effectValue = effectValue;
+    }
 }

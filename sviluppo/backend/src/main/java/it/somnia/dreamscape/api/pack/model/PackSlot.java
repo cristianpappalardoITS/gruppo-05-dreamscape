@@ -46,4 +46,10 @@ public class PackSlot {
     @OneToMany(mappedBy = "slot")
     @BatchSize(size = 50)
     private List<PackSlotRarity> rarities = new ArrayList<>();
+
+    public PackSlot(Pack pack, int sortOrder, int cardCount) {
+        this.pack = pack;
+        this.sortOrder = sortOrder;
+        this.cardCount = cardCount;
+    }
 }

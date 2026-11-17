@@ -978,8 +978,10 @@ Se `illustrationUrl` è `null` (le carte di prova `TEST-` non hanno illustrazion
 ### Carta della collezione
 
 ```json
-{ "card": { "id": "019a1f30-0000-7000-8000-000000000004", "name": "Il Sogno Lucido", "...": "..." }, "quantity": 1 }
+{ "card": { "id": "019a1f30-0000-7000-8000-000000000004", "name": "Il Sogno Lucido", "...": "..." }, "quantity": 2, "availableForTrade": 1 }
 ```
+
+`availableForTrade` sono le copie che si possono offrire in uno scambio: `quantity` meno quelle già offerte negli scambi in attesa (vedi [Scambi](#scambi)). Nei mazzi si usano tutte le `quantity` copie.
 
 Ogni versione è una voce a parte: se l'utente ha anche la full art del Sogno Lucido, nella collezione c'è un'altra voce con `card.variantType: "FULL_ART"`, il suo `card.id` e le sue copie.
 
@@ -1124,7 +1126,7 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 - `latestCards` sono le carte dell'ultima apertura (comprata o regalata), nell'ordine di uscita, con la stessa forma di `GET /pack-openings/{openingId}`. Lista vuota se il giocatore non ha mai aperto pacchetti.
 - `league` è la lega del punteggio attuale; nella lega più alta `nextLeagueName` e `nextLeagueMinRating` sono `null`.
 - `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
-- Per ora `missions` è una lista vuota e i tre contatori valgono `0`: si riempiono quando sono pronte missioni (#125), amici e scambi (#93) e sfide. La forma della risposta non cambia, quindi la pagina si può già fare tutta.
+- `pendingFriendRequests` sono le richieste di amicizia ricevute in attesa, `pendingTrades` gli scambi ricevuti in attesa di una risposta. Per ora `missions` è una lista vuota e `pendingChallenges` vale `0`: si riempiono quando sono pronte missioni (#125) e sfide (#94). La forma della risposta non cambia, quindi la pagina si può già fare tutta.
 - `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
 - Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 
@@ -1340,12 +1342,17 @@ Cosa si riceve dalle altre chiamate:
 
 | Chiamata | Mandate | Ricevete |
 |----------|---------|----------|
-| `GET /users?search=luc` | | Lista di `{ "id", "username" }` |
-| `POST /friend-requests` | `{ "username": "lucida" }` | `201` con la richiesta |
-| `GET /friend-requests?direction=received` (o `sent`) | | Lista di richieste: `{ "id", "user": { "id", "username" }, "createdAt" }` |
-| `POST /friend-requests/{requestId}/accept` | | `200` con l'amico |
-| `DELETE /friend-requests/{requestId}` | | `204` (rifiutata o annullata) |
+| `GET /users?search=luc` | | Lista di `{ "id", "username" }`, al massimo 20, in ordine di username. Da 2 caratteri in su; non ci sono chi cerca, gli admin e gli account cancellati |
+| `POST /friend-requests` | `{ "username": "lucida" }` | `201` con la richiesta. Se lucida vi aveva già chiesto l'amicizia, siete subito amici: `200` con l'amico |
+| `GET /friend-requests?direction=received` (o `sent`) | | Lista di richieste in attesa, dalla più recente: `{ "id", "user": { "id", "username" }, "createdAt" }`. `user` è l'altro giocatore |
+| `POST /friend-requests/{requestId}/accept` | | `200` con l'amico (solo chi ha ricevuto la richiesta) |
+| `DELETE /friend-requests/{requestId}` | | `204`: rifiuta se l'avete ricevuta, annulla se l'avete mandata |
 | `DELETE /friends/{userId}` | | `204`; annulla anche scambi e sfide in attesa tra voi due |
+
+- Lo username si cerca senza distinguere maiuscole e minuscole.
+- Errori di `POST /friend-requests`, con l'errore anche sul campo `username` (`fieldErrors`): `USER_NOT_FOUND` (404), `CANNOT_FRIEND_YOURSELF` (400), `ALREADY_FRIENDS` (409), `FRIEND_REQUEST_ALREADY_SENT` (409).
+- Una richiesta che non esiste o non vi riguarda: `404 FRIEND_REQUEST_NOT_FOUND`. Togliere chi non è un amico: `404 FRIEND_NOT_FOUND`.
+- Se un giocatore cancella l'account, sparisce dalla lista amici e dalle richieste, e gli scambi in attesa con lui si annullano.
 
 #### Scambi
 
@@ -1358,6 +1365,28 @@ Si scambia **solo con gli amici**. Quantità e rarità sono libere (es. 1 Epica 
 | Proponi | `POST /trades` |
 | Accetta / Rifiuta (destinatario) | `POST /trades/{tradeId}/accept`, `POST /trades/{tradeId}/reject` |
 | Annulla (chi propone) | `POST /trades/{tradeId}/cancel` |
+| Avvisi prima di proporre / di accettare | `POST /trades/preview`, `GET /trades/{tradeId}/deck-warnings` |
+| Collezione di un amico | `GET /users/{userId}/cards` (stessi filtri e pagine di `GET /me/cards`) |
+
+Uno scambio, come arriva da tutte le chiamate:
+
+```json
+{
+  "id": "019a2d10-1b2c-7d3e-8f40-a1b2c3d4e5f6",
+  "status": "PENDING",
+  "proposer":  { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida" },
+  "recipient": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" },
+  "message": "Ti va?",
+  "offered":   [ { "card": { "...": "..." }, "quantity": 1 } ],
+  "requested": [ { "card": { "...": "..." }, "quantity": 5 } ],
+  "createdAt": "2026-11-17T18:11:00Z",
+  "resolvedAt": null
+}
+```
+
+- `card` è una [Carta](#carta) completa. `message` è `null` se non c'è; `resolvedAt` è `null` finché lo scambio è in attesa.
+- `GET /trades?box=` è una lista a pagine (`page`, `size`, di base 20), dal più recente: `received` = in attesa di una vostra risposta, `sent` = proposti da voi e in attesa, `history` = chiusi, da tutti e due i lati.
+- `POST /trades` risponde `201` con lo scambio; `accept`, `reject` e `cancel` rispondono `200` con lo scambio aggiornato.
 
 Proposta di scambio:
 
@@ -1373,18 +1402,43 @@ Proposta di scambio:
 - `offered` = carte che do io; `requested` = carte che chiedo all'amico. Almeno una carta per lato. La full art si offre o si chiede con il suo `cardId`, come ogni altra carta.
 - Nella pagina "Nuovo scambio" il destinatario si sceglie **dalla lista amici** e le carte dalla propria collezione e da quella dell'amico (`GET /users/{userId}/cards`, visibile solo agli amici).
 - Stati di uno scambio: `PENDING` (in attesa), `ACCEPTED`, `REJECTED`, `CANCELLED`.
-- **Copie bloccate:** le copie che offri in uno scambio in attesa non le puoi offrire in un altro scambio finché il primo non si chiude (accettato, rifiutato o annullato). Restano usabili nei mazzi. Nella collezione per gli scambi conviene mostrare le copie disponibili (`availableForTrade`, come `quantity` ma senza quelle già offerte). Se offri più copie di quelle disponibili arriva un `409` con `code: "CARDS_LOCKED_IN_TRADE"`.
-- **Avviso sui mazzi:** prima di proporre o accettare, `POST /trades/preview` (stesso corpo della proposta) oppure `GET /trades/{tradeId}/deck-warnings` dicono quali mazzi cambiano:
+- **Copie bloccate:** le copie che offri in uno scambio in attesa non le puoi offrire in un altro scambio finché il primo non si chiude (accettato, rifiutato o annullato). Restano usabili nei mazzi. Nella collezione per gli scambi si mostrano le copie disponibili: `availableForTrade` in ogni voce di `GET /me/cards`, come `quantity` ma senza quelle già offerte. Le copie che chiedi all'amico non si bloccano.
+- **Collezione dell'amico:** `GET /users/{userId}/cards` funziona solo con gli amici (`403 NOT_FRIENDS` con gli altri). Anche lì `availableForTrade` dice quante copie l'amico può darvi: si chiedono al massimo quelle.
+- **Errori della proposta:**
+
+  | `code` | Stato | Quando |
+  |--------|-------|--------|
+  | `VALIDATION_ERROR` | 400 | Nessuna carta da un lato, quantità sotto 1, messaggio oltre 255 caratteri |
+  | `INVALID_TRADE` | 400 | Scambio con se stessi, o la stessa carta sia offerta sia richiesta |
+  | `USER_NOT_FOUND` | 404 | L'amico non esiste o ha cancellato l'account |
+  | `NOT_FRIENDS` | 403 | Non siete amici |
+  | `CARD_NOT_FOUND` | 404 | Una carta non esiste |
+  | `CARDS_NOT_OWNED` | 409 | Offri più copie di quelle che hai |
+  | `CARDS_LOCKED_IN_TRADE` | 409 | Le copie le hai, ma alcune sono già offerte in altri scambi in attesa |
+  | `REQUESTED_CARDS_NOT_AVAILABLE` | 409 | L'amico non ha abbastanza copie disponibili di una carta che chiedi |
+
+  Il `message` dice quale carta e quante copie, es. "Possiedi 2 copie di Il Faro nella Nebbia: ne offri 3.": si può mostrare così com'è. La stessa carta ripetuta nella richiesta si somma.
+- **Avvisi prima di proporre o accettare:** `POST /trades/preview` (stesso corpo e stessi errori della proposta, ma non salva niente) per chi propone; `GET /trades/{tradeId}/deck-warnings` per chi guarda uno scambio in attesa (per chi lo riceve: le carte che darebbe accettando).
 
   ```json
   { "deckWarnings": [
       { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f6", "deckName": "Incubi veloci", "isRanked": true, "cardName": "Il Faro nella Nebbia", "outcome": "INVALID" },
       { "deckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f7", "deckName": "Lord e amici", "isRanked": false, "cardName": "L'Uomo Senza Volto", "outcome": "NORMAL_VERSION" }
+    ],
+    "lastCopyWarnings": [
+      { "cardId": "019a1f30-0000-7000-8000-000000000003", "cardName": "Il Faro nella Nebbia" }
   ] }
   ```
 
-  `INVALID`: si mostra "Il mazzo Incubi veloci diventerà non valido (è il tuo mazzo classificato)". `NORMAL_VERSION`: cedi una full art che usi nel mazzo, ma hai una copia della versione normale, quindi si mostra "Il mazzo Lord e amici userà la versione normale di L'Uomo Senza Volto". Se la versione normale non ce l'hai, l'avviso è `INVALID`. In tutti i casi si chiede conferma; lo scambio si può fare lo stesso e un mazzo non valido va poi sistemato nell'editor.
-- Se all'accettazione qualcuno non ha più le carte, arriva un `409` e nessuna carta si muove.
+  `INVALID`: si mostra "Il mazzo Incubi veloci diventerà non valido (è il tuo mazzo classificato)". Un mazzo già non valido non si segnala. `NORMAL_VERSION`: cedi una full art che usi nel mazzo, ma hai una copia libera della versione normale, quindi si mostra "Il mazzo Lord e amici userà la versione normale di L'Uomo Senza Volto". Se la versione normale non ce l'hai, l'avviso è `INVALID`.
+
+  `lastCopyWarnings`: carte che escono ed erano le ultime copie che avete; dopo lo scambio non ne resta nessuna (la full art si conta da sola, e il nome finisce con "(full art)"). Si mostra "Dopo lo scambio non avrai più Il Faro nella Nebbia".
+
+  Con almeno un avviso si chiede conferma; lo scambio si può fare lo stesso. Liste vuote = niente da dire. Un mazzo non valido va poi sistemato nell'editor.
+- **Accettazione:** solo chi riceve. Le carte si spostano subito, e i mazzi passano alla versione normale come annunciato da `NORMAL_VERSION`.
+  - Se non avete più abbastanza copie disponibili delle carte richieste (es. le avete offerte in un altro scambio), arriva `409 REQUESTED_CARDS_NOT_AVAILABLE`, nessuna carta si muove e **lo scambio resta in attesa**: si può rifiutare, oppure annullare l'altro scambio e riprovare.
+  - Se non siete più amici, lo scambio si annulla da solo: `409 TRADE_CANCELLED`.
+- Uno scambio già chiuso: `409 TRADE_NOT_PENDING`. Uno scambio che non esiste o non vi riguarda: `404 TRADE_NOT_FOUND`. Rifiutare il proprio scambio o annullare quello di un altro: `403 FORBIDDEN`.
 
 #### Partite: classificata, rapida e sfide tra amici
 
@@ -1665,39 +1719,39 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /packs` | utente | Pacchetti in vendita nel negozio |
 | `POST /packs/{packId}/open` | utente | Compra e apre un pacchetto |
 | `GET /pack-openings/{openingId}` | utente | Rilegge un'apertura |
-| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte (missioni e contatori arrivano con #125 e #93) |
+| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte, richieste di amicizia e scambi in attesa (missioni e sfide arrivano con #125 e #94) |
 | `GET /cards` | pubblico | Catalogo, con filtri e pagine (anche `?featured=true` per la Home) |
 | `GET /cards/{cardId}` | pubblico | Una carta |
 | `GET /factions` | pubblico | Le tre fazioni con il loro Lord |
 | `GET /rules` | pubblico | I numeri del regolamento |
 | `GET /images/...` | pubblico | Illustrazioni e immagini dei pacchetti, con la cache |
-| `GET /me/cards` | utente | La mia collezione, con filtri |
+| `GET /me/cards` | utente | La mia collezione, con filtri e copie disponibili per gli scambi |
 | `GET /decks` | utente | I miei mazzi |
 | `GET /decks/{deckId}` | utente | Un mazzo |
 | `POST /decks` | utente | Nuovo mazzo |
 | `PUT /decks/{deckId}` | utente | Modifica di un mazzo |
 | `DELETE /decks/{deckId}` | utente | Elimina un mazzo |
+| `GET /friends` | utente | I miei amici |
+| `DELETE /friends/{userId}` | utente | Togli un amico |
+| `GET /users?search=` | utente | Cerca un Dreamweaver per username |
+| `GET /users/{userId}/cards` | utente | Collezione di un amico (per gli scambi) |
+| `GET /friend-requests?direction=` | utente | Richieste di amicizia ricevute o inviate |
+| `POST /friend-requests` | utente | Manda una richiesta |
+| `POST /friend-requests/{requestId}/accept` | utente | Accetta una richiesta di amicizia |
+| `DELETE /friend-requests/{requestId}` | utente | Rifiuta o annulla una richiesta di amicizia |
+| `GET /trades?box=` | utente | Scambi ricevuti, inviati, storico |
+| `GET /trades/{tradeId}` | utente | Uno scambio |
+| `POST /trades` | utente | Proponi uno scambio |
+| `POST /trades/preview` | utente | Avvisi (mazzi e ultima copia) prima di proporre |
+| `GET /trades/{tradeId}/deck-warnings` | utente | Avvisi (mazzi e ultima copia) prima di accettare |
+| `POST /trades/{tradeId}/accept` | utente | Accetta uno scambio e sposta le carte |
+| `POST /trades/{tradeId}/reject` | utente | Rifiuta uno scambio |
+| `POST /trades/{tradeId}/cancel` | utente | Annulla (chi propone) |
 
 ### Da fare
 
 | Metodo e indirizzo | Accesso | A cosa serve | Issue | Chi | Sprint |
 |--------------------|---------|--------------|-------|-----|--------|
-| `GET /friends` | utente | I miei amici | #93 | Marco | 5 |
-| `DELETE /friends/{userId}` | utente | Togli un amico | #93 | Marco | 5 |
-| `GET /users?search=` | utente | Cerca un Dreamweaver per username | #93 | Marco | 5 |
-| `GET /users/{userId}/cards` | utente | Collezione di un amico (per gli scambi) | #93 | Marco | 5 |
-| `GET /friend-requests?direction=` | utente | Richieste di amicizia ricevute o inviate | #93 | Marco | 5 |
-| `POST /friend-requests` | utente | Manda una richiesta | #93 | Marco | 5 |
-| `POST /friend-requests/{requestId}/accept` | utente | Accetta | #93 | Marco | 5 |
-| `DELETE /friend-requests/{requestId}` | utente | Rifiuta o annulla | #93 | Marco | 5 |
-| `GET /trades?box=` | utente | Scambi ricevuti, inviati, storico | #93 | Marco | 5 |
-| `GET /trades/{tradeId}` | utente | Uno scambio | #93 | Marco | 5 |
-| `POST /trades` | utente | Proponi uno scambio | #93 | Marco | 5 |
-| `POST /trades/preview` | utente | Mazzi che cambierebbero con la proposta | #93 | Marco | 5 |
-| `GET /trades/{tradeId}/deck-warnings` | utente | Mazzi che cambierebbero accettando | #93 | Marco | 5 |
-| `POST /trades/{tradeId}/accept` | utente | Accetta | #93 | Marco | 5 |
-| `POST /trades/{tradeId}/reject` | utente | Rifiuta | #93 | Marco | 5 |
-| `POST /trades/{tradeId}/cancel` | utente | Annulla (chi propone) | #93 | Marco | 5 |
 | `PUT /me/ranked-deck` | utente | Scegli il mazzo classificato | #127 | Cristian | 6 |
 | `POST /matches/ranked` | utente | Gioca una classificata | #127 | Cristian | 6 |
 | `POST /matches/casual` | utente | Gioca una rapida | #127 | Cristian | 6 |
@@ -1752,10 +1806,24 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `GOOGLE_EMAIL_NOT_VERIFIED` | 403 | Email dell'account Google non verificata |
 | `GOOGLE_ACCOUNT_CONFLICT` | 409 | Account già collegato a un altro account Google |
 | `GOOGLE_LOGIN_DISABLED` | 503 | Accesso con Google non attivo: si nasconde il pulsante |
+| `USER_NOT_FOUND` | 404 | Giocatore che non esiste o ha cancellato l'account |
+| `CANNOT_FRIEND_YOURSELF` | 400 | Richiesta di amicizia a se stessi |
+| `ALREADY_FRIENDS` | 409 | Siete già amici |
+| `FRIEND_REQUEST_ALREADY_SENT` | 409 | Richiesta già mandata e in attesa |
+| `FRIEND_REQUEST_NOT_FOUND` | 404 | Richiesta che non esiste o non vi riguarda |
+| `FRIEND_NOT_FOUND` | 404 | Togliere chi non è un amico |
+| `NOT_FRIENDS` | 403 | Scambio o collezione di chi non è un amico |
+| `TRADE_NOT_FOUND` | 404 | Scambio che non esiste o non vi riguarda |
+| `TRADE_NOT_PENDING` | 409 | Scambio già accettato, rifiutato o annullato |
+| `INVALID_TRADE` | 400 | Scambio con se stessi, o stessa carta offerta e richiesta |
+| `CARDS_NOT_OWNED` | 409 | Offri più copie di quelle che hai |
+| `CARDS_LOCKED_IN_TRADE` | 409 | Copie già offerte in altri scambi in attesa |
+| `REQUESTED_CARDS_NOT_AVAILABLE` | 409 | Le copie richieste non sono disponibili: alla proposta, o all'accettazione (lo scambio resta in attesa) |
+| `TRADE_CANCELLED` | 409 | All'accettazione non siete più amici: lo scambio si è annullato |
 
 **Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.
 
-**Da fare** (arriveranno con le loro issue): `CARDS_LOCKED_IN_TRADE`, `NO_OPPONENT_FOUND`, `ENGINE_UNAVAILABLE` e quelli di amici, scambi e sfide.
+**Da fare** (arriveranno con le loro issue): `NO_OPPONENT_FOUND`, `ENGINE_UNAVAILABLE` e quelli delle sfide.
 
 ---
 

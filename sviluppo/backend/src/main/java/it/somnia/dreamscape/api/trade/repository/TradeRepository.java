@@ -41,7 +41,9 @@ public interface TradeRepository extends JpaRepository<Trade, UUID> {
     @Query("SELECT t FROM Trade t WHERE t.id = :tradeId")
     Optional<Trade> findByIdForUpdate(UUID tradeId);
 
-    // Gli scambi in attesa tra due giocatori, in tutte e due le direzioni (amicizia tolta)
+    // Gli scambi in attesa tra due giocatori, in tutte e due le direzioni (amicizia tolta). Bloccati: se
+    // un'accettazione è in corso si aspetta che finisca, e uno scambio appena accettato non torna CANCELLED
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT t FROM Trade t
             WHERE t.status = it.somnia.dreamscape.api.trade.model.TradeStatus.PENDING
@@ -50,7 +52,8 @@ public interface TradeRepository extends JpaRepository<Trade, UUID> {
             """)
     List<Trade> findPendingBetween(UUID firstUserId, UUID secondUserId);
 
-    // Gli scambi in attesa di un giocatore, da entrambi i lati (account cancellato)
+    // Gli scambi in attesa di un giocatore, da entrambi i lati (account cancellato). Bloccati come sopra
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT t FROM Trade t
             WHERE t.status = it.somnia.dreamscape.api.trade.model.TradeStatus.PENDING

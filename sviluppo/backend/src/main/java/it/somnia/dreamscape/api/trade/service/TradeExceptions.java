@@ -26,6 +26,13 @@ public final class TradeExceptions {
         }
     }
 
+    // All'accettazione i due non sono più amici: lo scambio è stato annullato (decisione 026)
+    public static class TradeCancelledException extends ApiException {
+        public TradeCancelledException() {
+            super(HttpStatus.CONFLICT, "TRADE_CANCELLED", "Non siete più amici: lo scambio è stato annullato.");
+        }
+    }
+
     // Rifiuta solo chi riceve, annulla solo chi propone
     public static class TradeActionNotAllowedException extends ApiException {
         public TradeActionNotAllowedException() {

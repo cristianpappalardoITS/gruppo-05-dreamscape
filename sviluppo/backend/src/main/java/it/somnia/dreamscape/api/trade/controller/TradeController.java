@@ -18,6 +18,7 @@ import it.somnia.dreamscape.api.common.dto.response.PageResponse;
 import it.somnia.dreamscape.api.common.security.CurrentUser;
 import it.somnia.dreamscape.api.trade.dto.request.TradeRequest;
 import it.somnia.dreamscape.api.trade.dto.response.TradeResponse;
+import it.somnia.dreamscape.api.trade.dto.response.TradeWarningsResponse;
 import it.somnia.dreamscape.api.trade.service.TradeService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -51,6 +52,24 @@ public class TradeController {
     public ResponseEntity<TradeResponse> proposeTrade(@AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody TradeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tradeService.proposeTrade(CurrentUser.id(jwt), request));
+    }
+
+    // Avvisi prima di proporre: stesso corpo di POST /trades, non salva niente
+    @PostMapping("/preview")
+    public TradeWarningsResponse previewTrade(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody TradeRequest request) {
+        return tradeService.previewTrade(CurrentUser.id(jwt), request);
+    }
+
+    // Avvisi di uno scambio in attesa, per chi lo guarda (di solito chi sta per accettare)
+    @GetMapping("/{tradeId}/deck-warnings")
+    public TradeWarningsResponse getTradeWarnings(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID tradeId) {
+        return tradeService.getTradeWarnings(CurrentUser.id(jwt), tradeId);
+    }
+
+    // Solo chi riceve lo scambio: sposta le carte
+    @PostMapping("/{tradeId}/accept")
+    public TradeResponse acceptTrade(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID tradeId) {
+        return tradeService.acceptTrade(CurrentUser.id(jwt), tradeId);
     }
 
     // Solo chi riceve lo scambio

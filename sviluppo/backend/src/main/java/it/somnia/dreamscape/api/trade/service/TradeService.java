@@ -27,7 +27,9 @@ import it.somnia.dreamscape.api.card.service.CardExceptions.CardNotFoundExceptio
 import it.somnia.dreamscape.api.card.service.CardMapper;
 import it.somnia.dreamscape.api.common.dto.response.PageResponse;
 import it.somnia.dreamscape.api.deck.dto.response.CollectionCardResponse;
+import it.somnia.dreamscape.api.deck.model.DeckCards;
 import it.somnia.dreamscape.api.deck.model.UserCards;
+import it.somnia.dreamscape.api.deck.repository.DeckCardsRepository;
 import it.somnia.dreamscape.api.deck.repository.UserCardsRepository;
 import it.somnia.dreamscape.api.deck.service.CollectionService;
 import it.somnia.dreamscape.api.friend.service.FriendExceptions.NotFriendsException;
@@ -38,6 +40,7 @@ import it.somnia.dreamscape.api.trade.dto.request.TradeCardRequest;
 import it.somnia.dreamscape.api.trade.dto.request.TradeRequest;
 import it.somnia.dreamscape.api.trade.dto.response.TradeCardResponse;
 import it.somnia.dreamscape.api.trade.dto.response.TradeResponse;
+import it.somnia.dreamscape.api.trade.dto.response.TradeWarningsResponse;
 import it.somnia.dreamscape.api.trade.model.Trade;
 import it.somnia.dreamscape.api.trade.model.TradeItem;
 import it.somnia.dreamscape.api.trade.model.TradeSide;
@@ -49,6 +52,7 @@ import it.somnia.dreamscape.api.trade.service.TradeExceptions.CardsNotOwnedExcep
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.InvalidTradeException;
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.RequestedCardsNotAvailableException;
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.TradeActionNotAllowedException;
+import it.somnia.dreamscape.api.trade.service.TradeExceptions.TradeCancelledException;
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.TradeNotFoundException;
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.TradeNotPendingException;
 import it.somnia.dreamscape.api.user.dto.response.UserSummaryResponse;
@@ -84,6 +88,8 @@ public class TradeService {
     private final FriendService friendService;
     private final CollectionService collectionService;
     private final LockedCopies lockedCopies;
+    private final TradeImpact tradeImpact;
+    private final DeckCardsRepository deckCardsRepository;
     private final CardMapper cardMapper;
     private final Clock clock;
 
@@ -103,32 +109,118 @@ public class TradeService {
      */
     @Transactional
     public TradeResponse proposeTrade(UUID userId, TradeRequest request) {
-        User proposer = userService.getActiveUser(userId);
-        if (request.recipientId().equals(userId)) {
-            throw new InvalidTradeException("Non puoi proporre uno scambio a te stesso.");
-        }
-        User recipient = activePlayer(request.recipientId());
-        if (!friendService.areFriends(userId, recipient.getId())) {
-            throw new NotFriendsException();
-        }
-        Map<UUID, Integer> offered = sumByCard(request.offered());
-        Map<UUID, Integer> requested = sumByCard(request.requested());
-        if (offered.keySet().stream().anyMatch(requested::containsKey)) {
-            throw new InvalidTradeException("La stessa carta non può essere sia offerta sia richiesta.");
-        }
-        Map<UUID, Card> cards = loadCards(offered.keySet(), requested.keySet());
-
-        checkOffered(userId, offered, cards);
-        checkRequested(recipient, requested, cards);
-
+        Proposal proposal = prepare(userId, request, true);
         String message = request.message() == null || request.message().isBlank() ? null : request.message().strip();
-        Trade trade = new Trade(proposer, recipient, message);
-        sortedByCode(offered, cards).forEach(cardId -> trade.addItem(cards.get(cardId), TradeSide.OFFERED,
-                offered.get(cardId)));
-        sortedByCode(requested, cards).forEach(cardId -> trade.addItem(cards.get(cardId), TradeSide.REQUESTED,
-                requested.get(cardId)));
+        Trade trade = new Trade(proposal.proposer(), proposal.recipient(), message);
+        Map<UUID, Card> cards = proposal.cards();
+        sortedByCode(proposal.offered(), cards).forEach(cardId -> trade.addItem(cards.get(cardId), TradeSide.OFFERED,
+                proposal.offered().get(cardId)));
+        sortedByCode(proposal.requested(), cards).forEach(cardId -> trade.addItem(cards.get(cardId),
+                TradeSide.REQUESTED, proposal.requested().get(cardId)));
         // saveAndFlush: la data della proposta la scrive Hibernate all'inserimento e serve nella risposta
         return toResponse(tradeRepository.saveAndFlush(trade));
+    }
+
+    /**
+     * Gli avvisi prima di proporre ({@code POST /trades/preview}): mazzi di chi propone che cambiano e carte offerte
+     * che sono l'ultima copia. Fa gli stessi controlli della proposta, ma non salva niente.
+     *
+     * @param userId  chi propone, l'utente collegato
+     * @param request la proposta, come per {@code POST /trades}
+     * @return gli avvisi; liste vuote se non c'è niente da dire
+     * @throws InvalidTradeException e gli altri errori della proposta, alle stesse condizioni
+     */
+    @Transactional(readOnly = true)
+    public TradeWarningsResponse previewTrade(UUID userId, TradeRequest request) {
+        Proposal proposal = prepare(userId, request, false);
+        TradeImpact.Impact impact = tradeImpact.of(proposal.proposer(), proposal.offered(), proposal.requested(),
+                proposal.cards());
+        return new TradeWarningsResponse(impact.deckWarnings(), impact.lastCopyWarnings());
+    }
+
+    /**
+     * Gli avvisi di uno scambio in attesa per chi lo guarda ({@code GET /trades/{tradeId}/deck-warnings}): per chi
+     * riceve sono le carte che darebbe accettando, per chi propone quelle che ha offerto.
+     *
+     * @throws TradeNotFoundException   se lo scambio non esiste o non riguarda l'utente
+     * @throws TradeNotPendingException se lo scambio è già chiuso
+     */
+    @Transactional(readOnly = true)
+    public TradeWarningsResponse getTradeWarnings(UUID userId, UUID tradeId) {
+        User user = userService.getActiveUser(userId);
+        Trade trade = tradeRepository.findById(tradeId)
+                .filter(found -> found.involves(userId))
+                .orElseThrow(TradeNotFoundException::new);
+        if (!trade.isPending()) {
+            throw new TradeNotPendingException();
+        }
+        boolean isRecipient = trade.getRecipient().getId().equals(userId);
+        TradeImpact.Impact impact = tradeImpact.of(user,
+                quantities(trade, isRecipient ? TradeSide.REQUESTED : TradeSide.OFFERED),
+                quantities(trade, isRecipient ? TradeSide.OFFERED : TradeSide.REQUESTED), cardsOf(trade));
+        return new TradeWarningsResponse(impact.deckWarnings(), impact.lastCopyWarnings());
+    }
+
+    /**
+     * Accetta uno scambio ricevuto e sposta le carte, tutto nella stessa transazione (schema.md, sezione Scambi).
+     *
+     * <ol>
+     *   <li>blocca lo scambio; se i due non sono più amici lo annulla ({@code 409 TRADE_CANCELLED});</li>
+     *   <li>blocca le righe della collezione di tutti e due, sempre nello stesso ordine;</li>
+     *   <li>ricontrolla le copie: se mancano risponde {@code 409} e lo scambio <b>resta in attesa</b>;</li>
+     *   <li>sposta le carte e passa alla versione normale i mazzi che usavano una full art ceduta, se ce n'è
+     *       una copia libera;</li>
+     *   <li>chiude lo scambio come {@code ACCEPTED}.</li>
+     * </ol>
+     *
+     * @throws TradeNotFoundException              se lo scambio non esiste o non riguarda l'utente
+     * @throws TradeActionNotAllowedException      se l'utente è chi propone
+     * @throws TradeNotPendingException            se lo scambio è già chiuso
+     * @throws TradeCancelledException             se i due non sono più amici: lo scambio è stato annullato
+     * @throws RequestedCardsNotAvailableException se l'utente non ha più abbastanza copie disponibili
+     * @throws CardsNotOwnedException              se chi propone non ha più le copie offerte
+     */
+    @Transactional(noRollbackFor = TradeCancelledException.class)
+    public TradeResponse acceptTrade(UUID userId, UUID tradeId) {
+        userService.getActiveUser(userId);
+        Trade trade = pendingTradeForUpdate(userId, tradeId, TradeSide.REQUESTED);
+        User proposer = trade.getProposer();
+        User recipient = trade.getRecipient();
+        Instant now = Instant.now(clock);
+        if (!friendService.areFriends(proposer.getId(), recipient.getId())) {
+            trade.resolve(TradeStatus.CANCELLED, now);
+            throw new TradeCancelledException();
+        }
+        Map<UUID, Integer> offered = quantities(trade, TradeSide.OFFERED);
+        Map<UUID, Integer> requested = quantities(trade, TradeSide.REQUESTED);
+        Map<UUID, Card> cards = cardsOf(trade);
+
+        // Righe di tutti e due per tutte le carte dello scambio: chi dà e chi riceve. Prima l'utente con l'id
+        // più basso, così due accettazioni tra gli stessi giocatori non si aspettano a vicenda
+        Set<UUID> allCards = new HashSet<>(cards.keySet());
+        Map<UUID, UserCards> proposerRows;
+        Map<UUID, UserCards> recipientRows;
+        if (proposer.getId().compareTo(recipient.getId()) < 0) {
+            proposerRows = lockRows(proposer.getId(), allCards);
+            recipientRows = lockRows(recipient.getId(), allCards);
+        } else {
+            recipientRows = lockRows(recipient.getId(), allCards);
+            proposerRows = lockRows(proposer.getId(), allCards);
+        }
+
+        checkStillAvailable(trade, proposer, offered, proposerRows, recipient, requested, recipientRows, cards);
+
+        // Gli effetti sui mazzi si calcolano prima di spostare le carte, con lo stesso calcolo degli avvisi
+        TradeImpact.Impact proposerImpact = tradeImpact.of(proposer, offered, requested, cards);
+        TradeImpact.Impact recipientImpact = tradeImpact.of(recipient, requested, offered, cards);
+
+        offered.forEach((cardId, copies) -> move(cards.get(cardId), copies, proposerRows, recipient, recipientRows));
+        requested.forEach((cardId, copies) -> move(cards.get(cardId), copies, recipientRows, proposer, proposerRows));
+        applySwaps(proposerImpact.swaps());
+        applySwaps(recipientImpact.swaps());
+
+        trade.resolve(TradeStatus.ACCEPTED, now);
+        return toResponse(trade);
     }
 
     /**
@@ -252,11 +344,39 @@ public class TradeService {
 
     // ------------------------------------------------------------------ controlli della proposta
 
+    // Una proposta controllata: le copie con le carte sommate e le carte caricate
+    private record Proposal(User proposer, User recipient, Map<UUID, Integer> offered, Map<UUID, Integer> requested,
+            Map<UUID, Card> cards) {
+    }
+
+    // I controlli comuni a proposta e anteprima. lock = true blocca le righe di chi propone (solo la proposta)
+    private Proposal prepare(UUID userId, TradeRequest request, boolean lock) {
+        User proposer = userService.getActiveUser(userId);
+        if (request.recipientId().equals(userId)) {
+            throw new InvalidTradeException("Non puoi proporre uno scambio a te stesso.");
+        }
+        User recipient = activePlayer(request.recipientId());
+        if (!friendService.areFriends(userId, recipient.getId())) {
+            throw new NotFriendsException();
+        }
+        Map<UUID, Integer> offered = sumByCard(request.offered());
+        Map<UUID, Integer> requested = sumByCard(request.requested());
+        if (offered.keySet().stream().anyMatch(requested::containsKey)) {
+            throw new InvalidTradeException("La stessa carta non può essere sia offerta sia richiesta.");
+        }
+        Map<UUID, Card> cards = loadCards(offered.keySet(), requested.keySet());
+        checkOffered(userId, offered, cards, lock);
+        checkRequested(recipient, requested, cards);
+        return new Proposal(proposer, recipient, offered, requested, cards);
+    }
+
     // Le copie offerte: le righe della collezione si bloccano prima di contare quelle già offerte, così una
     // seconda proposta nello stesso momento aspetta qui e poi vede lo scambio della prima
-    private void checkOffered(UUID userId, Map<UUID, Integer> offered, Map<UUID, Card> cards) {
-        Map<UUID, Integer> owned = userCardsRepository.findForUpdate(userId, offered.keySet()).stream()
-                .collect(Collectors.toMap(userCard -> userCard.getCard().getId(), UserCards::getQuantity));
+    private void checkOffered(UUID userId, Map<UUID, Integer> offered, Map<UUID, Card> cards, boolean lock) {
+        Map<UUID, Integer> owned = lock
+                ? userCardsRepository.findForUpdate(userId, offered.keySet()).stream()
+                        .collect(Collectors.toMap(userCard -> userCard.getCard().getId(), UserCards::getQuantity))
+                : collectionService.ownedQuantities(userId);
         Map<UUID, Integer> locked = lockedCopies.of(userId);
         for (UUID cardId : sortedByCode(offered, cards)) {
             int wanted = offered.get(cardId);
@@ -293,6 +413,92 @@ public class TradeService {
                                 + ": ne chiedi " + wanted + ".");
             }
         }
+    }
+
+    // ------------------------------------------------------------------ accettazione
+
+    // Ricontrollo all'accettazione, con le righe già bloccate. Chi propone: le sue copie offerte sono bloccate
+    // per gli altri scambi, quindi conta tutto tranne quelle offerte negli altri scambi. Chi riceve: contano
+    // solo le copie disponibili, non quelle che ha offerto in altri scambi in attesa
+    private void checkStillAvailable(Trade trade, User proposer, Map<UUID, Integer> offered,
+            Map<UUID, UserCards> proposerRows, User recipient, Map<UUID, Integer> requested,
+            Map<UUID, UserCards> recipientRows, Map<UUID, Card> cards) {
+        Map<UUID, Integer> proposerLocked = lockedCopies.of(proposer.getId());
+        for (UUID cardId : sortedByCode(offered, cards)) {
+            int lockedByOthers = proposerLocked.getOrDefault(cardId, 0) - offered.get(cardId);
+            int available = quantityOf(proposerRows, cardId) - lockedByOthers;
+            if (available < offered.get(cardId)) {
+                throw new CardsNotOwnedException(proposer.getUsername() + " non ha più " + copies(offered.get(cardId))
+                        + " di " + label(cards.get(cardId)) + ".");
+            }
+        }
+        Map<UUID, Integer> recipientLocked = lockedCopies.of(recipient.getId());
+        for (UUID cardId : sortedByCode(requested, cards)) {
+            int wanted = requested.get(cardId);
+            int available = quantityOf(recipientRows, cardId) - recipientLocked.getOrDefault(cardId, 0);
+            if (available < wanted) {
+                String label = label(cards.get(cardId));
+                throw new RequestedCardsNotAvailableException(available <= 0
+                        ? "Non hai copie disponibili di " + label + "."
+                        : "Hai " + copies(available) + (available == 1 ? " disponibile" : " disponibili") + " di "
+                                + label + ": lo scambio ne chiede " + wanted + ".");
+            }
+        }
+    }
+
+    private Map<UUID, UserCards> lockRows(UUID userId, Set<UUID> cardIds) {
+        return userCardsRepository.findForUpdate(userId, cardIds).stream()
+                .collect(Collectors.toMap(row -> row.getCard().getId(), Function.identity(), (a, b) -> a,
+                        LinkedHashMap::new));
+    }
+
+    // Sposta le copie: chi dà scala (e la riga sparisce a 0), chi riceve aumenta o ha una riga nuova
+    private void move(Card card, int copies, Map<UUID, UserCards> fromRows, User to, Map<UUID, UserCards> toRows) {
+        UserCards from = fromRows.get(card.getId());
+        from.setQuantity(from.getQuantity() - copies);
+        if (from.getQuantity() == 0) {
+            userCardsRepository.delete(from);
+            fromRows.remove(card.getId());
+        }
+        UserCards target = toRows.get(card.getId());
+        if (target != null) {
+            target.setQuantity(target.getQuantity() + copies);
+        } else {
+            toRows.put(card.getId(), userCardsRepository.save(new UserCards(to, card, copies)));
+        }
+    }
+
+    // La full art ceduta lascia il posto alla carta normale nel mazzo (schema.md, "Full art che esce da un mazzo")
+    private void applySwaps(List<TradeImpact.FullArtSwap> swaps) {
+        for (TradeImpact.FullArtSwap swap : swaps) {
+            DeckCards fullArt = swap.fullArtEntry();
+            fullArt.setQuantity(fullArt.getQuantity() - swap.copies());
+            if (fullArt.getQuantity() == 0) {
+                deckCardsRepository.delete(fullArt);
+            }
+            deckCardsRepository.findAllByDeck_Id(swap.deck().getId()).stream()
+                    .filter(entry -> entry.getCard().getId().equals(swap.normalCard().getId()))
+                    .findFirst()
+                    .ifPresentOrElse(entry -> entry.setQuantity(entry.getQuantity() + swap.copies()),
+                            () -> deckCardsRepository.save(new DeckCards(swap.deck(), swap.normalCard(), swap.copies())));
+        }
+    }
+
+    private static int quantityOf(Map<UUID, UserCards> rows, UUID cardId) {
+        UserCards row = rows.get(cardId);
+        return row != null ? row.getQuantity() : 0;
+    }
+
+    private static Map<UUID, Integer> quantities(Trade trade, TradeSide side) {
+        Map<UUID, Integer> quantities = new LinkedHashMap<>();
+        trade.itemsOf(side).forEach(item -> quantities.put(item.getCard().getId(), item.getQuantity()));
+        return quantities;
+    }
+
+    private static Map<UUID, Card> cardsOf(Trade trade) {
+        Map<UUID, Card> cards = new LinkedHashMap<>();
+        trade.getItems().forEach(item -> cards.put(item.getCard().getId(), item.getCard()));
+        return cards;
     }
 
     private Trade pendingTradeForUpdate(UUID userId, UUID tradeId, TradeSide userSide) {

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -21,13 +22,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import it.somnia.dreamscape.api.TestcontainersConfiguration;
+import it.somnia.dreamscape.api.common.exception.ApiException;
 import it.somnia.dreamscape.api.trade.dto.request.TradeCardRequest;
 import it.somnia.dreamscape.api.trade.dto.request.TradeRequest;
 import it.somnia.dreamscape.api.trade.service.TradeExceptions.CardsLockedInTradeException;
 import it.somnia.dreamscape.api.trade.service.TradeService;
 
-// Due proposte dello stesso giocatore nello stesso momento con la sua unica copia (consegna della #93).
-// Niente @Transactional: ogni proposta deve avere la sua transazione, come due richieste vere.
+// Due operazioni nello stesso momento sulle stesse copie (consegna della #93): due proposte con l'unica copia,
+// oppure un'accettazione e una proposta di chi accetta. Niente @Transactional: ogni proposta deve avere la sua transazione, come due richieste vere.
 // Per questo il test usa utenti suoi e li cancella alla fine
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -95,7 +97,7 @@ class TradeConcurrencyTest {
             try {
                 result.get(30, TimeUnit.SECONDS);
                 created++;
-            } catch (java.util.concurrent.ExecutionException exception) {
+            } catch (ExecutionException exception) {
                 failures.add(exception.getCause());
             }
         }
@@ -107,6 +109,49 @@ class TradeConcurrencyTest {
         assertInstanceOf(CardsLockedInTradeException.class, failures.getFirst());
         assertEquals(1, jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM trades WHERE proposer_id = ? AND status = 'PENDING'", Integer.class, proposerId));
+    }
+
+    @Test
+    void acceptAndProposeAtTheSameTime_withTheSameCopies_onlyOneSucceeds() throws Exception {
+        // Given: lo scambio chiede le 2 copie di chi riceve; lui, intanto, ne offre 1 in uno scambio nuovo
+        UUID otherCardId = jdbcTemplate.queryForObject("SELECT id FROM cards WHERE code = 'TEST-002'", UUID.class);
+        jdbcTemplate.update("INSERT INTO user_cards (user_id, card_id, quantity) VALUES (?, ?, 1)", proposerId,
+                otherCardId);
+        UUID tradeId = tradeService.proposeTrade(proposerId, new TradeRequest(recipientId, null,
+                List.of(new TradeCardRequest(offeredCardId, 1)), List.of(new TradeCardRequest(requestedCardId, 2))))
+                .id();
+        TradeRequest counterProposal = new TradeRequest(proposerId, null,
+                List.of(new TradeCardRequest(requestedCardId, 1)), List.of(new TradeCardRequest(otherCardId, 1)));
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        // When
+        Future<?> accept = executor.submit(() -> {
+            start.await();
+            return tradeService.acceptTrade(recipientId, tradeId);
+        });
+        Future<?> propose = executor.submit(() -> {
+            start.await();
+            return tradeService.proposeTrade(recipientId, counterProposal);
+        });
+        start.countDown();
+        int succeeded = 0;
+        for (Future<?> result : List.of(accept, propose)) {
+            try {
+                result.get(30, TimeUnit.SECONDS);
+                succeeded++;
+            } catch (ExecutionException exception) {
+                // La seconda trova le copie già spostate o già offerte: un 409 previsto, nessun errore inatteso
+                assertInstanceOf(ApiException.class, exception.getCause());
+            }
+        }
+        executor.shutdown();
+
+        // Then: una sola delle due, e nessuna copia persa o duplicata
+        assertEquals(1, succeeded);
+        assertEquals(2, jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(quantity), 0) FROM user_cards WHERE card_id = ? AND user_id IN (?, ?)",
+                Integer.class, requestedCardId, proposerId, recipientId));
     }
 
     private UUID createUser(String username) {

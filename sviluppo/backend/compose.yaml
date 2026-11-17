@@ -14,3 +14,14 @@ services:
     ports:
       - '1025:1025'
       - '8025:8025'
+  # Motore di gioco (decisione 029): il backend lo chiama con la chiave ENGINE_API_KEY.
+  # L'immagine si ricostruisce a ogni avvio da sviluppo/engine, così segue sempre il codice del motore
+  # (se il codice non è cambiato ci mette pochi secondi). Porta aperta solo su questo computer
+  engine:
+    build: '../engine'
+    image: 'dreamscape-engine:dev'
+    pull_policy: 'build'
+    environment:
+      - 'ENGINE_API_KEY=${ENGINE_API_KEY:-chiave-di-sviluppo-del-motore}'
+    ports:
+      - '127.0.0.1:8081:8081'

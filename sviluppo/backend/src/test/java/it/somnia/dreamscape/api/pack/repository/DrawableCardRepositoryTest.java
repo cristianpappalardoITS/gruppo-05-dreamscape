@@ -19,6 +19,8 @@ import it.somnia.dreamscape.api.card.model.CardVariantType;
 import it.somnia.dreamscape.api.card.repository.CardRepository;
 
 // Quali carte possono uscire dai pacchetti, con le carte di prova di V900 (7 Comuni per fazione)
+// e quelle del set base di V102 (15 Comuni per fazione). Dove l'espansione non conta, si pesca
+// solo dal set di prova.
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
 @Transactional
@@ -38,14 +40,14 @@ class DrawableCardRepositoryTest {
         // When
         List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), null, null);
 
-        // Then
-        assertEquals(21, cards.size());
+        // Then: 21 di prova e 45 del set base
+        assertEquals(66, cards.size());
     }
 
     @Test
     void findDrawable_oneFaction_returnsOnlyThatFaction() {
         // When
-        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), factionId("DREAMS"), null);
+        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), factionId("DREAMS"), testSetId());
 
         // Then
         assertEquals(7, cards.size());
@@ -55,7 +57,7 @@ class DrawableCardRepositoryTest {
     @Test
     void findDrawable_legendaries_excludesFullArts() {
         // When
-        List<Card> cards = drawableCardRepository.findDrawable(rarityId("LEGENDARY"), null, null);
+        List<Card> cards = drawableCardRepository.findDrawable(rarityId("LEGENDARY"), null, testSetId());
 
         // Then
         assertEquals(List.of("TEST-013", "TEST-026", "TEST-039"), cards.stream().map(Card::getCode).toList());
@@ -67,7 +69,7 @@ class DrawableCardRepositoryTest {
         jdbcTemplate.update("UPDATE cards SET is_active = FALSE WHERE code = 'TEST-001'");
 
         // When
-        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), factionId("DREAMS"), null);
+        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), factionId("DREAMS"), testSetId());
 
         // Then
         assertEquals(6, cards.size());
@@ -81,18 +83,18 @@ class DrawableCardRepositoryTest {
         // When
         List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), null, null);
 
-        // Then
-        assertEquals(0, cards.size());
+        // Then: restano solo le 45 Comuni del set base
+        assertEquals(45, cards.size());
+        assertTrue(cards.stream().allMatch(card -> card.getCode().startsWith("BASE-")));
     }
 
     @Test
     void findDrawable_packWithItsOwnCardSet_usesThatSetEvenIfInactive() {
         // Given: il pacchetto indica l'espansione, quindi vale quella
         jdbcTemplate.update("UPDATE card_sets SET is_active = FALSE WHERE code = 'TEST'");
-        UUID testSetId = jdbcTemplate.queryForObject("SELECT id FROM card_sets WHERE code = 'TEST'", UUID.class);
 
         // When
-        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), null, testSetId);
+        List<Card> cards = drawableCardRepository.findDrawable(rarityId("COMMON"), null, testSetId());
 
         // Then
         assertEquals(21, cards.size());
@@ -120,6 +122,10 @@ class DrawableCardRepositoryTest {
 
     private UUID rarityId(String code) {
         return jdbcTemplate.queryForObject("SELECT id FROM rarities WHERE code = ?", UUID.class, code);
+    }
+
+    private UUID testSetId() {
+        return jdbcTemplate.queryForObject("SELECT id FROM card_sets WHERE code = 'TEST'", UUID.class);
     }
 
     private UUID factionId(String code) {

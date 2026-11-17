@@ -798,12 +798,13 @@ Con le 12 carte di prova non si forma un mazzo valido (al massimo 18 carte). Per
 |----------|-----------|------------------|
 | `db/migration/` | Tabelle (`V1`–`V11`) e catalogo vero (`V100` e successive) | Sempre: sviluppo, test, produzione |
 | `db/testdata/` | 39 carte finte (per fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art), pacchetti di prova (spenti da `V903`: valgono quelli veri di `V101`) e tre utenti di prova (`V900`–`V903`) | Solo nel profilo `dev` e nei test |
+| `db/devdata/` | Carte finte spente (`V950`): in sviluppo catalogo e pacchetti mostrano solo le carte vere di `V102` | Solo nel profilo `dev` |
 
 - Numerazione da `V900` in su (es. `V900__seed_test_cards.sql`), così non si scontra mai con le migration vere.
 - Codici con il prefisso `TEST-` (es. `TEST-001`) e l'espansione `TEST`: non si confondono con le carte vere. Anche i nomi hanno "(prova)", perché `cards.name` è unico. Per fazione servono almeno 7 Comuni e 3 Rare, come per il set iniziale vero.
 - Le illustrazioni finte possono restare vuote (`illustration_url` NULL): il frontend mostra un segnaposto.
 - Le password degli utenti di prova si scrivono già cifrate con BCrypt, mai in chiaro. Gli utenti e le password di prova sono elencati nel README del backend.
-- Quando arriva il catalogo vero, i dati finti restano solo per i test.
+- Con il catalogo vero (`V102`, #165) le carte finte restano attive solo nei test; in sviluppo le spegne `V950`.
 
 ### Configurazione Spring Boot
 
@@ -850,7 +851,7 @@ I dati stanno nel volume Docker di PostgreSQL e restano a ogni riavvio. Flyway e
 | Numeri | Contenuto | Esempio |
 |--------|-----------|---------|
 | `V1`–`V99` | Struttura: tabelle, colonne, indici | `V9__add_card_type_to_cards.sql` |
-| `V100`–`V199` | Catalogo ufficiale | `V100__seed_rules_data.sql` (rarità, fazioni, vantaggi ed effetti, già scritta), `V101__seed_base_set.sql`, `V102__seed_packs.sql` |
+| `V100`–`V199` | Catalogo ufficiale | `V100__seed_rules_data.sql` (rarità, fazioni, vantaggi ed effetti), `V101__seed_packs.sql` (pacchetti), `V102__seed_base_set.sql` (le 99 carte del set base e le 12 full art) |
 | ... | Ogni espansione nuova prosegue la numerazione | `V103__expansion_1.sql` |
 
 Flyway esegue le migration in ordine di numero. Una migration già eseguita **non si modifica mai**: per correggere una carta si scrive una nuova migration con un `UPDATE`.
@@ -867,7 +868,7 @@ Flyway esegue le migration in ordine di numero. Una migration già eseguita **no
   | Miniatura | `/images/cards/base-004-v1-thumb.webp` | `illustration_thumb_url` |
   | Full art grande e miniatura (carta `BASE-004-FA`) | `/images/cards/base-004-fullart-v1.webp`, `…-v1-thumb.webp` | `illustration_url`, `illustration_thumb_url` della full art |
 
-  Quelle del catalogo ufficiale stanno nel repository; quelle caricate dal backoffice nel volume dei file caricati.
+  Quelle del catalogo ufficiale le crea `carte/compositore/crea_webp.py` e stanno nel backend (`sviluppo/backend/src/main/resources/images/cards/`, dentro il jar); quelle caricate dal backoffice nella cartella `IMAGES_DIR`. Il backend cerca prima in `IMAGES_DIR` e poi nel jar.
 - **Cornici e simboli:** file statici del frontend, uno per fazione e rarità, con la finestra trasparente e le coordinate delle zone (nome, simbolo, testi, ATT, DIF).
 - **Riferimenti tra tabelle nelle migration:** sempre tramite `code` (fazione, rarità, espansione, carta), mai tramite `id` scritti a mano.
 - **Il catalogo ufficiale cambia solo con le migration.** Se si crea dal backoffice una carta che poi viene inserita anche da una migration, Flyway fallisce sul codice duplicato.

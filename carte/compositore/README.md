@@ -74,6 +74,29 @@ Si apre con Excel, Numbers o Fogli Google (separatore punto e virgola, codifica 
 - Nome, simbolo, testi, attacco e difesa stanno su pannelli scuri semitrasparenti, con lo sfondo sfocato dietro per la leggibilità.
 - Bordo sottile nel colore della fazione. Posizioni e trasparenza sono nella tabella `FULL_ART`.
 
+## Copie WebP per il backend
+
+Il sito non usa le carte finite: la carta la monta il frontend, con l'illustrazione servita dal backend su `/images/cards/` (decisione 007). `crea_webp.py` crea, per ogni carta di `carte.csv`, due copie WebP dell'illustrazione e della sua full art: grande (larga 1024 px) e miniatura (400 px). I PNG originali non vengono toccati.
+
+```bash
+python3 crea_webp.py
+```
+
+| Comando | Cosa fa |
+|---------|---------|
+| `python3 crea_webp.py` | Crea le copie che non esistono ancora |
+| `python3 crea_webp.py --solo BASE-004` | Solo quella carta (normale e full art) |
+| `python3 crea_webp.py --versione 2 --solo BASE-004` | Copie con la versione 2 nel nome, per un'illustrazione cambiata |
+| `python3 crea_webp.py --sovrascrivi` | Riscrive anche le copie che esistono già |
+| `python3 crea_webp.py --uscita CARTELLA` | Salva le copie in un'altra cartella |
+
+| Originale | Copie |
+|-----------|-------|
+| `base-004.png` | `base-004-v1.webp`, `base-004-v1-thumb.webp` |
+| `base-004-fullart.png` | `base-004-fullart-v1.webp`, `base-004-fullart-v1-thumb.webp` |
+
+Le copie vanno in `sviluppo/backend/src/main/resources/images/cards/`, dentro il backend. Il browser tiene ogni immagine per un anno, quindi un'illustrazione cambiata non si sovrascrive: si crea con `--versione 2` e una migration nuova aggiorna gli URL della carta.
+
 ## Se qualcosa non torna
 
 - **"manca l'illustrazione"**: il nome nella colonna `illustrazione` non corrisponde a un file in `../illustrazioni/`.

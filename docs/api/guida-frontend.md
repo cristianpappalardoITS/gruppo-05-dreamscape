@@ -182,7 +182,7 @@ Per creare i branch e aprire le pull request seguite [workflow-github.md](../wor
 
    `cp .env.example .env` si fa **solo la prima volta**: crea il file con i dati del database del vostro computer. Le volte dopo bastano `cd sviluppo/backend` e `./gradlew bootRun`.
 
-3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit. Serve internet.
+3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit, e si costruisce il container del motore di gioco (nel terminale scorrono molte righe che iniziano con `#`: è normale). Serve internet. Le volte dopo il motore si ricostruisce in pochi secondi.
 4. Il backend è pronto quando nel terminale compare una riga con **`Started DreamscapeApiApplication`**. **Lasciate aperto quel terminale**: se lo chiudete, il backend si ferma. Per fermarlo voi: **Ctrl+C**.
 5. Controllo: aprite [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) nel browser. Deve comparire `{"status":"UP"}`.
 
@@ -274,6 +274,7 @@ Con tutti e due accesi, aprite nel browser [http://localhost:5173/api/v1/packs](
 | Sul Mac `docker --version` funziona ma il backend dice che **non trova `docker`** | In Docker Desktop: **Settings** (l'ingranaggio) → **Advanced** → scegliete **System** → **Apply & restart**. Poi riaprite il terminale |
 | Dopo un `git pull`, `./gradlew bootRun` si ferma con **Validate failed** o **Migrations have failed validation** | È arrivata una migration nuova e il database di sviluppo è vecchio. Da `sviluppo/backend`: `docker compose down -v`, poi di nuovo `./gradlew bootRun`. Il database di sviluppo si ricrea con i dati di prova (quello che avevate scritto a mano si perde) |
 | **Port 8080 was already in use** | Il backend è già acceso in un altro terminale: usate quello, oppure fermatelo con Ctrl+C |
+| **8081** già in uso, oppure un errore che parla del servizio **engine** | La porta 8081 serve al motore di gioco: chiudete il programma che la usa. Se l'errore è nella costruzione del motore, da `sviluppo/backend` scrivete `docker compose build engine` e mandate a Marco o Cristian le ultime righe |
 | `./gradlew: Permission denied` (Mac) | Scrivete `chmod +x gradlew` una volta, poi riprovate |
 | `npm` o `node`: **command not found** | Chiudete e riaprite il terminale. Se non basta, reinstallate Node.js (1.4) |
 | Vite dice che serve **Node.js 20.19+ o 22.12+** | Node.js è vecchio: installate la LTS (1.4) |
@@ -1543,7 +1544,79 @@ Il risultato:
 
 Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`). Un giocatore che chiama `/admin/...` riceve `403`.
 
-Per caricare un file non si usa JSON: si manda un `FormData`. Quando arriverà, `api.js` avrà una funzione apposta.
+**Pronti (#95):** carte, caricamento delle immagini e pacchetti. **Da fare, dopo il SAL:** dashboard, configurazione e messaggi.
+
+#### Carte: `GET/POST /admin/cards`, `GET/PUT /admin/cards/{cardId}`
+
+`GET /admin/cards` è una lista a pagine come `GET /cards`, ma con **tutte** le carte: anche le full art e le disattivate. Parametri facoltativi: `faction`, `rarity`, `search` (nome o codice), `active` (`true`/`false`), `fullArt` (`true`/`false`), `page`, `size`.
+
+Una carta del backoffice (dati salvati, non quelli presi dalla carta base):
+
+```json
+{
+  "id": "019a1f30-0000-7000-8000-000000000013", "code": "BASE-013", "baseCardId": null, "variantType": null,
+  "name": "Il Sogno Lucido", "description": "Sai di sognare, e il sogno ti obbedisce.", "attack": 10, "defense": 14,
+  "factionCode": "DREAMS", "rarityCode": "LEGENDARY", "cardSetCode": "BASE", "effectCode": "REST", "effectValue": 3,
+  "illustrationUrl": "/images/cards/base-013-v1.webp", "illustrationThumbUrl": "/images/cards/base-013-v1-thumb.webp",
+  "illustrationFocusY": 0.40, "isActive": true, "deckCount": 12
+}
+```
+
+- `deckCount`: in quanti mazzi è usata la carta, contando anche la sua full art. Prima di disattivarla conviene chiedere conferma: "12 mazzi diventeranno non validi".
+- `POST` (risponde `201`) e `PUT` (risponde `200`) mandano gli stessi campi, senza `id` e `deckCount`. Con `PUT` si manda tutta la carta: i campi mancanti si svuotano (es. senza `effectCode` l'effetto si toglie).
+- **Carta normale:** obbligatori `code` (lettere maiuscole, numeri e trattini), `name`, `attack`, `defense` (da 1 a 99), `factionCode`, `rarityCode`, `cardSetCode`. `effectCode` è facoltativo; `effectValue` c'è solo per gli effetti con la X (da 1 a 20). `illustrationFocusY` va da 0 a 1 (di base 0,40).
+- **Full art:** solo `code` (il codice della carta base + `-FA`, es. `BASE-013-FA`), `baseCardId`, l'illustrazione e `isActive`. Oggi solo per le Leggendarie, una per carta. Nome, testi, statistiche ed effetto restano vuoti: li prende dalla carta base.
+- Il codice e la carta base non si cambiano.
+- L'illustrazione: prima si carica con `POST /admin/images`, poi si mettono gli indirizzi ricevuti in `illustrationUrl` e `illustrationThumbUrl` (sempre tutti e due).
+
+Errori: `409 CARD_CODE_TAKEN`, `409 CARD_NAME_TAKEN`, `409 FULL_ART_EXISTS`, `404 CARD_NOT_FOUND`, `400 VALIDATION_ERROR` (con `fieldErrors`: campi mancanti, fazione o effetto che non esistono, valore X sbagliato, full art di una carta non Leggendaria).
+
+#### Immagini: `POST /admin/images`
+
+Form `multipart/form-data` con tre campi: `file` (PNG o JPEG, al massimo 15 MB), `code` e `type`:
+
+| `type` | `code` | Cosa crea | Risposta `201` |
+|--------|--------|-----------|----------------|
+| `ILLUSTRATION` | Codice della carta, es. `BASE-013` | Copia grande (1024 px) e miniatura (400 px) | `{ "url": "/images/cards/base-013-v1.webp", "thumbUrl": "/images/cards/base-013-v1-thumb.webp" }` |
+| `FULL_ART` | `BASE-013` o `BASE-013-FA` | Come sopra, con `-fullart` nel nome | `{ "url": "/images/cards/base-013-fullart-v1.webp", "thumbUrl": "…" }` |
+| `COVER` | Nome del pacchetto, es. `dream-pack` | Una sola copia (1024 px) | `{ "url": "/images/packs/dream-pack-v1.webp" }` |
+
+Il backend conserva intatto l'originale e crea da solo le copie WebP. Un nuovo caricamento per lo stesso codice diventa `-v2`: il file vecchio non cambia mai, così la cache del browser resta giusta. Il caricamento **non** modifica la carta: gli indirizzi si salvano poi con `PUT /admin/cards/{cardId}` (o nel pacchetto).
+
+```js
+const form = new FormData();
+form.append("file", fileInput.files[0]);
+form.append("code", "BASE-013");
+form.append("type", "ILLUSTRATION");
+// Con FormData non si mette Content-Type: lo aggiunge il browser
+```
+
+Errori: `400 INVALID_IMAGE` (non è un PNG o un JPEG), `400 VALIDATION_ERROR` (codice non valido), `413 FILE_TOO_LARGE`, `400 MALFORMED_REQUEST` (manca il file o il tipo).
+
+#### Pacchetti: `GET/POST /admin/packs`, `GET/PUT /admin/packs/{packId}`
+
+`GET /admin/packs` restituisce **tutti** i pacchetti, anche spenti, set iniziali e benvenuto. Un pacchetto:
+
+```json
+{
+  "id": "019a1f31-0000-7000-8000-000000000001", "name": "Dream Pack", "description": "…", "packType": "SHOP",
+  "priceCredits": 500, "cardSetCode": null, "factionCode": null, "fullArtChance": 20.00,
+  "availableFrom": null, "availableUntil": null, "imageUrl": null, "isActive": true,
+  "slots": [
+    { "cardCount": 3, "rarities": [ { "rarityCode": "COMMON", "weight": 100 } ] },
+    { "cardCount": 1, "rarities": [ { "rarityCode": "RARE", "weight": 70 }, { "rarityCode": "EPIC", "weight": 25 }, { "rarityCode": "LEGENDARY", "weight": 5 } ] }
+  ],
+  "covers": [ { "id": "…", "name": "Dreams Lord", "factionCode": "DREAMS", "imageUrl": "/images/packs/dreams-lord-v1.webp", "isActive": true } ]
+}
+```
+
+- `POST` (risponde `201`) e `PUT` (risponde `200`) mandano gli stessi campi, senza `id`. Nelle copertine, `id` serve solo per modificarne una che c'è già.
+- `packType`: `SHOP` (si compra, prezzo maggiore di 0), `STARTER` o `WELCOME` (gratis, prezzo 0).
+- **Slot:** almeno uno; i pesi (`weight`) di ogni slot sono percentuali e **sommano a 100**. Con `PUT` gli slot sostituiscono quelli di prima.
+- **Copertine:** quelle con `id` si modificano, quelle senza `id` si aggiungono, quelle che mancano si spengono (non si cancellano: le aperture già fatte le ricordano).
+- `availableFrom` e `availableUntil` (UTC) sono facoltativi: la fine viene dopo l'inizio. `fullArtChance` va da 0 a 100.
+
+Errori: `409 PACK_NAME_TAKEN`, `404 PACK_NOT_FOUND`, `400 VALIDATION_ERROR` (es. "Le probabilità dello slot 2 sommano a 95: devono fare 100.").
 
 ---
 
@@ -1747,6 +1820,11 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /trades/{tradeId}/accept` | utente | Accetta uno scambio e sposta le carte |
 | `POST /trades/{tradeId}/reject` | utente | Rifiuta uno scambio |
 | `POST /trades/{tradeId}/cancel` | utente | Annulla (chi propone) |
+| `GET /admin/cards`, `GET /admin/cards/{cardId}` | admin | Le carte, anche full art e disattivate |
+| `POST /admin/cards`, `PUT /admin/cards/{cardId}` | admin | Nuova carta o full art; modifica e disattivazione |
+| `POST /admin/images` | admin | Caricamento di illustrazioni e copertine, con le copie WebP |
+| `GET /admin/packs`, `GET /admin/packs/{packId}` | admin | Tutti i pacchetti, anche spenti |
+| `POST /admin/packs`, `PUT /admin/packs/{packId}` | admin | Nuovo pacchetto; modifica di slot, copertine, prezzo e vendita |
 
 ### Da fare
 
@@ -1764,7 +1842,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /challenges/{challengeId}/cancel` | utente | Annulla | #94 | Cristian | 5 |
 | `GET /leagues` | utente | Le leghe con soglie e premi | #106 | Cristian | 6 |
 | `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
-| `/admin/...` | admin | Backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | 5 |
+| `GET /admin/stats`, configurazione, messaggi | admin | Il resto del backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | dopo il SAL |
 
 Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 
@@ -1820,6 +1898,11 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `CARDS_LOCKED_IN_TRADE` | 409 | Copie già offerte in altri scambi in attesa |
 | `REQUESTED_CARDS_NOT_AVAILABLE` | 409 | Le copie richieste non sono disponibili: alla proposta, o all'accettazione (lo scambio resta in attesa) |
 | `TRADE_CANCELLED` | 409 | All'accettazione non siete più amici: lo scambio si è annullato |
+| `CARD_CODE_TAKEN`, `CARD_NAME_TAKEN` | 409 | Backoffice: codice o nome della carta già usati |
+| `FULL_ART_EXISTS` | 409 | Backoffice: la carta ha già la sua full art |
+| `PACK_NAME_TAKEN` | 409 | Backoffice: nome del pacchetto già usato |
+| `INVALID_IMAGE` | 400 | Backoffice: il file non è un PNG o un JPEG |
+| `FILE_TOO_LARGE` | 413 | Backoffice: file oltre i 15 MB |
 
 **Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.
 

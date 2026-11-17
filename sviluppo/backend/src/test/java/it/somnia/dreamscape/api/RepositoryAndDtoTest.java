@@ -77,13 +77,13 @@ class RepositoryAndDtoTest {
 
     @Test
     void findByBaseCardIsNullAndActiveTrue_testData_excludesTheVersions() {
-        // Given: 39 carte normali e 3 full art
+        // Given: 39 carte normali di prova con 3 full art e 99 del set base con 12 full art
 
         // When
         List<Card> cards = cardRepository.findByBaseCardIsNullAndActiveTrueOrderByCodeAsc();
 
         // Then
-        assertEquals(39, cards.size());
+        assertEquals(138, cards.size());
     }
 
     @Test

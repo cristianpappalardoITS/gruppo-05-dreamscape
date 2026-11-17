@@ -96,4 +96,10 @@ public class Card {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    // Una carta nuova del backoffice; gli altri dati si impostano con i setter
+    public Card(String code, CardSet cardSet) {
+        this.code = code;
+        this.cardSet = cardSet;
+    }
 }

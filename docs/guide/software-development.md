@@ -100,10 +100,12 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 - Il `Random` si usa sempre in quest'ordine: mescola il mazzo di chi sfida, poi quello dell'avversario, poi tira la moneta. L'ordine degli effetti lo decide la moneta.
 - Ogni regola e ogni effetto ha un test JUnit con seed fisso: `calculateDamage_attackerHasFactionAdvantage_addsBonus`.
 - Le simulazioni (#87) usano lo stesso motore, senza copiarne la logica.
+- Nel backend le partite si chiedono a `BattleSimulator` (`match/service`), mai con chiamate HTTP scritte a mano: se il motore non risponde lancia `503 ENGINE_UNAVAILABLE` e non si salva niente. La richiesta è `SimulationRequest` di `engine-core`, che il backend include come progetto Gradle ([README del motore](../../sviluppo/engine/README.md#api)).
 
 ```java
-// ✅ Regole e Random arrivano da fuori: stessa partita con lo stesso seed
-BattleResult result = engine.simulate(first, second, rules, new Random(seed));
+// ✅ Regole e seed arrivano da fuori: stessa partita con lo stesso seed
+SimulationResult result = battleSimulator.simulate(
+        new SimulationRequest(challengerDeck, opponentDeck, rules, seed, true));
 
 // ❌ Valori scritti nel codice e Random nascosto
 if (lifePoints <= 0 || round > 60) { ... }

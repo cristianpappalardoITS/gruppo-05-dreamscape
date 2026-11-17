@@ -17,6 +17,10 @@ public interface DeckCardsRepository extends JpaRepository<DeckCards, UUID> {
 
     List<DeckCards> findAllByDeck_Id(UUID deckId);
 
+    // In quanti mazzi compare almeno una di queste carte (backoffice: avviso prima di disattivare una carta)
+    @Query("SELECT COUNT(DISTINCT dc.deck.id) FROM DeckCards dc WHERE dc.card.id IN :cardIds")
+    long countDecksUsing(@Param("cardIds") Collection<UUID> cardIds);
+
     // Le carte di più mazzi con una sola query (lista dei mazzi), con la carta e la sua carta base
     @EntityGraph(attributePaths = { "card", "card.baseCard" })
     List<DeckCards> findAllByDeck_IdIn(Collection<UUID> deckIds);

@@ -1,5 +1,6 @@
 package it.somnia.dreamscape.api.user.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,6 +25,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByRole(UserRole role);
+
+    // Ricerca dei giocatori per username (pagina Amici): solo account attivi del ruolo indicato, senza
+    // chi cerca. Containing aggiunge i % da solo e tratta % e _ scritti dall'utente come caratteri normali
+    List<User> findTop20ByEnabledTrueAndRoleAndUsernameContainingIgnoreCaseAndIdNotOrderByUsernameAsc(
+            UserRole role, String username, UUID excludedUserId);
 
     // La lega di un punteggio: quella con la soglia più alta che il punteggio raggiunge.
     // Le leghe si leggono qui finché non c'è il loro codice (#106).

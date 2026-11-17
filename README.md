@@ -77,6 +77,6 @@ Le linee guida del progetto sono in [`docs/`](docs/README.md):
 - [Decisioni del gruppo](docs/decisioni/README.md): cosa si è deciso e perché
 - [Proposta di schema del database](docs/database/schema.md) (da verificare)
 - [Proposta di regolamento](docs/proposte/proposta-regolamento-dreamscape.pdf) (da discutere)
-- [Guida ai dati per il frontend](docs/api/guida-frontend.md): quali dati arrivano dal backend, pagina per pagina
+- [Guida per il frontend](docs/api/guida-frontend.md): avvio del progetto, chiamate alle API, pagine ed elenco di tutti gli endpoint
 
 Set di carte di prova: [carte/](carte/README.md), con la [presentazione per il team](carte/presentazione-set-carte.pdf) e la [lista degli effetti proposta da Nicolas](carte/effetti/Effetti%20Keyword%20Descrizioni.txt), rivista nel [catalogo provvisorio degli effetti](docs/decisioni/028-catalogo-degli-effetti.md).

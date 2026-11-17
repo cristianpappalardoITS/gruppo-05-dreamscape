@@ -8,14 +8,14 @@
 | Linee guida (workflow, codice, naming, commenti, template) | `docs/*.md` | Marco / Cristian |
 | Come avviare e usare un modulo | `README.md` dentro `sviluppo/engine/`, `sviluppo/backend/`, `frontend/` | Chi lavora sul modulo |
 | Classi e metodi | Javadoc nel codice | Chi scrive il codice |
-| Endpoint REST | `docs/api/endpoints.md` | Chi crea o modifica l'endpoint |
+| Endpoint REST | `docs/api/guida-frontend.md` | Chi crea o modifica l'endpoint |
 | Decisioni del gruppo (concept, fazioni, valori di gioco...) | `docs/decisioni/` | Marco / Cristian, su comunicazione dei referenti |
 | Riunioni | `docs/verbali/` | Chi fa da verbalizzante |
 | Diagrammi ER, architettura, flussi | `docs/diagrammi/` | SWD (ER, architettura), WMD (flussi) |
 
 ## Regole
 
-- **La documentazione si aggiorna nella stessa PR del codice.** Se cambi un endpoint, aggiorni `docs/api/endpoints.md` nella stessa PR.
+- **La documentazione si aggiorna nella stessa PR del codice.** Se cambi un endpoint, aggiorni `docs/api/guida-frontend.md` nella stessa PR.
 - Si scrive in **Markdown** (`.md`), in italiano.
 - Frasi brevi, tabelle ed esempi concreti al posto di paragrafi lunghi.
 - Ogni decisione ha un file suo: chi arriva dopo deve capire **cosa** si è deciso e **perché**, senza dover chiedere.

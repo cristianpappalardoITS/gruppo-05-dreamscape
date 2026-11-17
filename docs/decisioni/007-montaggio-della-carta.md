@@ -25,4 +25,4 @@ La carta si aggiorna da sola. Con le miniature la prima visita alla collezione p
 
 ## Conseguenze
 - Il riferimento visivo sono le carte di prova in `carte/carte-finali/`.
-- [Capitolo 7 della guida ai dati](../api/guida-frontend.md#7-come-si-monta-una-carta).
+- [Capitolo 12 della guida per il frontend](../api/guida-frontend.md#12-come-si-monta-una-carta).

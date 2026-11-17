@@ -27,6 +27,6 @@ Con l'id token il backend resta senza stato e il frontend riceve il token come c
 
 ## Conseguenze
 - Migration `V11`: `users.google_subject` e `password_hash` facoltativa. Nel database di sviluppo con i dati finti serve `docker compose down -v` ([README del backend](../../sviluppo/backend/README.md#dopo-una-migration-nuova)).
-- [Guida per il frontend](../api/guida-frontend.md#accesso-con-google) e [elenco degli endpoint](../api/endpoint-e-fetch.md) con `POST /auth/google`; [schema.md](../database/schema.md) con le colonne nuove.
+- [Guida per il frontend](../api/guida-frontend.md#accesso-con-google) e [elenco degli endpoint](../api/guida-frontend.md#14-elenco-completo-degli-endpoint) con `POST /auth/google`; [schema.md](../database/schema.md) con le colonne nuove.
 - Il progetto e il client OAuth su Google Cloud li crea Cristian; il client id va dato a WMD per il pulsante (#73).
 - Da dire a Alessandro (#73): pulsante ufficiale di Google, form del `202`, pulsante nascosto con `503`.

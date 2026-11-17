@@ -24,7 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import it.somnia.dreamscape.api.TestcontainersConfiguration;
 import it.somnia.dreamscape.api.common.config.StorageProperties;
 
-// Immagini su /images/**, senza accesso e con la cache per sempre (guida per il frontend, capitolo 7)
+// Immagini su /images/**, senza accesso e con la cache per sempre (guida per il frontend, capitolo 7):
+// quelle di IMAGES_DIR e quelle del catalogo dentro il backend
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -71,6 +72,17 @@ class ImageResourceTest {
     }
 
     @Test
+    void getImage_catalogCard_isServedFromTheBackendWithTheCache() throws Exception {
+        // Given: le copie WebP del set base stanno in src/main/resources/images/cards (V102)
+
+        // When / Then
+        mockMvc.perform(get("/images/cards/base-004-fullart-v1-thumb.webp"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("image/webp"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, containsString("immutable")));
+    }
+
+    @Test
     void getImage_missingFile_returnsNotFound() throws Exception {
         mockMvc.perform(get("/images/cards/non-esiste-v1.webp"))
                 .andExpect(status().isNotFound())
@@ -83,6 +95,8 @@ class ImageResourceTest {
 
         // When / Then
         mockMvc.perform(get("/images/%2e%2e/application.properties"))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(get("/images/../application.properties"))
                 .andExpect(status().is4xxClientError());
     }
 }

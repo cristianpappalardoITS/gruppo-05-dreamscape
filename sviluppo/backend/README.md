@@ -43,18 +43,31 @@ I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno b
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Server SMTP per le email alla consegna. Senza `SPRING_MAIL_HOST` il link di recupero si scrive solo nel log | `smtp.example.com` |
 | `MAIL_FROM` | Mittente delle email | `noreply@dreamscape.local` |
 | `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password.html?token=` |
+| `IMAGES_DIR` | Cartella delle immagini caricate dal backoffice, servite su `/images/...` (vedi [Immagini](#immagini)). In sviluppo `./data/images`, fuori da git | `/srv/dreamscape/images` |
 | `GOOGLE_CLIENT_ID` | Client id OAuth di Google Cloud per l'accesso con Google (decisione 032). Vuota = accesso con Google spento (`503 GOOGLE_LOGIN_DISABLED`) | `123…apps.googleusercontent.com` |
+
+## Immagini
+Il backend serve le immagini su `/images/...`, senza accesso e con la cache per sempre. Le cerca in due posti, in quest'ordine:
+
+| Dove | Cosa | In sviluppo | Alla consegna |
+|------|------|-------------|---------------|
+| Cartella `IMAGES_DIR` | Immagini caricate dal backoffice | `./data/images` (fuori da git, si crea da sola) | Una cartella sul server che non si cancella agli aggiornamenti, indicata con `IMAGES_DIR` |
+| `src/main/resources/images/` | Copie WebP del catalogo ufficiale (`cards/base-004-v1.webp`, `cards/base-004-v1-thumb.webp`...) | Nel repository | Dentro il jar: non si copia niente a mano |
+
+Le copie del catalogo le crea `carte/compositore/crea_webp.py` dai PNG di `carte/illustrazioni/` ([README del compositore](../../carte/compositore/README.md#copie-webp-per-il-backend)). Un'illustrazione cambiata si salva con una versione nuova nel nome (`-v2`) e una migration nuova aggiorna gli URL della carta.
 
 ## Struttura
 - `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).
-- `src/main/resources/db/migration/`: tabelle (`V1`–`V11`), dati del regolamento (`V100`) e pacchetti (`V101`). Una migration già eseguita non si modifica.
+- `src/main/resources/db/migration/`: tabelle (`V1`–`V11`), dati del regolamento (`V100`), pacchetti (`V101`) e le 99 carte del set base (`V102`). Una migration già eseguita non si modifica.
 - `src/main/resources/db/testdata/`: dati finti (`V900`–`V903`), caricati solo nel profilo `dev` e nei test.
+- `src/main/resources/db/devdata/`: `V950` spegne le carte di prova, solo nel profilo `dev`.
+- `src/main/resources/images/cards/`: le copie WebP delle illustrazioni del catalogo.
 
 Lo schema è spiegato in [docs/database/schema.md](../../docs/database/schema.md).
 
 ## Dati finti (profilo `dev` e test)
-- **Carte:** 39 carte del Set di prova (`TEST-001`–`TEST-039`): per ogni fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art (`TEST-013-FA`, `TEST-026-FA`, `TEST-039-FA`). Ognuno dei 19 effetti è su almeno una carta.
-- **Pacchetti:** valgono quelli veri di `V101` (decisioni 014 e 030: Nap Pack, Dream Pack, Lucid, Faceless e Still Time Pack, REM Pack, tre set iniziali e due Welcome Pack), che pescano anche dalle carte di prova. I pacchetti di prova di `V901` sono spenti da `V903`.
+- **Carte:** 39 carte del Set di prova (`TEST-001`–`TEST-039`): per ogni fazione 7 Comuni, 3 Rare, 2 Epiche e 1 Leggendaria con la sua full art (`TEST-013-FA`, `TEST-026-FA`, `TEST-039-FA`). Ognuno dei 19 effetti è su almeno una carta. Ci sono anche le 99 carte vere di `V102`. Nel profilo `dev` le carte di prova sono spente da `V950`: il catalogo mostra solo quelle vere e i mazzi che usano carte di prova non sono validi. Nei test restano attive.
+- **Pacchetti:** valgono quelli veri di `V101` (decisioni 014 e 030: Nap Pack, Dream Pack, Lucid, Faceless e Still Time Pack, REM Pack, tre set iniziali e due Welcome Pack). In `dev` pescano solo le carte vere, nei test anche quelle di prova. I pacchetti di prova di `V901` sono spenti da `V903`.
 - **Utenti di prova:** partono con 500 DC e la fazione ancora da scegliere, quindi possono provare la pagina Benvenuto (`POST /me/welcome`) e poi comprare un Dream Pack. `anna_test` e `bruno_test` sono amici; `carla_test` ha chiesto l'amicizia a `bruno_test`.
 
 | Username | Email | Password |

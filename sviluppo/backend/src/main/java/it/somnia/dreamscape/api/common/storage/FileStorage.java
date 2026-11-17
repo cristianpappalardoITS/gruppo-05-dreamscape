@@ -17,6 +17,16 @@ public interface FileStorage {
     void saveImage(String path, byte[] content);
 
     /**
+     * Salva un'immagine pubblica solo se il percorso è ancora libero, in un'unica operazione: due salvataggi nello
+     * stesso momento con lo stesso percorso non si sovrascrivono, uno dei due riceve {@code false}.
+     *
+     * @param path    il percorso relativo, es. {@code cards/base-004-v1.webp}
+     * @param content i byte del file
+     * @return {@code true} se il file è stato creato, {@code false} se c'era già
+     */
+    boolean createImage(String path, byte[] content);
+
+    /**
      * Dice se un'immagine pubblica esiste già (serve per scegliere il numero di versione).
      *
      * @param path il percorso relativo

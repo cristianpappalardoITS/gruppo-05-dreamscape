@@ -35,6 +35,9 @@ public class AdminImageService {
 
     static final int LARGE_WIDTH = 1024;
     static final int THUMB_WIDTH = 400;
+    // Limiti dell'immagine caricata: bastano per un'illustrazione stampabile, e la decodifica resta sotto i 200 MB
+    static final int MAX_SIDE = 8000;
+    static final long MAX_PIXELS = 40_000_000L;
 
     // Codice della carta o nome del pacchetto: lettere, numeri e trattini, come BASE-004 o dream-pack
     private static final Pattern CODE = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9-]{0,39}$");
@@ -54,27 +57,31 @@ public class AdminImageService {
      *                oppure il nome del pacchetto per le copertine (es. {@code dream-pack})
      * @param type    illustrazione, full art o copertina
      * @return gli indirizzi delle copie, da salvare nella carta o nel pacchetto
-     * @throws InvalidImageException       se il file non è un PNG o un JPEG leggibile
+     * @throws InvalidImageException       se il file non è un PNG o un JPEG leggibile, o se ha troppi pixel
      * @throws InvalidAdminFieldException  se il codice non è valido
      */
     public ImageUploadResponse upload(byte[] content, String code, ImageType type) {
         if (code == null || !CODE.matcher(code.strip()).matches()) {
             throw new InvalidAdminFieldException("code", "Il codice può avere solo lettere, numeri e trattini.");
         }
-        String format = imageFormat(content);
-        BufferedImage image = read(content);
+        DecodedImage image = decode(content);
+        byte[] large = webpImageWriter.write(image.pixels(), LARGE_WIDTH);
+        byte[] thumb = type == ImageType.COVER ? null : webpImageWriter.write(image.pixels(), THUMB_WIDTH);
 
+        // La copia grande "prenota" la versione: se un altro caricamento l'ha appena presa, si passa alla successiva
         String folder = type == ImageType.COVER ? "packs" : "cards";
         String name = fileName(code.strip(), type);
-        int version = nextVersion(folder, name);
+        int version = nextVersion(folder, name, 1);
+        while (!fileStorage.createImage(folder + "/" + name + "-v" + version + ".webp", large)) {
+            version = nextVersion(folder, name, version + 1);
+        }
         String base = folder + "/" + name + "-v" + version;
 
-        fileStorage.saveOriginal(base + "." + EXTENSIONS.get(format), content);
-        fileStorage.saveImage(base + ".webp", webpImageWriter.write(image, LARGE_WIDTH));
-        if (type == ImageType.COVER) {
+        fileStorage.saveOriginal(base + "." + EXTENSIONS.get(image.format()), content);
+        if (thumb == null) {
             return new ImageUploadResponse("/images/" + base + ".webp", null);
         }
-        fileStorage.saveImage(base + "-thumb.webp", webpImageWriter.write(image, THUMB_WIDTH));
+        fileStorage.saveImage(base + "-thumb.webp", thumb);
         return new ImageUploadResponse("/images/" + base + ".webp", "/images/" + base + "-thumb.webp");
     }
 
@@ -92,8 +99,8 @@ public class AdminImageService {
 
     // Una versione è occupata se il file c'è in IMAGES_DIR o tra le immagini che arrivano con il backend
     // (classpath images/, il catalogo ufficiale della #165): stesso indirizzo vorrebbe dire coprire quella vecchia
-    private int nextVersion(String folder, String name) {
-        int version = 1;
+    private int nextVersion(String folder, String name, int from) {
+        int version = from;
         while (versionTaken(folder + "/" + name + "-v" + version + ".webp")) {
             version++;
         }
@@ -104,17 +111,27 @@ public class AdminImageService {
         return fileStorage.imageExists(path) || new ClassPathResource(BUNDLED_IMAGES + path).exists();
     }
 
-    // Il formato si legge dal contenuto, non dal nome del file: "png" o "jpeg"
-    private static String imageFormat(byte[] content) {
+    // Una sola lettura del file: il formato si prende dal contenuto, non dal nome ("png" o "jpeg"), e le
+    // dimensioni si controllano prima di decodificare. Un PNG di pochi KB può dichiarare 50.000 x 50.000 pixel:
+    // decodificarlo vorrebbe dire chiedere gigabyte di memoria
+    private static DecodedImage decode(byte[] content) {
         if (content == null || content.length == 0) {
             throw new InvalidImageException();
         }
         try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(content))) {
-            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-            while (readers.hasNext()) {
-                String format = readers.next().getFormatName().toLowerCase(Locale.ROOT);
-                if (EXTENSIONS.containsKey(format)) {
-                    return format;
+            Iterator<ImageReader> readers = input != null ? ImageIO.getImageReaders(input) : null;
+            while (readers != null && readers.hasNext()) {
+                ImageReader reader = readers.next();
+                String format = reader.getFormatName().toLowerCase(Locale.ROOT);
+                if (!EXTENSIONS.containsKey(format)) {
+                    continue;
+                }
+                try {
+                    reader.setInput(input, true, true);
+                    checkSize(reader.getWidth(0), reader.getHeight(0));
+                    return new DecodedImage(format, reader.read(0));
+                } finally {
+                    reader.dispose();
                 }
             }
         } catch (IOException e) {
@@ -123,15 +140,14 @@ public class AdminImageService {
         throw new InvalidImageException();
     }
 
-    private static BufferedImage read(byte[] content) {
-        try {
-            BufferedImage image = ImageIO.read(new ByteArrayInputStream(content));
-            if (image == null) {
-                throw new InvalidImageException();
-            }
-            return image;
-        } catch (IOException e) {
-            throw new InvalidImageException();
+    private static void checkSize(int width, int height) {
+        if (width > MAX_SIDE || height > MAX_SIDE || (long) width * height > MAX_PIXELS) {
+            throw new InvalidImageException("L'immagine è troppo grande: al massimo " + MAX_SIDE
+                    + " pixel per lato e " + MAX_PIXELS / 1_000_000 + " milioni di pixel in tutto.");
         }
+    }
+
+    // Formato ("png" o "jpeg") e pixel dell'immagine caricata
+    private record DecodedImage(String format, BufferedImage pixels) {
     }
 }

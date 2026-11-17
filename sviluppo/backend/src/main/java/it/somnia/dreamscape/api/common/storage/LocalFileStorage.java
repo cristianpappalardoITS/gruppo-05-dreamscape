@@ -2,8 +2,10 @@ package it.somnia.dreamscape.api.common.storage;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,21 @@ public class LocalFileStorage implements FileStorage {
     @Override
     public void saveImage(String path, byte[] content) {
         write(storageProperties.imagesDir(), path, content);
+    }
+
+    // CREATE_NEW: il sistema operativo crea il file solo se non c'è, senza spazio tra controllo e scrittura
+    @Override
+    public boolean createImage(String path, byte[] content) {
+        Path target = resolve(storageProperties.imagesDir(), path);
+        try {
+            Files.createDirectories(target.getParent());
+            Files.write(target, content, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            return true;
+        } catch (FileAlreadyExistsException e) {
+            return false;
+        } catch (IOException e) {
+            throw new UncheckedIOException("Salvataggio del file " + path + " non riuscito", e);
+        }
     }
 
     @Override

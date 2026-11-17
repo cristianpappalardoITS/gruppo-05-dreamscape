@@ -16,8 +16,11 @@ public final class AdminExceptions {
     // File che non è un'immagine PNG o JPEG leggibile
     public static class InvalidImageException extends ApiException {
         public InvalidImageException() {
-            super(HttpStatus.BAD_REQUEST, "INVALID_IMAGE", "Carica un'immagine PNG o JPEG.",
-                    List.of(new FieldErrorResponse("file", "Carica un'immagine PNG o JPEG.")));
+            this("Carica un'immagine PNG o JPEG.");
+        }
+
+        public InvalidImageException(String message) {
+            super(HttpStatus.BAD_REQUEST, "INVALID_IMAGE", message, List.of(new FieldErrorResponse("file", message)));
         }
     }
 

@@ -35,7 +35,7 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 |-----------|-----------|
 | [Proposta di schema del database](database/schema.md) | **Da verificare.** Tabelle, diagrammi ER, scelte, regole dei service, migration Flyway |
 | [schema.sql](database/schema.sql) | SQL completo dello schema, diviso nelle future migration |
-| [Guida ai dati per il frontend](api/guida-frontend.md) | Per il team WMD: API, dati in ingresso e in uscita, accesso con JWT, pagina per pagina |
+| [Guida per il frontend](api/guida-frontend.md) | Per il team WMD: avvio del progetto, regole delle API, accesso con JWT, `api.js`, pagine e chiamate, elenco di tutti gli endpoint e codici di errore |
 
 ## Proposte da discutere
 
@@ -57,7 +57,7 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 | Cartella | Contenuto |
 |----------|-----------|
 | `verbali/` | Verbali delle riunioni (`AAAA-MM-GG-argomento.md`) |
-| `api/` | Elenco degli endpoint REST (la guida per il frontend c'è già) |
+| `api/` | La guida per il frontend, con l'elenco di tutti gli endpoint REST (capitolo 14) |
 | `diagrammi/` | Diagramma ER, architettura, flussi |
 
 Queste cartelle si creano quando serve il primo documento.

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import it.somnia.dreamscape.api.common.security.RefreshCookies;
+import it.somnia.dreamscape.api.user.dto.request.GoogleLoginRequest;
 import it.somnia.dreamscape.api.user.dto.request.LoginRequest;
 import it.somnia.dreamscape.api.user.dto.request.PasswordResetRequest;
 import it.somnia.dreamscape.api.user.dto.request.PasswordResetRequestRequest;
@@ -18,6 +19,10 @@ import it.somnia.dreamscape.api.user.dto.response.AccessTokenResponse;
 import it.somnia.dreamscape.api.user.dto.response.LoginResponse;
 import it.somnia.dreamscape.api.user.dto.response.UserResponse;
 import it.somnia.dreamscape.api.user.service.AuthService;
+import it.somnia.dreamscape.api.user.service.GoogleAuthService;
+import it.somnia.dreamscape.api.user.service.GoogleAuthService.GoogleOutcome;
+import it.somnia.dreamscape.api.user.service.GoogleAuthService.LoggedIn;
+import it.somnia.dreamscape.api.user.service.GoogleAuthService.SignupRequired;
 import it.somnia.dreamscape.api.user.service.AuthService.RefreshedSession;
 import it.somnia.dreamscape.api.user.service.AuthService.Session;
 import it.somnia.dreamscape.api.user.service.PasswordResetService;
@@ -31,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final GoogleAuthService googleAuthService;
     private final PasswordResetService passwordResetService;
     private final RefreshCookies refreshCookies;
 
@@ -43,6 +49,20 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         Session session = authService.login(request);
         return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookies.create(session.refreshToken()).toString())
+                .body(session.body());
+    }
+
+    // 200 accesso, 201 account appena creato, 202 serve la registrazione (decisione 032)
+    @PostMapping("/google")
+    public ResponseEntity<?> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        GoogleOutcome outcome = googleAuthService.loginWithGoogle(request);
+        if (outcome instanceof SignupRequired signupRequired) {
+            return ResponseEntity.accepted().body(signupRequired.body());
+        }
+        LoggedIn loggedIn = (LoggedIn) outcome;
+        Session session = loggedIn.session();
+        return ResponseEntity.status(loggedIn.created() ? HttpStatus.CREATED : HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, refreshCookies.create(session.refreshToken()).toString())
                 .body(session.body());
     }

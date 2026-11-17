@@ -82,9 +82,24 @@ public class AuthService {
             throw new InvalidCredentialsException();
         }
         User user = found.get();
-        if (!user.isEnabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        // Chi si è registrato con Google non ha una password finché non la sceglie (decisione 032)
+        String passwordHash = user.hasPassword() ? user.getPasswordHash() : dummyPasswordHash();
+        boolean passwordMatches = passwordEncoder.matches(request.password(), passwordHash);
+        if (!user.isEnabled() || !user.hasPassword() || !passwordMatches) {
             throw new InvalidCredentialsException();
         }
+        return openSession(user);
+    }
+
+    /**
+     * Apre la sessione di un utente già riconosciuto (password o Google): ultimo accesso, ricompensa del
+     * primo accesso del giorno, refresh token e token di accesso.
+     *
+     * @param user l'utente attivo
+     * @return il corpo della risposta e il refresh token per il cookie
+     */
+    @Transactional
+    public Session openSession(User user) {
         user.setLastLoginAt(clock.instant());
         if (!user.isAdmin()) {
             userService.grantDailyRewardIfDue(user.getId());

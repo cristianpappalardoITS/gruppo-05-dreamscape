@@ -22,4 +22,4 @@ Il backend resta senza stato. Il token in memoria e il cookie `HttpOnly` protegg
 
 ## Conseguenze
 - Il cookie funziona senza problemi solo con sito e API sullo stesso indirizzo: vedi [006](006-avvio-locale-e-dati.md).
-- `api.js` rinnova il token da solo all'apertura di ogni pagina ([guida ai dati](../api/guida-frontend.md#3-accesso-con-jwt)).
+- `api.js` rinnova il token da solo all'apertura di ogni pagina ([guida ai dati](../api/guida-frontend.md#7-accesso-con-jwt)).

@@ -1,27 +1,291 @@
-# Guida ai dati per il frontend · Dreamscape
+# Guida per il frontend · Dreamscape
 
-Per il team **WMD**. Spiega quali dati arrivano dal backend, come chiederli e come mandarli, pagina per pagina, così la sitemap e le pagine restano coerenti con il database.
+Per il team **WMD**. Qui c'è tutto quello che serve per collegare le pagine al backend, in un solo file:
 
-L'elenco di tutti gli endpoint, con quelli già pronti, e la guida passo passo per le chiamate da React sono in [endpoint-e-fetch.md](endpoint-e-fetch.md).
+1. **Avviare il progetto:** i programmi da installare, come scaricare il progetto e avviare backend e frontend.
+2. **Come si parla con il backend:** le regole comuni delle API, l'accesso, il file `api.js` e come usarlo nelle pagine.
+3. **Pagine e dati:** gli oggetti che arrivano, le chiamate pagina per pagina, come si monta la carta, l'elenco delle pagine.
+4. **Riferimento:** l'elenco di tutti gli endpoint con il loro stato, tutti i codici di errore e il controllo prima della PR.
 
-> 🚧 **Proposta di SWD da confermare insieme.** I dati vengono dalla [proposta di database](../database/schema.md). I nomi delle API seguono [naming.md](../naming.md) e sono una proposta: quelli definitivi saranno in **Swagger** quando il backend esiste. Se qualcosa non torna con quello che vi serve, ditelo a Marco o Cristian.
+I dati vengono dallo [schema del database](../database/schema.md) e i nomi delle API seguono [naming.md](../naming.md). L'elenco definitivo, da provare dal browser, è **Swagger**: `http://localhost:8080/swagger-ui.html` con il backend acceso.
+
+**Come leggere lo stato degli endpoint** ([capitolo 14](#14-elenco-completo-degli-endpoint)):
+
+| Stato | Cosa vuol dire |
+|-------|----------------|
+| **Pronto** | È in `develop` e ha i test: si può usare subito, i dati sono quelli scritti qui. |
+| **Da fare** | Non esiste ancora. Quello che c'è scritto è la proposta già approvata: si possono preparare le pagine, ma qualche nome può cambiare. Quando arriva, lo stato diventa "Pronto". |
+
+Se qualcosa non torna, o vi serve un dato che non c'è, ditelo a Marco o Cristian.
 
 ## Indice
 
-1. [Come funziona in breve](#1-come-funziona-in-breve)
-2. [Regole comuni delle API](#2-regole-comuni-delle-api)
-3. [Accesso con JWT](#3-accesso-con-jwt)
-4. [Il file api.js](#4-il-file-apijs)
-5. [Gli oggetti che ricevete](#5-gli-oggetti-che-ricevete)
-6. [Pagine e chiamate](#6-pagine-e-chiamate)
-7. [Come si monta una carta](#7-come-si-monta-una-carta)
-8. [Elenco delle pagine per la sitemap](#8-elenco-delle-pagine-per-la-sitemap)
-9. [Regole da ricordare](#9-regole-da-ricordare)
-10. [Cose ancora da decidere](#10-cose-ancora-da-decidere)
+**Parte 1 · Avviare il progetto**
+
+1. [Installare i programmi](#1-installare-i-programmi)
+2. [Scaricare il progetto](#2-scaricare-il-progetto)
+3. [Avviare il backend](#3-avviare-il-backend)
+4. [Avviare il frontend collegato al backend](#4-avviare-il-frontend-collegato-al-backend)
+
+**Parte 2 · Come si parla con il backend**
+
+5. [Come funziona in breve](#5-come-funziona-in-breve)
+6. [Regole comuni delle API](#6-regole-comuni-delle-api)
+7. [Accesso con JWT](#7-accesso-con-jwt)
+8. [Il file api.js](#8-il-file-apijs)
+9. [Usare api.js nelle pagine](#9-usare-apijs-nelle-pagine)
+
+**Parte 3 · Pagine e dati**
+
+10. [Gli oggetti che ricevete](#10-gli-oggetti-che-ricevete)
+11. [Pagine e chiamate](#11-pagine-e-chiamate)
+12. [Come si monta una carta](#12-come-si-monta-una-carta)
+13. [Elenco delle pagine per la sitemap](#13-elenco-delle-pagine-per-la-sitemap)
+
+**Parte 4 · Riferimento**
+
+14. [Elenco completo degli endpoint](#14-elenco-completo-degli-endpoint)
+15. [Tutti i codici di errore](#15-tutti-i-codici-di-errore)
+16. [Regole da ricordare](#16-regole-da-ricordare)
+17. [Cose ancora da decidere](#17-cose-ancora-da-decidere)
+18. [Controllo finale prima della PR](#18-controllo-finale-prima-della-pr)
 
 ---
 
-## 1. Come funziona in breve
+## 1. Installare i programmi
+
+Si fa **una volta sola** per computer. Servono cinque programmi: quattro obbligatori e un editor consigliato.
+
+| Programma | A cosa serve | Versione | Dove si scarica |
+|-----------|--------------|----------|-----------------|
+| **Git** | Scaricare il progetto e mandare le modifiche | Qualsiasi recente | [git-scm.com/downloads](https://git-scm.com/downloads) |
+| **Java (Temurin)** | Far partire il backend | **25**, non un'altra | [adoptium.net/temurin/releases/?version=25](https://adoptium.net/temurin/releases/?version=25) |
+| **Docker Desktop** | Far partire il database (PostgreSQL) e Mailpit, che il backend avvia da solo | Qualsiasi recente | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
+| **Node.js** | Far partire il frontend (Vite) | La **LTS**; almeno la 22.12 | [nodejs.org/en/download](https://nodejs.org/en/download) |
+| Visual Studio Code (consigliato) | Scrivere il codice | Qualsiasi recente | [code.visualstudio.com/download](https://code.visualstudio.com/download) |
+
+**Prima di iniziare, sul Mac:** controllate che chip avete. Menu Apple (la mela in alto a sinistra) → **Informazioni su questo Mac**. Se alla voce "Chip" c'è scritto "Apple M1", "M2", "M3" o simili avete un **Mac Apple Silicon**; se c'è "Intel" avete un **Mac Intel**. Vi serve per scegliere i file giusti di Java e Docker.
+
+**Dove si scrivono i comandi:**
+
+- **Mac:** l'app **Terminale**: premete Cmd+Spazio, scrivete "Terminale" e premete Invio (si trova anche in Applicazioni → Utility).
+- **Windows:** **Git Bash**, che si installa insieme a Git (Start → scrivete "Git Bash"). Usate Git Bash e non PowerShell: così i comandi di questa guida sono identici per Mac e Windows.
+
+Dopo aver installato un programma, **chiudete e riaprite il terminale**: altrimenti il terminale non lo trova.
+
+### 1.1 Git
+
+- **Mac:** aprite il Terminale e scrivete `git --version`. Se Git non c'è, il Mac propone di installare gli "Strumenti della riga di comando": cliccate **Installa** e aspettate la fine.
+- **Windows:** andate su [git-scm.com/downloads/win](https://git-scm.com/downloads/win), cliccate "Click here to download" e aprite il file. Nell'installazione lasciate tutte le opzioni come sono e cliccate sempre **Next**, poi **Install**. Insieme a Git si installa **Git Bash**.
+
+### 1.2 Java 25 (Temurin)
+
+1. Andate su [adoptium.net/temurin/releases/?version=25](https://adoptium.net/temurin/releases/?version=25). In alto dev'essere scelto **JDK 25 - LTS**.
+2. Scorrete fino a "All platforms and packages" e cercate il vostro sistema:
+   - **Mac:** nel riquadro **macOS** scegliete **Apple Silicon** oppure **Intel** (in base al vostro chip) e **JDK**, poi scaricate il file **PKG**;
+   - **Windows:** nel riquadro **Windows** scegliete **x64** e **JDK**, poi scaricate il file **MSI**.
+3. Aprite il file scaricato.
+4. **Solo su Windows:** nella schermata "Custom Setup" cliccate su **Set JAVA_HOME variable** e scegliete "Will be installed on local hard drive". Senza questa opzione il backend potrebbe non trovare Java.
+5. Finite l'installazione con **Next** (o **Continua** sul Mac) e **Install**.
+
+Guida ufficiale, se serve: [adoptium.net/installation](https://adoptium.net/installation/).
+
+### 1.3 Docker Desktop
+
+1. Andate su [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) e cliccate **Download Docker Desktop**. Scegliete:
+   - **Mac:** "Download for Mac – Apple Silicon" oppure "Download for Mac – Intel Chip", in base al vostro chip;
+   - **Windows:** "Download for Windows – AMD64" (quasi tutti i PC).
+2. **Mac:** aprite il file `.dmg` e trascinate Docker nella cartella **Applicazioni**. Poi aprite Docker dalle Applicazioni.
+3. **Windows:** aprite il file `.exe` e lasciate spuntata l'opzione **Use WSL 2 instead of Hyper-V**. Alla fine riavviate il computer, poi aprite Docker Desktop dal menu Start.
+4. Al primo avvio accettate le condizioni d'uso. L'accesso con un account Docker **non serve**: potete saltarlo.
+5. Aspettate che in basso a sinistra Docker Desktop scriva **Engine running** (sul Mac, la balena nella barra in alto smette di muoversi).
+
+Docker Desktop **deve essere aperto** ogni volta che avviate il backend.
+
+Guide ufficiali, se serve: [Mac](https://docs.docker.com/desktop/setup/install/mac-install/) e [Windows](https://docs.docker.com/desktop/setup/install/windows-install/). Su Windows, se Docker dice che manca WSL, seguite [questa guida](https://learn.microsoft.com/it-it/windows/wsl/install): aprite PowerShell come amministratore, scrivete `wsl --install`, riavviate.
+
+### 1.4 Node.js
+
+1. Andate su [nodejs.org/en/download](https://nodejs.org/en/download).
+2. Lasciate selezionata la versione con scritto **LTS** e il vostro sistema (macOS o Windows).
+3. Scaricate l'installatore (**`.pkg`** sul Mac, **`.msi`** su Windows), apritelo e installate con le opzioni già scelte.
+
+Con Node.js si installa anche `npm`, il programma che scarica le librerie del frontend.
+
+### 1.5 Visual Studio Code (consigliato)
+
+Da [code.visualstudio.com/download](https://code.visualstudio.com/download). Dentro VS Code conviene l'estensione **ESLint** (pannello Estensioni, a sinistra, cercate "ESLint"): segnala gli errori con le regole già messe nel progetto.
+
+### 1.6 Controllo: è tutto installato?
+
+Chiudete e riaprite il terminale (Terminale sul Mac, Git Bash su Windows) e scrivete un comando alla volta:
+
+```bash
+git --version
+java -version
+docker --version
+node -v
+npm -v
+```
+
+| Comando | Va bene se scrive | Se non va |
+|---------|-------------------|-----------|
+| `git --version` | `git version 2.` e un numero | Rifate il punto 1.1 |
+| `java -version` | una riga con **`25`**, es. `openjdk version "25.0.1"` | Se c'è un altro numero (es. 17 o 21) o "command not found", rifate il punto 1.2 |
+| `docker --version` | `Docker version` e un numero | Aprite Docker Desktop e riprovate; altrimenti rifate il punto 1.3 |
+| `node -v` | `v22.12` o un numero più alto (es. `v24...`) | Rifate il punto 1.4 |
+| `npm -v` | un numero, es. `11.6.2` | Rifate il punto 1.4 |
+
+---
+
+## 2. Scaricare il progetto
+
+Il progetto è su GitHub: [github.com/cristianpappalardoITS/gruppo-05-dreamscape](https://github.com/cristianpappalardoITS/gruppo-05-dreamscape).
+
+**La prima volta**, nel terminale, scaricatelo nella vostra cartella utente:
+
+```bash
+cd ~
+git clone https://github.com/cristianpappalardoITS/gruppo-05-dreamscape.git
+cd gruppo-05-dreamscape
+git switch develop
+```
+
+Si crea la cartella `gruppo-05-dreamscape` dentro la cartella utente: sul Mac `/Users/vostro-nome/gruppo-05-dreamscape`, su Windows `C:\Users\vostro-nome\gruppo-05-dreamscape`. Si lavora sempre partendo da `develop`.
+
+**Se il progetto ce l'avete già** (anche in un'altra cartella), entrate nella sua cartella e aggiornatelo prima di iniziare:
+
+```bash
+cd ~/gruppo-05-dreamscape
+git switch develop
+git pull
+```
+
+Se l'avete messo altrove, cambiate il percorso del `cd` (es. `cd ~/Desktop/gruppo-05-dreamscape`).
+
+In VS Code: **File → Apri cartella** e scegliete `gruppo-05-dreamscape`. Il terminale si apre anche dentro VS Code (**Terminale → Nuovo terminale**; su Windows scegliete "Git Bash" dalla freccia accanto al +).
+
+Per creare i branch e aprire le pull request seguite [workflow-github.md](../workflow-github.md).
+
+---
+
+## 3. Avviare il backend
+
+1. Aprite **Docker Desktop** e aspettate **Engine running**.
+2. Nel terminale, dalla cartella del progetto:
+
+   ```bash
+   cd sviluppo/backend
+   cp .env.example .env
+   ./gradlew bootRun
+   ```
+
+   `cp .env.example .env` si fa **solo la prima volta**: crea il file con i dati del database del vostro computer. Le volte dopo bastano `cd sviluppo/backend` e `./gradlew bootRun`.
+
+3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit. Serve internet.
+4. Il backend è pronto quando nel terminale compare una riga con **`Started DreamscapeApiApplication`**. **Lasciate aperto quel terminale**: se lo chiudete, il backend si ferma. Per fermarlo voi: **Ctrl+C**.
+5. Controllo: aprite [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) nel browser. Deve comparire `{"status":"UP"}`.
+
+Quando il backend è acceso:
+
+| Cosa | Indirizzo |
+|------|-----------|
+| API | `http://localhost:8080/api/v1` |
+| Swagger (tutte le API, si possono provare) | `http://localhost:8080/swagger-ui.html` |
+| Email di prova (recupero password) | `http://localhost:8025` |
+
+Nel database di sviluppo ci sono tre utenti di prova, con 500 DC e la fazione ancora da scegliere:
+
+| Username | Email | Password |
+|----------|-------|----------|
+| `anna_test` | `anna_test@example.test` | `prova-dreamscape` |
+| `bruno_test` | `bruno_test@example.test` | `prova-dreamscape` |
+| `carla_test` | `carla_test@example.test` | `prova-dreamscape` |
+
+Sono password di prova, valide solo sul database del vostro computer. Le carte di prova si chiamano "(prova)" e **non hanno ancora le illustrazioni**: arrivano con `illustrationUrl: null` (vedi [Gli oggetti che ricevete](#10-gli-oggetti-che-ricevete)).
+
+---
+
+## 4. Avviare il frontend collegato al backend
+
+### 4.1 Collegare Vite al backend (una volta sola)
+
+Il frontend (Vite, `http://localhost:5173`) e il backend (`http://localhost:8080`) in sviluppo sono su due indirizzi diversi. Alla consegna invece sono sullo **stesso indirizzo**. Per avere in sviluppo la stessa situazione si dice a Vite di passare al backend tutto quello che inizia con `/api` e `/images`.
+
+Sostituite il contenuto di `sviluppo/frontend/vite.config.js` con questo:
+
+```js
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    // Le chiamate a /api e le immagini delle carte vanno al backend:
+    // così sito e API hanno lo stesso indirizzo, come alla consegna.
+    proxy: {
+      "/api": "http://localhost:8080",
+      "/images": "http://localhost:8080",
+    },
+  },
+});
+```
+
+Basta farlo una volta per tutto il gruppo: chi lo fa per primo lo mette in una pull request, gli altri lo ricevono con `git pull`.
+
+Perché serve:
+
+- **Niente CORS:** per il browser le chiamate partono dallo stesso indirizzo della pagina.
+- **Il cookie del refresh token funziona:** il backend lo manda con `SameSite=Strict`, quindi il browser lo rimanda solo allo stesso sito.
+- Negli indirizzi si scrive sempre `/api/v1/...`, mai `http://localhost:8080/...`: lo stesso codice funziona in sviluppo e alla consegna.
+
+### 4.2 Avviare il frontend
+
+Con il backend acceso, aprite un **secondo terminale** (il primo resta occupato dal backend) e, dalla cartella del progetto:
+
+```bash
+cd sviluppo/frontend
+npm install
+npm run dev
+```
+
+- `npm install` scarica le librerie del frontend. Serve la prima volta e ogni volta che `package.json` cambia (es. dopo un `git pull` che aggiunge una libreria). Se non siete sicuri, rifatelo: non fa danni.
+- `npm run dev` avvia Vite. Quando scrive `Local: http://localhost:5173/`, aprite quell'indirizzo nel browser. Ogni modifica ai file si vede subito, senza ricaricare.
+- Per fermarlo: **Ctrl+C** nel suo terminale.
+
+In sviluppo usate **Chrome o Firefox**. Il cookie del refresh token ha l'opzione `Secure`: questi due browser lo accettano anche su `http://localhost`. Se dopo l'accesso il cookie non si salva (può succedere con Safari), ditelo a SWD.
+
+### 4.3 Controllo: frontend e backend si parlano?
+
+Con tutti e due accesi, aprite nel browser [http://localhost:5173/api/v1/packs](http://localhost:5173/api/v1/packs). Deve comparire:
+
+```json
+{"status":401,"code":"UNAUTHORIZED","message":"Accesso scaduto o mancante. Accedi di nuovo.","fieldErrors":[]}
+```
+
+È giusto così: la richiesta è passata da Vite al backend, che risponde "serve l'accesso". Se invece compare la pagina del frontend, un 404 o una pagina vuota, il proxy del punto 4.1 manca o il backend è spento.
+
+### 4.4 Se qualcosa non parte
+
+| Cosa succede | Cosa fare |
+|--------------|-----------|
+| `./gradlew bootRun` dà un errore che parla di **Java**, di **toolchain** o di **languageVersion 25** | Manca Java 25 o il terminale non lo vede. Controllate `java -version` (1.6); se serve reinstallate Java 25 (1.2) e riaprite il terminale |
+| `./gradlew bootRun` dà un errore che parla di **Docker** | Docker Desktop è chiuso o non ancora pronto: apritelo, aspettate **Engine running** e riprovate |
+| Sul Mac `docker --version` funziona ma il backend dice che **non trova `docker`** | In Docker Desktop: **Settings** (l'ingranaggio) → **Advanced** → scegliete **System** → **Apply & restart**. Poi riaprite il terminale |
+| Dopo un `git pull`, `./gradlew bootRun` si ferma con **Validate failed** o **Migrations have failed validation** | È arrivata una migration nuova e il database di sviluppo è vecchio. Da `sviluppo/backend`: `docker compose down -v`, poi di nuovo `./gradlew bootRun`. Il database di sviluppo si ricrea con i dati di prova (quello che avevate scritto a mano si perde) |
+| **Port 8080 was already in use** | Il backend è già acceso in un altro terminale: usate quello, oppure fermatelo con Ctrl+C |
+| `./gradlew: Permission denied` (Mac) | Scrivete `chmod +x gradlew` una volta, poi riprovate |
+| `npm` o `node`: **command not found** | Chiudete e riaprite il terminale. Se non basta, reinstallate Node.js (1.4) |
+| Vite dice che serve **Node.js 20.19+ o 22.12+** | Node.js è vecchio: installate la LTS (1.4) |
+| Nel terminale di Vite compare **ECONNREFUSED** o **proxy error** | Il backend è spento: avviatelo (capitolo 3) |
+| Dopo l'accesso, ricaricando la pagina si torna al login | Il cookie non si è salvato: usate Chrome o Firefox (4.2) |
+| Su Windows Docker Desktop dice che manca **WSL** | PowerShell come amministratore → `wsl --install` → riavviate (1.3) |
+
+Se dopo questi passi qualcosa ancora non va, mandate a Marco o Cristian la foto dell'errore con le ultime righe del terminale.
+
+---
+
+## 5. Come funziona in breve
 
 - Il frontend è fatto di **pagine HTML** con **CSS** e **JavaScript**. I **componenti** che si ripetono, come la carta, sono in **React** (decisione del 2/11). Gli strumenti li sceglie Gaia nella #72.
 - Il JavaScript della pagina chiede i dati al backend tramite `api.js`, che usa `fetch()` e riceve **JSON**. Poi riempie la pagina e passa i dati ai componenti.
@@ -37,29 +301,32 @@ L'elenco di tutti gli endpoint, con quelli già pronti, e la guida passo passo p
 
 ---
 
-## 2. Regole comuni delle API
+## 6. Regole comuni delle API
 
 | Cosa | Regola | Esempio |
 |------|--------|---------|
-| Indirizzo base | Tutte le API partono da `/api/v1`, sullo stesso indirizzo del sito: uguale in locale e alla consegna | `/api/v1/decks` |
-| Id | Ogni id è un **UUID**: un testo di 36 caratteri. Si usa così come arriva, anche negli URL; non si calcola e non si confronta come un numero | `"019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01"`, `/sfide/019a1f2e-…` |
+| Indirizzo base | Tutte le API partono da `/api/v1`, sullo stesso indirizzo del sito: uguale in locale e alla consegna. Negli indirizzi non si scrive mai `http://localhost:8080` | `/api/v1/decks` |
+| Id | Ogni id è un **UUID**: un testo di 36 caratteri. Si usa così come arriva, anche negli URL; non si calcola e non si confronta come un numero | `"019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01"` |
 | Formato | JSON in entrata e in uscita, nomi in `camelCase` | `{ "totalCards": 20, "isValid": true }` |
+| Valori mancanti | I campi senza valore arrivano come `null`, non spariscono | `"imageUrl": null` |
 | Risorse | In inglese, al plurale, il verbo è il metodo HTTP | `GET /decks`, `POST /decks`, `DELETE /decks/{deckId}` |
-| Date | Testo ISO 8601 in UTC: va convertito nell'ora locale per mostrarlo | `"2026-10-26T14:30:00Z"` |
-| Immagini | URL relativi al backend, in WebP: si mettono così come sono in `src` o si usano nel disegno della carta. Il browser le tiene in cache (vedi [capitolo 7](#7-come-si-monta-una-carta)) | `"/images/cards/base-004-v1.webp"` |
+| Date | Testo ISO 8601 in UTC: va convertito nell'ora italiana per mostrarlo | `"2026-10-26T14:30:00Z"` |
+| Immagini | URL relativi, in WebP: si mettono così come sono in `src` o si usano nel disegno della carta. Il browser le tiene in cache ([capitolo 12](#12-come-si-monta-una-carta)) | `"/images/cards/base-004-v1.webp"` |
 | Liste lunghe | Con paginazione: `page` (da 0) e `size` | `GET /me/cards?page=0&size=24` |
 
 Una lista paginata arriva così:
 
 ```json
-{
-  "items": [ ],
-  "page": 0,
-  "size": 24,
-  "totalItems": 57,
-  "totalPages": 3
-}
+{ "items": [ ], "page": 0, "size": 24, "totalItems": 57, "totalPages": 3 }
 ```
+
+**Le cinque regole del codice**
+
+1. Tutte le chiamate passano da **un solo file**, `api.js` ([capitolo 8](#8-il-file-apijs)). Mai `fetch()` nelle pagine o nei componenti.
+2. Il **server decide**: contenuto dei pacchetti, esito delle partite, validità dei mazzi, scambi. Il frontend mostra quello che riceve.
+3. **I controlli si fanno due volte:** nel frontend per aiutare l'utente (campo vuoto, password corta), nel backend per sicurezza.
+4. **Mai dati personali negli indirizzi**: niente email o password nella barra degli indirizzi o nei parametri `?`.
+5. **Niente dati finti** nel frontend: le pagine usano solo le API.
 
 ### Errori
 
@@ -74,22 +341,27 @@ Ogni errore ha lo stesso formato, così si mostra il messaggio senza logica spec
 }
 ```
 
-| Codice HTTP | Quando | Cosa fa il frontend |
-|-------------|--------|---------------------|
-| `200` / `201` | Tutto bene (`201` = creato) | Mostra il risultato |
-| `204` | Tutto bene, nessun dato in risposta | Mostra una conferma |
+- `message` è già in italiano: si può mostrare così com'è.
+- `code` serve al codice per capire cosa è successo (es. `NOT_ENOUGH_CREDITS`): mai confrontare il testo di `message`.
+- `fieldErrors` è sempre una lista, vuota se l'errore non riguarda un campo. Ogni voce va mostrata accanto al suo campo.
+- Solo il mazzo non valido (`INVALID_DECK`) ha anche `problems`, con tutti i problemi del mazzo ([Mazzi](#mazzi)).
+
+| Stato HTTP | Quando | Cosa fa la pagina |
+|------------|--------|-------------------|
+| `200`, `201` | Tutto bene (`201` = creato) | Mostra il risultato |
+| `202`, `204` | Tutto bene, nessun dato o richiesta presa in carico | Mostra una conferma |
 | `400` | Dati sbagliati (campo vuoto, password troppo corta, mazzo non valido) | Mostra `fieldErrors` accanto ai campi, oppure `message` |
-| `401` | Token mancante o scaduto | Prova `/auth/refresh`; se fallisce, porta alla pagina di accesso |
+| `401` | Token mancante o scaduto | Ci pensa `api.js`: rinnova il token o porta all'accesso |
 | `403` | Accesso non permesso (es. un giocatore nel backoffice) | Mostra "non hai i permessi" |
 | `404` | Non esiste (carta, mazzo, scambio...) | Pagina o messaggio "non trovato" |
 | `409` | Conflitto (username già usato, crediti insufficienti, carte non più possedute) | Mostra `message` |
-| `503` | Servizio momentaneamente non disponibile (es. il motore di gioco non risponde) | Mostra `message` e invita a riprovare |
+| `503` | Servizio momentaneamente non disponibile (es. il motore di gioco) | Mostra `message` e invita a riprovare |
 
-Codici (`code`) che arrivano con ogni API: `VALIDATION_ERROR` (campi sbagliati, con `fieldErrors`), `MALFORMED_REQUEST` (JSON o parametri illeggibili), `UNAUTHORIZED` (token mancante o scaduto), `FORBIDDEN`, `NOT_FOUND`, `CONFLICT` (due richieste insieme sugli stessi dati: si riprova), `INTERNAL_ERROR`. I codici delle singole pagine sono scritti accanto alle loro chiamate.
+L'elenco di tutti i codici (`code`) è nel [capitolo 15](#15-tutti-i-codici-di-errore).
 
 ---
 
-## 3. Accesso con JWT
+## 7. Accesso con JWT
 
 Il backend usa i **token JWT**. Ci sono due token:
 
@@ -100,7 +372,7 @@ Il backend usa i **token JWT**. Ci sono due token:
 
 Perché non `localStorage`: se una pagina avesse un bug di sicurezza (XSS), uno script estraneo potrebbe leggere il token. Il cookie `HttpOnly` non è leggibile dal JavaScript.
 
-Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio pagina. Non è un problema: all'apertura di ogni pagina `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 4](#4-il-file-apijs)).
+Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio pagina. Non è un problema: all'apertura di ogni pagina `api.js` chiama `/auth/refresh` e ottiene un token nuovo dal cookie (vedi il [capitolo 8](#8-il-file-apijs)).
 
 ### Le chiamate dell'accesso
 
@@ -108,6 +380,7 @@ Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio
 |--------|----------|--------------|---------------|
 | Registrazione | `POST /auth/register` | `username`, `email`, `password`, `privacyAccepted`, `termsAccepted` | `201` + i dati dell'utente. Poi si fa l'accesso |
 | Accesso | `POST /auth/login` | `login` (username **o** email), `password` | `accessToken` + dati dell'utente; il refresh token arriva nel cookie |
+| Accesso con Google | `POST /auth/google` | `idToken` (dal pulsante di Google); per registrarsi anche `username`, `privacyAccepted`, `termsAccepted` | `200` come l'accesso, `201` se l'account è nuovo, `202` se serve la registrazione (vedi sotto) |
 | Nuovo token di accesso | `POST /auth/refresh` | Niente: il cookie parte da solo | Un nuovo `accessToken` |
 | Uscita | `POST /auth/logout` | Niente | `204`; il backend revoca il refresh token e cancella il cookie |
 | Chi sono | `GET /me` | — | I dati dell'utente collegato |
@@ -116,10 +389,34 @@ Il sito è fatto di più pagine HTML, quindi la variabile si perde a ogni cambio
 | Password dimenticata (facoltativa) | `POST /auth/password-reset-requests` | `email` | Sempre `202`, anche se l'email non esiste (per non rivelare chi è registrato) |
 | Nuova password (facoltativa) | `POST /auth/password-resets` | `token` (dal link dell'email), `newPassword` | `204` |
 
-Esempio di registrazione:
+#### Accesso con Google
+
+Il pulsante "Continua con Google" usa la libreria ufficiale di Google (Google Identity Services), che dà al JavaScript un **id token**. Il frontend lo manda al backend, che lo verifica e risponde come `POST /auth/login`: stesso `accessToken`, stesso cookie. Il client id di Google lo dà SWD (decisione 032).
+
+1. `POST /auth/google` con `{ "idToken": "…" }`.
+2. Le risposte possibili:
+
+| Stato | Quando | Cosa fa il frontend |
+|-------|--------|---------------------|
+| `200` | L'account Google è già collegato, oppure c'è già un account con la stessa email (verificata da Google), che viene collegato | Come dopo `POST /auth/login` |
+| `202` | Nessun account Dreamscape: serve la registrazione. Arriva `{ "signupRequired": true, "email": "mario.rossi@gmail.com", "suggestedUsername": "mario_rossi" }` | Mostra un piccolo form con l'username proposto (modificabile) e le caselle di Privacy e Termini, poi rimanda `POST /auth/google` con `idToken`, `username`, `privacyAccepted` e `termsAccepted` |
+| `201` | L'account è stato creato (500 DC di registrazione): la persona è già dentro | Come dopo l'accesso, poi pagina **Benvenuto** |
+
+L'id token di Google scade dopo circa un'ora: tra il `202` e il secondo invio si può riusare lo stesso. Se è scaduto si ripremi il pulsante.
+
+Errori: `401 INVALID_GOOGLE_TOKEN` (token non valido o scaduto), `403 GOOGLE_EMAIL_NOT_VERIFIED`, `409 GOOGLE_ACCOUNT_CONFLICT` (l'account con quell'email è collegato a un altro account Google), `409 USERNAME_TAKEN`, `400 VALIDATION_ERROR` (username non valido o consensi mancanti), `401 ACCOUNT_DISABLED`, `503 GOOGLE_LOGIN_DISABLED` (manca il client id: si nasconde il pulsante).
+
+Chi si è registrato con Google **non ha una password**: `POST /auth/login`, `PUT /me/password` e `DELETE /me` non funzionano (`PUT` e `DELETE` rispondono `400 PASSWORD_NOT_SET`). La password si sceglie con "Password dimenticata", e da lì si entra in tutti e due i modi.
+
+### Le chiamate dell'accesso nel dettaglio
+
+Per ognuna: cosa **mandate**, cosa **ricevete** e gli errori possibili.
+
+#### Registrazione: `POST /auth/register`
+
+Mandate:
 
 ```json
-POST /api/v1/auth/register
 {
   "username": "lucida",
   "email": "lucida@example.com",
@@ -129,7 +426,36 @@ POST /api/v1/auth/register
 }
 ```
 
-Esempio di risposta all'accesso:
+| Campo | Regola |
+|-------|--------|
+| `username` | Da 3 a 30 caratteri: lettere, numeri e trattino basso |
+| `email` | Email valida, al massimo 255 caratteri |
+| `password` | Da 8 a 100 caratteri |
+| `privacyAccepted`, `termsAccepted` | Devono essere `true` |
+
+Username ed email sono unici **senza distinguere le maiuscole** ("Lucida" e "lucida" sono lo stesso utente).
+
+Ricevete `201`:
+
+```json
+{ "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida", "role": "PLAYER", "credits": 500 }
+```
+
+La registrazione **non** fa l'accesso: dopo si chiama `login()` e si va alla pagina Benvenuto.
+
+Errori: `409 USERNAME_TAKEN`, `409 EMAIL_TAKEN` (anche in `fieldErrors`), `400 VALIDATION_ERROR`.
+
+#### Accesso: `POST /auth/login`
+
+Mandate (con `login()` di `api.js`):
+
+```json
+{ "login": "lucida", "password": "una-password-lunga" }
+```
+
+`login` può essere lo username **o** l'email.
+
+Ricevete `200`, e il refresh token arriva nel cookie:
 
 ```json
 {
@@ -139,12 +465,109 @@ Esempio di risposta all'accesso:
 }
 ```
 
-- `role` è `PLAYER` oppure `ADMIN`: con `ADMIN` si mostra il backoffice. Un solo login per tutti: l'admin entra dalla stessa pagina.
-- **Regole dei campi** (il backend le ricontrolla sempre): username da 3 a 30 caratteri, lettere, numeri e trattino basso; email valida; password di almeno 8 caratteri; Privacy e Termini obbligatori.
-- Username ed email sono unici **senza distinguere le maiuscole**: "Lucida" e "lucida" sono lo stesso utente.
+- `expiresIn` è in secondi (900 = 15 minuti).
+- `role`: `PLAYER` o `ADMIN`. Con `ADMIN` si va al backoffice. L'admin entra dalla stessa pagina.
+- `credits` è il saldo: si mostra nell'intestazione. Dopo un ricaricamento della pagina si rilegge con `GET /me/summary`.
+
+Errori: `401 INVALID_CREDENTIALS` (stesso messaggio se l'utente non esiste o la password è sbagliata), `401 ACCOUNT_DISABLED` (account cancellato).
+
+#### Token nuovo: `POST /auth/refresh`
+
+Lo chiama solo `api.js`. Non si manda niente: parte il cookie.
+
+Ricevete `200` e un cookie nuovo:
+
+```json
+{ "accessToken": "eyJhbGciOi...", "expiresIn": 900 }
+```
+
+Errore: `401 INVALID_REFRESH_TOKEN` (cookie mancante, scaduto o revocato): l'utente deve rifare l'accesso.
+
+#### Uscita: `POST /auth/logout`
+
+Con `logout()` di `api.js`. Non si manda niente. Ricevete `204`: il backend revoca il refresh token e cancella il cookie. Poi si va alla Home.
+
+#### Password dimenticata: `POST /auth/password-reset-requests`
+
+Mandate:
+
+```json
+{ "email": "lucida@example.com" }
+```
+
+Ricevete **sempre** `202`, anche se l'email non è registrata: così nessuno può scoprire chi è iscritto. La pagina mostra sempre lo stesso messaggio, es. "Se l'email è registrata, ti abbiamo mandato un link".
+
+L'email contiene un link a `nuova-password.html?token=...` (indirizzo da confermare con chi fa la pagina). Il link vale **1 ora** e una volta sola. In sviluppo l'email si legge in Mailpit, `http://localhost:8025`.
+
+#### Nuova password: `POST /auth/password-resets`
+
+La pagina legge il token dall'indirizzo e lo manda con la password nuova:
+
+```js
+const token = new URLSearchParams(window.location.search).get("token");
+await api("/auth/password-resets", { method: "POST", body: { token, newPassword } });
+```
+
+Ricevete `204`. Tutti i dispositivi vengono scollegati: si va all'accesso.
+
+Errore: `400 INVALID_RESET_TOKEN` (link scaduto o già usato): si propone di chiederne uno nuovo.
+
+#### Profilo: `GET /me`
+
+Ricevete:
+
+```json
+{
+  "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01",
+  "username": "lucida",
+  "email": "lucida@example.com",
+  "role": "PLAYER",
+  "createdAt": "2026-10-26T14:30:00Z"
+}
+```
+
+Qui **non** ci sono i crediti: arrivano con l'accesso e con `GET /me/summary`.
+
+#### Cambio email: `PUT /me`
+
+Mandate:
+
+```json
+{ "email": "nuova@example.com" }
+```
+
+Ricevete `200` con il profilo aggiornato (stessa forma di `GET /me`). Lo username non si cambia.
+
+Errori: `409 EMAIL_TAKEN`, `400 VALIDATION_ERROR`.
+
+#### Cambio password: `PUT /me/password`
+
+Mandate:
+
+```json
+{ "currentPassword": "una-password-lunga", "newPassword": "una-password-nuova" }
+```
+
+Ricevete `204`. Gli **altri** dispositivi vengono scollegati; questo resta collegato.
+
+Errore: `400 WRONG_PASSWORD` (password attuale sbagliata).
+
+#### Cancellazione dell'account: `DELETE /me`
+
+Mandate:
+
+```json
+{ "password": "una-password-lunga" }
+```
+
+Ricevete `204` e il cookie viene cancellato: si va alla Home. L'account diventa anonimo e non si può recuperare: **chiedete conferma prima**.
+
+Errore: `400 WRONG_PASSWORD`.
+
+Da sapere:
+
 - `/auth/refresh` risponde `{ "accessToken": "…", "expiresIn": 900 }` e manda un refresh token **nuovo** nel cookie: quello vecchio non vale più. Il cookie si chiama `dreamscape_refresh` e vale solo per `/api/v1`.
 - Il primo accesso del giorno (ora italiana), con il login o con il refresh all'apertura di una pagina, dà i **50 DC** della ricompensa giornaliera: si vedono in `GET /me/credit-transactions`.
-- Il link dell'email di recupero porta a `nuova-password.html?token=…` (indirizzo da confermare con chi fa la pagina): la pagina manda `token` e `newPassword` a `/auth/password-resets`. Il link vale **1 ora** e una volta sola.
 
 Codici di errore dell'accesso:
 
@@ -156,90 +579,338 @@ Codici di errore dell'accesso:
 | `ACCOUNT_DISABLED` | 401 | L'account è stato cancellato |
 | `WRONG_PASSWORD` | 400 | Password attuale sbagliata nel cambio password o nella cancellazione dell'account |
 | `INVALID_RESET_TOKEN` | 400 | Link di recupero scaduto o già usato: si chiede un link nuovo |
+| `PASSWORD_NOT_SET` | 400 | Account registrato con Google senza password: cambio password e cancellazione chiedono di sceglierla prima con "Password dimenticata" |
+| `INVALID_GOOGLE_TOKEN`, `GOOGLE_EMAIL_NOT_VERIFIED`, `GOOGLE_ACCOUNT_CONFLICT`, `GOOGLE_LOGIN_DISABLED` | 401, 403, 409, 503 | Accesso con Google: vedi [Accesso con Google](#accesso-con-google) |
 
 ---
 
-## 4. Il file api.js
+## 8. Il file api.js
 
-Tutte le chiamate passano da un solo file, `api.js`, che aggiunge il token, rinnova quello scaduto e trasforma gli errori. Pagine e componenti non usano mai `fetch()` direttamente.
+Create `sviluppo/frontend/src/api.js` e copiate questo codice. Fa quattro cose:
 
-Qui sotto c'è l'idea di base. La versione da usare, che non fa mai partire due rinnovi del token insieme, è in [endpoint-e-fetch.md, passo 6](endpoint-e-fetch.md#passo-6-il-file-apijs).
+1. aggiunge il token di accesso a ogni chiamata;
+2. se il token è scaduto, ne chiede uno nuovo e riprova **una** volta;
+3. trasforma ogni errore in un `ApiError` con `status`, `code`, `message` e `fieldErrors`;
+4. tiene il token solo in memoria.
 
 ```js
-// api.js: unico punto da cui passano le chiamate al backend
-const API_BASE = "/api/v1"; // stesso indirizzo del sito, in locale e alla consegna
+// api.js: l'unico file che parla con il backend.
+// Il token di accesso resta in memoria; il refresh token è nel cookie HttpOnly.
 
-// Token di accesso solo in memoria; il refresh token sta nel cookie HttpOnly.
+const API_BASE = "/api/v1";
+// Pagina di accesso: cambiatela se il percorso è un altro
+const LOGIN_PAGE = "/login";
+
 let accessToken = null;
+// Rinnovo del token in corso: tutte le chiamate che lo aspettano usano lo stesso
+let refreshing = null;
 
-async function send(path, method, body) {
-  const headers = { "Content-Type": "application/json" };
+// Errore delle API: stessi campi della risposta del backend
+export class ApiError extends Error {
+  constructor({ status, code, message, fieldErrors }) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.fieldErrors = fieldErrors ?? [];
+  }
+}
+
+// Errore senza risposta del backend (spento, rete assente)
+const NETWORK_ERROR = {
+  status: 0,
+  code: "NETWORK_ERROR",
+  message: "Il server non risponde. Riprova tra poco.",
+};
+
+function send(path, method, body) {
+  const headers = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   return fetch(API_BASE + path, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
-    credentials: "include" // fa partire il cookie del refresh token
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    credentials: "same-origin", // manda il cookie del refresh token
   });
 }
 
-export async function refresh() {
-  const response = await fetch(API_BASE + "/auth/refresh", { method: "POST", credentials: "include" });
-  if (!response.ok) return false;
-  accessToken = (await response.json()).accessToken;
-  return true;
+// Chiede un token di accesso nuovo con il cookie. Restituisce true se l'utente è collegato.
+// Mai due rinnovi insieme: il backend cambia il cookie a ogni rinnovo, e se riceve due volte
+// lo stesso cookie scollega l'utente da tutti i dispositivi.
+export function refresh() {
+  if (!refreshing) {
+    refreshing = fetch(API_BASE + "/auth/refresh", { method: "POST", credentials: "same-origin" })
+      .then(async (response) => {
+        accessToken = response.ok ? (await response.json()).accessToken : null;
+        return accessToken !== null;
+      })
+      .catch(() => false)
+      .finally(() => {
+        refreshing = null;
+      });
+  }
+  return refreshing;
 }
 
+// Chiamata alle API. Esempi:
+//   await api("/packs")
+//   await api(`/packs/${packId}/open`, { method: "POST" })
+//   await api("/me", { method: "PUT", body: { email } })
+// Restituisce i dati della risposta, oppure null se la risposta è vuota (202, 204).
+// Se qualcosa va storto lancia un ApiError.
 export async function api(path, { method = "GET", body } = {}) {
-  let response = await send(path, method, body);
-  if (response.status === 401 && (await refresh())) {
-    response = await send(path, method, body); // riprova una volta con il token nuovo
+  const isAuthCall = path.startsWith("/auth/");
+  let response;
+  try {
+    response = await send(path, method, body);
+    if (response.status === 401 && !isAuthCall && (await refresh())) {
+      response = await send(path, method, body); // riprova una volta con il token nuovo
+    }
+  } catch {
+    throw new ApiError(NETWORK_ERROR);
   }
-  if (response.status === 401) {
-    window.location.href = "/accesso.html";
-    return null;
+
+  if (response.status === 401 && !isAuthCall) {
+    window.location.href = LOGIN_PAGE; // sessione finita: si torna all'accesso
+    return new Promise(() => {}); // la pagina sta cambiando: non continua
   }
-  if (response.status === 204) return null;
-  const data = await response.json();
-  if (!response.ok) throw data; // { status, code, message, fieldErrors }
+  if (response.status === 202 || response.status === 204) return null;
+
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiError(data ?? { ...NETWORK_ERROR, status: response.status });
   return data;
 }
 
+// Accesso con username o email. Restituisce l'utente: { id, username, role, credits }
 export async function login(loginName, password) {
   const data = await api("/auth/login", { method: "POST", body: { login: loginName, password } });
   accessToken = data.accessToken;
   return data.user;
 }
+
+// Uscita: il backend cancella il cookie, qui si dimentica il token
+export async function logout() {
+  try {
+    await api("/auth/logout", { method: "POST" });
+  } finally {
+    accessToken = null;
+  }
+}
+
+// Trasforma fieldErrors in un oggetto { nomeCampo: messaggio }, comodo nei form
+export function errorsByField(error) {
+  return Object.fromEntries((error?.fieldErrors ?? []).map((item) => [item.field, item.message]));
+}
 ```
 
-Uso in una pagina:
+Due cose da sapere:
 
-```js
-import { api, refresh } from "./api.js";
+- **`NETWORK_ERROR` non viene dal backend:** lo crea `api.js` quando il backend non risponde.
+- **Perché un solo rinnovo alla volta:** in sviluppo React (`StrictMode`) esegue due volte ogni `useEffect`. Senza `refreshing`, all'apertura partirebbero due rinnovi con lo stesso cookie, e il backend li prenderebbe per un furto di token, scollegando l'utente.
 
-await refresh(); // all'apertura della pagina: recupera il token dal cookie
-const summary = await api("/me/summary");
-document.querySelector("#credits").textContent = summary.credits;
-```
+---
 
-Una pagina che usa un componente React gli passa i dati arrivati da `api.js`:
+---
+
+## 9. Usare api.js nelle pagine
+
+### 9.1 All'apertura del sito: l'utente è ancora collegato?
+
+Il token è in memoria, quindi si perde quando si ricarica la pagina. Il cookie invece resta. All'avvio si chiama `refresh()` una volta, prima di mostrare le pagine dell'area utente. In `main.jsx`:
 
 ```jsx
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { api, refresh } from "./api.js";
-import { Card } from "./components/Card.jsx";
+import { refresh } from "./api.js";
+import App from "./App.jsx";
+import "./index.css";
 
-await refresh();
-const openingId = window.location.pathname.split("/").pop(); // /negozio/apertura/{openingId}
-const opening = await api(`/pack-openings/${openingId}`);
-createRoot(document.querySelector("#opened-cards")).render(
-  opening.cards.map((item, index) => <Card key={index} card={item.card} />)
-);
+// isLoggedIn è true se il cookie è ancora valido: l'utente non deve rifare l'accesso
+refresh().then((isLoggedIn) => {
+  createRoot(document.getElementById("root")).render(
+    <StrictMode>
+      <App isLoggedIn={isLoggedIn} />
+    </StrictMode>,
+  );
+});
+```
+
+Il primo accesso del giorno, anche con questo `refresh()`, dà i 50 DC della ricompensa giornaliera.
+
+Il `refresh()` restituisce solo il token, non il saldo: dopo un ricaricamento i crediti per l'intestazione si leggono con [`GET /me/summary`](#dashboard).
+
+### 9.2 Leggere dati: GET in un useEffect
+
+Esempio della pagina Negozio. È lo schema da usare per ogni pagina che **legge** dati: stato di caricamento, errore, dati.
+
+```jsx
+import { useEffect, useState } from "react";
+import { api } from "../api.js";
+
+export default function ShopPage() {
+  const [packs, setPacks] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api("/packs").then(setPacks).catch(setError);
+  }, []);
+
+  if (error) return <p role="alert">{error.message}</p>;
+  if (!packs) return <p>Caricamento...</p>;
+
+  return (
+    <ul>
+      {packs.map((pack) => (
+        <li key={pack.id}>
+          {pack.name}: {pack.priceCredits} DC
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### 9.3 Mandare dati: un form con gli errori accanto ai campi
+
+Esempio della pagina di accesso già fatta (`LoginPage.jsx`). Ai campi serve un `name`, e il campo "Email" accetta **username o email**: conviene chiamarlo "Username o email".
+
+```jsx
+import { useState } from "react";
+import { login } from "../api.js";
+
+const LoginPage = () => {
+  const [error, setError] = useState(null);
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    setSending(true);
+    setError(null);
+    try {
+      const user = await login(form.get("login"), form.get("password"));
+      // ADMIN va al backoffice, PLAYER alla dashboard
+      window.location.href = user.role === "ADMIN" ? "/admin" : "/dashboard";
+    } catch (err) {
+      setError(err.message); // es. "Username, email o password non corretti."
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <InputField label="Username o email" name="login" autoComplete="username" required />
+      <PasswordField label="Password" name="password" autoComplete="current-password" required />
+      {error && <p role="alert">{error}</p>}
+      <LoginButton type="submit" disabled={sending}>ACCEDI</LoginButton>
+    </form>
+  );
+};
+```
+
+Con più campi, come nella registrazione, si usa `errorsByField`:
+
+```jsx
+import { useState } from "react";
+import { api, errorsByField } from "../api.js";
+
+export default function RegisterPage() {
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState(null);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    try {
+      await api("/auth/register", {
+        method: "POST",
+        body: {
+          username: form.get("username"),
+          email: form.get("email"),
+          password: form.get("password"),
+          privacyAccepted: form.get("privacy") === "on",
+          termsAccepted: form.get("terms") === "on",
+        },
+      });
+      // Registrato: si fa l'accesso e si va al Benvenuto
+    } catch (err) {
+      setErrors(errorsByField(err)); // { username: "Questo username è già usato." }
+      setMessage(err.message);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="username" />
+      {errors.username && <small>{errors.username}</small>}
+      {/* ...gli altri campi allo stesso modo... */}
+      {message && <p role="alert">{message}</p>}
+      <button type="submit">Registrati</button>
+    </form>
+  );
+}
+```
+
+### 9.4 Azioni che cambiano dati: comprare un pacchetto
+
+```jsx
+const [buying, setBuying] = useState(false);
+
+async function buy(pack) {
+  setBuying(true);
+  try {
+    const result = await api(`/packs/${pack.id}/open`, { method: "POST" });
+    // Si va alla pagina dell'apertura: ricaricarla non compra un altro pacchetto
+    window.location.href = `/negozio/apertura/${result.openingId}`;
+  } catch (err) {
+    if (err.code === "NOT_ENOUGH_CREDITS") {
+      setMessage("Non hai abbastanza Dream Credits.");
+    } else {
+      setMessage(err.message);
+    }
+  } finally {
+    setBuying(false);
+  }
+}
+
+// Il pulsante si spegne mentre la richiesta è in corso: niente doppi acquisti
+<button onClick={() => buy(pack)} disabled={buying}>Compra</button>;
+```
+
+**Regola importante:** una chiamata che cambia dati (`POST`, `PUT`, `DELETE`) parte **solo da un clic** dell'utente, mai da un `useEffect`. In sviluppo React esegue due volte gli `useEffect`: si comprerebbero due pacchetti.
+
+### 9.5 Liste a pagine: i crediti
+
+```jsx
+const [page, setPage] = useState(0);
+const [data, setData] = useState(null);
+
+useEffect(() => {
+  api(`/me/credit-transactions?page=${page}&size=20`).then(setData);
+}, [page]);
+
+// data.items = le righe; data.totalPages = quante pagine ci sono
+<button disabled={page === 0} onClick={() => setPage(page - 1)}>Indietro</button>
+<button disabled={!data || page + 1 >= data.totalPages} onClick={() => setPage(page + 1)}>Avanti</button>
+```
+
+### 9.6 Date e numeri
+
+```js
+// "2026-11-11T10:15:00Z" -> "11/11/2026, 11:15"
+const formatDate = (iso) =>
+  new Date(iso).toLocaleString("it-IT", { timeZone: "Europe/Rome", dateStyle: "short", timeStyle: "short" });
+
+// 1000 -> "1.000"
+const formatCredits = (credits) => credits.toLocaleString("it-IT");
 ```
 
 ---
 
-## 5. Gli oggetti che ricevete
+---
+
+## 10. Gli oggetti che ricevete
 
 Questi oggetti tornano in più pagine: conviene scrivere una sola funzione JavaScript per mostrarli.
 
@@ -271,11 +942,38 @@ Questi oggetti tornano in più pagine: conviene scrivere una sola funzione JavaS
 ```
 
 - `effect` è `null` se la carta non ha effetti; `value` è il numero X dell'effetto (es. `Castigo 2`), `null` se l'effetto non ha numero.
-- `illustrationUrl` è la copia **grande** (larghezza 1024 px), `illustrationThumbUrl` la **miniatura** (larghezza 400 px): quale usare è spiegato nel [capitolo 7](#7-come-si-monta-una-carta).
+- `illustrationUrl` è la copia **grande** (larghezza 1024 px), `illustrationThumbUrl` la **miniatura** (larghezza 400 px): quale usare è spiegato nel [capitolo 12](#12-come-si-monta-una-carta).
 - `illustrationFocusY` dice quale fascia dell'immagine resta visibile nel ritaglio: 0 = in alto, 1 = in basso (quasi sempre 0,40).
 - **Full art:** è una carta a parte, con il suo `id` e il suo codice (`BASE-004-FA`): `variantType` è `"FULL_ART"` e `baseCardId` è l'id della carta normale. Nome, testi, ATT, DIF, fazione, rarità ed effetto sono quelli della carta normale (il backend li manda già compilati); cambiano solo `id`, `code` e l'illustrazione, verticale 2:3. Oggi solo le Leggendarie hanno la full art. Domani le skin arriveranno nello stesso modo, con un altro `variantType`.
 - `lordTitle` c'è solo per le tre carte Lord.
 - Codici delle rarità: `COMMON`, `RARE`, `EPIC`, `LEGENDARY`. Codici delle fazioni: `DREAMS`, `NIGHTMARES`, `MEMORIES`.
+
+### La carta campo per campo
+
+| Campo | Tipo | Cosa ci fate | Può essere `null`? |
+|-------|------|--------------|--------------------|
+| `id` | UUID | Chiave nelle liste React (`key`), e il `cardId` da mandare per mazzi e scambi | No |
+| `code` | testo | Codice della carta, es. `BASE-004`; la full art finisce con `-FA` | No |
+| `baseCardId` | UUID | Per la full art: l'id della carta normale | Sì, nelle carte normali |
+| `variantType` | testo | `"FULL_ART"` = carta senza cornice | Sì, nelle carte normali |
+| `name` | testo | Nome sulla carta | No |
+| `faction.code` | testo | Sceglie cornice e simbolo: `DREAMS` (luna), `NIGHTMARES` (occhio), `MEMORIES` (clessidra) | No |
+| `faction.name` | testo | Nome da mostrare | No |
+| `rarity.code` | testo | Sceglie la cornice: `COMMON`, `RARE`, `EPIC`, `LEGENDARY` | No |
+| `rarity.name` | testo | "Comune", "Rara", "Epica", "Leggendaria" | No |
+| `attack`, `defense` | numero | ATT e DIF | No |
+| `description` | testo | Testo di atmosfera | Sì: allora non si mostra |
+| `effect` | oggetto | Effetto della carta | Sì: carta senza effetto |
+| `effect.code` | testo | Codice, es. `REST` (per un'icona, se ci sarà) | No |
+| `effect.name` | testo | Nome, es. "Riposo" | No |
+| `effect.value` | numero | Il numero X, es. 3 | Sì: effetti senza numero |
+| `effect.text` | testo | Testo per il giocatore, **con il numero già dentro** | No |
+| `illustrationUrl` | testo | Illustrazione grande (1024 px di larghezza) | Sì, finché non c'è |
+| `illustrationThumbUrl` | testo | Miniatura (400 px) | Sì, insieme a quella grande |
+| `illustrationFocusY` | numero da 0 a 1 | Quale fascia dell'immagine resta visibile nel ritaglio (0 = in alto, 1 = in basso). Di base 0,40 | No |
+| `lordTitle` | testo | Solo per le tre carte Lord, es. "Dreams Lord" | Sì, nelle altre carte |
+
+Se `illustrationUrl` è `null` (le carte di prova `TEST-` non hanno illustrazioni), il componente mostra un'immagine di riserva.
 
 ### Carta della collezione
 
@@ -295,7 +993,7 @@ Degli altri giocatori si vede solo lo username: mai email o crediti.
 
 ---
 
-## 6. Pagine e chiamate
+## 11. Pagine e chiamate
 
 Per ogni pagina: le chiamate da fare e cosa mostrare. 🔓 = pagina pubblica, 🔑 = serve l'accesso, 🛠️ = solo admin.
 
@@ -388,8 +1086,8 @@ Il set iniziale è di **una sola fazione, scelta dal Dreamweaver** in questa pag
   "starterFaction": "DREAMS",
   "starterCards": [ { "card": { "...": "..." } } ],
   "welcomeOpenings": [
-    { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Benvenuto", "cards": [ { "card": { "...": "..." } } ] },
-    { "openingId": "019a2b40-0000-7000-8000-000000000102", "packName": "Benvenuto con Epica", "cards": [ { "card": { "...": "..." } } ] }
+    { "openingId": "019a2b40-0000-7000-8000-000000000101", "packName": "Welcome Pack", "cards": [ { "card": { "...": "..." } } ] },
+    { "openingId": "019a2b40-0000-7000-8000-000000000102", "packName": "Welcome Pack Epico", "cards": [ { "card": { "...": "..." } } ] }
   ]
 }
 ```
@@ -455,7 +1153,17 @@ Lo username non si cambia (è il nome visibile agli amici). La cancellazione ren
 }
 ```
 
-Tipi possibili: `SIGNUP_BONUS`, `DAILY_REWARD`, `PACK_PURCHASE`, `MATCH_REWARD`, `MISSION_REWARD`, `LEAGUE_REWARD`, `ADMIN_ADJUSTMENT` (il frontend li traduce in italiano). Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
+| `type` | Da mostrare come |
+|--------|------------------|
+| `SIGNUP_BONUS` | Regalo di benvenuto |
+| `DAILY_REWARD` | Ricompensa giornaliera |
+| `PACK_PURCHASE` | Acquisto pacchetto |
+| `MATCH_REWARD` | Vittoria in partita |
+| `MISSION_REWARD` | Missione completata |
+| `LEAGUE_REWARD` | Premio di lega |
+| `ADMIN_ADJUSTMENT` | Correzione dell'amministratore |
+
+`amount` è negativo per le spese. `page` parte da 0, `size` va da 1 a 100 (di base 20); i movimenti arrivano dal più recente. Il riquadro "Acquista crediti" con denaro vero va mostrato solo come "in arrivo": in fase 1 non c'è.
 
 #### Negozio e apertura dei pacchetti
 
@@ -628,6 +1336,17 @@ GET /api/v1/friends
 [ { "user": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" }, "since": "2026-10-20T18:11:00Z" } ]
 ```
 
+Cosa si riceve dalle altre chiamate:
+
+| Chiamata | Mandate | Ricevete |
+|----------|---------|----------|
+| `GET /users?search=luc` | | Lista di `{ "id", "username" }` |
+| `POST /friend-requests` | `{ "username": "lucida" }` | `201` con la richiesta |
+| `GET /friend-requests?direction=received` (o `sent`) | | Lista di richieste: `{ "id", "user": { "id", "username" }, "createdAt" }` |
+| `POST /friend-requests/{requestId}/accept` | | `200` con l'amico |
+| `DELETE /friend-requests/{requestId}` | | `204` (rifiutata o annullata) |
+| `DELETE /friends/{userId}` | | `204`; annulla anche scambi e sfide in attesa tra voi due |
+
 #### Scambi
 
 Si scambia **solo con gli amici**. Quantità e rarità sono libere (es. 1 Epica per 5 Comuni): decide l'amico accettando o rifiutando.
@@ -692,6 +1411,7 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 
 - Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
 - Se il motore di gioco non risponde, `POST /matches/...` e `POST /challenges/{challengeId}/accept` rispondono `503` con `code: "ENGINE_UNAVAILABLE"`: la partita non si gioca, niente crediti né punti, la sfida resta in attesa. Si mostra "Partita non disponibile, riprova tra poco".
+- `PUT /me/ranked-deck` risponde `204`; `POST /challenges` risponde `201` con la sfida; rifiuto e annullamento rispondono `204`.
 - Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
 - Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
 
@@ -767,11 +1487,13 @@ Il risultato:
 | Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `/admin/missions`, `/admin/leagues` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round, premi delle missioni, soglie e premi delle leghe. Le carte per mazzo (20) sono in sola lettura |
 | Messaggi | `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | Messaggi del form Contatti: letto, archiviato |
 
-Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`).
+Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`). Un giocatore che chiama `/admin/...` riceve `403`.
+
+Per caricare un file non si usa JSON: si manda un `FormData`. Quando arriverà, `api.js` avrà una funzione apposta.
 
 ---
 
-## 7. Come si monta una carta
+## 12. Come si monta una carta
 
 La carta la **monta il frontend** con un solo componente React (`Card`, #81): il backend manda i dati e l'illustrazione, non l'immagine finita. Così, se cambia una statistica, la carta si aggiorna da sola.
 
@@ -841,9 +1563,69 @@ In una prima sessione di un nuovo utente si montano circa 150–200 carte: benve
 
 Se nella stessa pagina la stessa carta compare più volte (es. due copie nel mazzo), basta usare `Card` due volte: le immagini arrivano dalla cache e non si scaricano di nuovo.
 
+### Esempio di componente
+
+Una base da cui partire per la #81. Le classi CSS e i nomi dei file delle cornici sono di esempio: li decide chi fa il componente.
+
+```jsx
+// Card.jsx: la carta montata dal frontend con i dati del backend
+const FALLBACK_ART = "/img/illustrazione-mancante.webp";
+
+export default function Card({ card, size = "thumb" }) {
+  const isFullArt = card.variantType === "FULL_ART";
+  const art = (size === "large" ? card.illustrationUrl : card.illustrationThumbUrl) ?? FALLBACK_ART;
+  const frame = `/img/cornici/${card.faction.code.toLowerCase()}-${card.rarity.code.toLowerCase()}-${size}-v1.webp`;
+  // Testo per chi usa un lettore di schermo
+  const label = `${card.name}, ${card.faction.name}, ${card.rarity.name}, attacco ${card.attack}, difesa ${card.defense}`;
+
+  return (
+    <figure className={`card card--${size}${isFullArt ? " card--full-art" : ""}`} aria-label={label}>
+      {/* 1. Illustrazione, ritagliata in verticale senza zoom */}
+      <img
+        className="card__art"
+        src={art}
+        alt=""
+        loading="lazy"
+        style={{ objectFit: "cover", objectPosition: `50% ${card.illustrationFocusY * 100}%` }}
+      />
+      {/* 2. Cornice sopra; la full art non ce l'ha */}
+      {!isFullArt && <img className="card__frame" src={frame} alt="" />}
+      {/* 3. Testi nelle loro zone */}
+      <span className="card__name">{card.name}</span>
+      {card.lordTitle && <span className="card__lord">{card.lordTitle}</span>}
+      {card.effect && (
+        <p className="card__effect">
+          <strong>{card.effect.name}</strong> {card.effect.text}
+        </p>
+      )}
+      {card.description && <p className="card__description">{card.description}</p>}
+      <span className="card__attack">{card.attack}</span>
+      <span className="card__defense">{card.defense}</span>
+    </figure>
+  );
+}
+```
+
+Uso:
+
+```jsx
+// Apertura di un pacchetto: carte grandi
+opening.cards.map((item, index) => <Card key={index} card={item.card} size="large" />);
+
+// Collezione: miniature, con le copie
+collection.items.map((item) => (
+  <div key={item.card.id}>
+    <Card card={item.card} />
+    <span>x{item.quantity}</span>
+  </div>
+));
+```
+
+Nelle aperture si usa l'indice come `key`: la stessa carta può uscire due volte nello stesso pacchetto.
+
 ---
 
-## 8. Elenco delle pagine per la sitemap
+## 13. Elenco delle pagine per la sitemap
 
 Le pagine che il database permette, già con le decisioni di questi giorni.
 
@@ -858,7 +1640,126 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**,
 
 ---
 
-## 9. Regole da ricordare
+## 14. Elenco completo degli endpoint
+
+Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = solo `role: ADMIN`. Gli indirizzi sono dopo `/api/v1`. Dove sono spiegati: accesso e profilo nel [capitolo 7](#7-accesso-con-jwt), tutto il resto nella pagina che li usa ([capitolo 11](#11-pagine-e-chiamate)).
+
+### Pronti (in develop)
+
+| Metodo e indirizzo | Accesso | A cosa serve |
+|--------------------|---------|--------------|
+| `POST /auth/register` | pubblico | Registrazione |
+| `POST /auth/login` | pubblico | Accesso |
+| `POST /auth/google` | pubblico | Accesso e registrazione con Google (#159; serve `GOOGLE_CLIENT_ID` sul backend) |
+| `POST /auth/refresh` | pubblico (cookie) | Token di accesso nuovo |
+| `POST /auth/logout` | pubblico (cookie) | Uscita |
+| `POST /auth/password-reset-requests` | pubblico | Password dimenticata: manda l'email |
+| `POST /auth/password-resets` | pubblico | Nuova password dal link dell'email |
+| `GET /me` | utente | Dati del profilo |
+| `PUT /me` | utente | Cambio email |
+| `PUT /me/password` | utente | Cambio password |
+| `DELETE /me` | utente | Cancellazione dell'account |
+| `GET /me/credit-transactions` | utente | Movimenti dei Dream Credits |
+| `GET /me/welcome` | utente | Pagina Benvenuto: fazione scelta e carte ricevute |
+| `POST /me/welcome` | utente | Scelta della fazione: set iniziale e pacchetti di benvenuto |
+| `GET /packs` | utente | Pacchetti in vendita nel negozio |
+| `POST /packs/{packId}/open` | utente | Compra e apre un pacchetto |
+| `GET /pack-openings/{openingId}` | utente | Rilegge un'apertura |
+| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte (missioni e contatori arrivano con #125 e #93) |
+| `GET /cards` | pubblico | Catalogo, con filtri e pagine (anche `?featured=true` per la Home) |
+| `GET /cards/{cardId}` | pubblico | Una carta |
+| `GET /factions` | pubblico | Le tre fazioni con il loro Lord |
+| `GET /rules` | pubblico | I numeri del regolamento |
+| `GET /images/...` | pubblico | Illustrazioni e immagini dei pacchetti, con la cache |
+| `GET /me/cards` | utente | La mia collezione, con filtri |
+| `GET /decks` | utente | I miei mazzi |
+| `GET /decks/{deckId}` | utente | Un mazzo |
+| `POST /decks` | utente | Nuovo mazzo |
+| `PUT /decks/{deckId}` | utente | Modifica di un mazzo |
+| `DELETE /decks/{deckId}` | utente | Elimina un mazzo |
+
+### Da fare
+
+| Metodo e indirizzo | Accesso | A cosa serve | Issue | Chi | Sprint |
+|--------------------|---------|--------------|-------|-----|--------|
+| `GET /friends` | utente | I miei amici | #93 | Marco | 5 |
+| `DELETE /friends/{userId}` | utente | Togli un amico | #93 | Marco | 5 |
+| `GET /users?search=` | utente | Cerca un Dreamweaver per username | #93 | Marco | 5 |
+| `GET /users/{userId}/cards` | utente | Collezione di un amico (per gli scambi) | #93 | Marco | 5 |
+| `GET /friend-requests?direction=` | utente | Richieste di amicizia ricevute o inviate | #93 | Marco | 5 |
+| `POST /friend-requests` | utente | Manda una richiesta | #93 | Marco | 5 |
+| `POST /friend-requests/{requestId}/accept` | utente | Accetta | #93 | Marco | 5 |
+| `DELETE /friend-requests/{requestId}` | utente | Rifiuta o annulla | #93 | Marco | 5 |
+| `GET /trades?box=` | utente | Scambi ricevuti, inviati, storico | #93 | Marco | 5 |
+| `GET /trades/{tradeId}` | utente | Uno scambio | #93 | Marco | 5 |
+| `POST /trades` | utente | Proponi uno scambio | #93 | Marco | 5 |
+| `POST /trades/preview` | utente | Mazzi che cambierebbero con la proposta | #93 | Marco | 5 |
+| `GET /trades/{tradeId}/deck-warnings` | utente | Mazzi che cambierebbero accettando | #93 | Marco | 5 |
+| `POST /trades/{tradeId}/accept` | utente | Accetta | #93 | Marco | 5 |
+| `POST /trades/{tradeId}/reject` | utente | Rifiuta | #93 | Marco | 5 |
+| `POST /trades/{tradeId}/cancel` | utente | Annulla (chi propone) | #93 | Marco | 5 |
+| `PUT /me/ranked-deck` | utente | Scegli il mazzo classificato | #127 | Cristian | 6 |
+| `POST /matches/ranked` | utente | Gioca una classificata | #127 | Cristian | 6 |
+| `POST /matches/casual` | utente | Gioca una rapida | #127 | Cristian | 6 |
+| `GET /me/matches` | utente | Storico delle partite | #127 | Cristian | 6 |
+| `GET /matches/{matchId}` | utente | Risultato e replay | #94 | Cristian | 5 |
+| `GET /challenges?box=` | utente | Sfide ricevute o inviate | #94 | Cristian | 5 |
+| `POST /challenges` | utente | Sfida un amico | #94 | Cristian | 5 |
+| `POST /challenges/{challengeId}/accept` | utente | Accetta e gioca | #94 | Cristian | 5 |
+| `POST /challenges/{challengeId}/reject` | utente | Rifiuta | #94 | Cristian | 5 |
+| `POST /challenges/{challengeId}/cancel` | utente | Annulla | #94 | Cristian | 5 |
+| `GET /leagues` | utente | Le leghe con soglie e premi | #106 | Cristian | 6 |
+| `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
+| `/admin/...` | admin | Backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | 5 |
+
+Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
+
+---
+
+## 15. Tutti i codici di errore
+
+**Pronti** (arrivano già oggi):
+
+| `code` | Stato | Quando |
+|--------|-------|--------|
+| `VALIDATION_ERROR` | 400 | Campi sbagliati: guardate `fieldErrors` |
+| `MALFORMED_REQUEST` | 400 | JSON illeggibile o id scritto male nell'indirizzo |
+| `UNAUTHORIZED` | 401 | Token mancante o scaduto (ci pensa `api.js`) |
+| `FORBIDDEN` | 403 | Non permesso, es. un giocatore nel backoffice |
+| `NOT_FOUND` | 404 | Indirizzo che non esiste |
+| `METHOD_NOT_ALLOWED` | 405 | Metodo sbagliato, es. `GET` dove serve `POST` |
+| `CONFLICT` | 409 | Due richieste insieme sugli stessi dati: si riprova |
+| `INTERNAL_ERROR` | 500 | Errore del server: "Riprova" |
+| `USERNAME_TAKEN`, `EMAIL_TAKEN` | 409 | Username o email già usati |
+| `INVALID_CREDENTIALS` | 401 | Accesso sbagliato |
+| `ACCOUNT_DISABLED` | 401 | Account cancellato |
+| `INVALID_REFRESH_TOKEN` | 401 | Sessione finita: rifare l'accesso |
+| `WRONG_PASSWORD` | 400 | Password attuale sbagliata |
+| `INVALID_RESET_TOKEN` | 400 | Link di recupero scaduto o già usato |
+| `INVALID_FACTION` | 400 | Fazione che non esiste |
+| `WELCOME_ALREADY_CLAIMED` | 409 | Fazione già scelta |
+| `PACK_NOT_FOUND` | 404 | Pacchetto che non esiste o non si compra |
+| `PACK_NOT_ON_SALE` | 409 | Pacchetto non più in vendita |
+| `INVALID_COVER` | 400 | Copertina sbagliata |
+| `NOT_ENOUGH_CREDITS` | 409 | Crediti che non bastano |
+| `PACK_OPENING_NOT_FOUND` | 404 | Apertura che non esiste o di un altro utente |
+| `CARD_NOT_FOUND` | 404 | Carta che non esiste |
+| `INVALID_DECK` | 400 | Mazzo che non rispetta le regole: la lista è in `problems` |
+| `DECK_NOT_FOUND` | 404 | Mazzo che non esiste o di un altro utente |
+| `DECK_NAME_TAKEN` | 409 | Hai già un mazzo con questo nome |
+| `PASSWORD_NOT_SET` | 400 | Account senza password (registrato con Google) |
+| `INVALID_GOOGLE_TOKEN` | 401 | Accesso con Google non riuscito |
+| `GOOGLE_EMAIL_NOT_VERIFIED` | 403 | Email dell'account Google non verificata |
+| `GOOGLE_ACCOUNT_CONFLICT` | 409 | Account già collegato a un altro account Google |
+| `GOOGLE_LOGIN_DISABLED` | 503 | Accesso con Google non attivo: si nasconde il pulsante |
+
+**Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.
+
+**Da fare** (arriveranno con le loro issue): `CARDS_LOCKED_IN_TRADE`, `NO_OPPONENT_FOUND`, `ENGINE_UNAVAILABLE` e quelli di amici, scambi e sfide.
+
+---
+
+## 16. Regole da ricordare
 
 - **Il server decide**: estrazione dei pacchetti, esito delle partite, validità dei mazzi, scambi. Il frontend non calcola niente di tutto questo.
 - **I controlli si fanno due volte**: nel frontend per aiutare l'utente, nel backend per sicurezza.
@@ -871,7 +1772,7 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**,
 
 ---
 
-## 10. Cose ancora da decidere
+## 17. Cose ancora da decidere
 
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
@@ -881,3 +1782,18 @@ Rispetto alla prima sitemap: nuove **Benvenuto**, **Amici**, **Nuova password**,
 | Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
 | Immagini di Nap Pack e REM Pack | Da proporre ([decisione 030](../decisioni/030-nuovi-pacchetti.md)) | Digital |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |
+
+---
+
+## 18. Controllo finale prima della PR
+
+Prima di aprire una PR con una pagina che usa le API:
+
+- [ ] Le chiamate passano tutte da `api.js`: nessun `fetch()` nella pagina.
+- [ ] Il token non è mai in `localStorage` o `sessionStorage`.
+- [ ] La pagina mostra il caricamento e gli errori (`message`, e `fieldErrors` accanto ai campi).
+- [ ] Le `POST`, `PUT` e `DELETE` partono solo da un clic, con il pulsante spento mentre la richiesta è in corso.
+- [ ] Prezzi, percentuali, limiti dei mazzi e nomi vengono dalle API, non sono scritti a mano.
+- [ ] Le date sono mostrate nell'ora italiana.
+- [ ] Nessun dato personale negli indirizzi.
+- [ ] Provata con il backend acceso e un utente di prova.

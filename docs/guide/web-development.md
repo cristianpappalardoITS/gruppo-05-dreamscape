@@ -146,7 +146,7 @@ async function caricaCollezione(f) { ... }
 
 ### Chiamate al backend
 
-- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#4-il-file-apijs). Pagine e componenti importano `api()` e non toccano mai token né `fetch()`.
+- Un solo file `api.js`, come quello della [guida](../api/guida-frontend.md#8-il-file-apijs). Pagine e componenti importano `api()` e non toccano mai token né `fetch()`.
 - Gli errori arrivano sempre con `{ status, code, message, fieldErrors }`: mostrate `fieldErrors` accanto ai campi e `message` negli altri casi.
 - Con `401` ci pensa `api.js` (rinnovo del token o pagina di accesso). Con `403` si mostra "non hai i permessi".
 
@@ -225,11 +225,11 @@ Il backend nasce nello stesso Sprint 3 (#68 progetto, #71 registrazione e access
 
 | Issue | Chi | Sprint | Da leggere prima |
 |-------|-----|--------|------------------|
-| #72 Progetto frontend | Gaia | 3 | Questa guida, [`api.js`](../api/guida-frontend.md#4-il-file-apijs) |
+| #72 Progetto frontend | Gaia | 3 | Questa guida, [`api.js`](../api/guida-frontend.md#8-il-file-apijs) |
 | #113 Layout comune | Gaia, Yuri | 3 | Design system (sezione 4), menu diverso per visitatore, Dreamweaver e admin |
-| #73 Registrazione e accesso | Alessandro | 3 | [Accesso con JWT](../api/guida-frontend.md#3-accesso-con-jwt): consensi, errori, pagina Benvenuto con la scelta della fazione |
-| #112 Wireframe Amici, Benvenuto, Profilo, backoffice | Daniele | 3 | [Pagine e chiamate](../api/guida-frontend.md#6-pagine-e-chiamate) |
-| #81 Componente della carta | Yuri, Gaia | 4 | [Come si monta una carta](../api/guida-frontend.md#7-come-si-monta-una-carta) |
+| #73 Registrazione e accesso | Alessandro | 3 | [Accesso con JWT](../api/guida-frontend.md#7-accesso-con-jwt): consensi, errori, pagina Benvenuto con la scelta della fazione |
+| #112 Wireframe Amici, Benvenuto, Profilo, backoffice | Daniele | 3 | [Pagine e chiamate](../api/guida-frontend.md#11-pagine-e-chiamate) |
+| #81 Componente della carta | Yuri, Gaia | 4 | [Come si monta una carta](../api/guida-frontend.md#12-come-si-monta-una-carta) |
 | #82 Negozio e apertura | Daniele | 4 | I sei pacchetti (sezione 3), apertura con l'id nell'URL |
 | #83 Collezione e dettaglio | Alessandro | 4 | Filtri, paginazione, altre versioni della carta (full art) |
 

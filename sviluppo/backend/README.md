@@ -43,10 +43,11 @@ I dati scritti a mano nel database di sviluppo si perdono. I test non ne hanno b
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Server SMTP per le email alla consegna. Senza `SPRING_MAIL_HOST` il link di recupero si scrive solo nel log | `smtp.example.com` |
 | `MAIL_FROM` | Mittente delle email | `noreply@dreamscape.local` |
 | `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password.html?token=` |
+| `GOOGLE_CLIENT_ID` | Client id OAuth di Google Cloud per l'accesso con Google (decisione 032). Vuota = accesso con Google spento (`503 GOOGLE_LOGIN_DISABLED`) | `123…apps.googleusercontent.com` |
 
 ## Struttura
 - `src/main/java/it/somnia/dreamscape/api/`: il codice, diviso per funzionalità ([regole-codice.md](../../docs/regole-codice.md)).
-- `src/main/resources/db/migration/`: tabelle (`V1`–`V10`), dati del regolamento (`V100`) e pacchetti (`V101`). Una migration già eseguita non si modifica.
+- `src/main/resources/db/migration/`: tabelle (`V1`–`V11`), dati del regolamento (`V100`) e pacchetti (`V101`). Una migration già eseguita non si modifica.
 - `src/main/resources/db/testdata/`: dati finti (`V900`–`V903`), caricati solo nel profilo `dev` e nei test.
 
 Lo schema è spiegato in [docs/database/schema.md](../../docs/database/schema.md).

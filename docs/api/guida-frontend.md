@@ -182,7 +182,7 @@ Per creare i branch e aprire le pull request seguite [workflow-github.md](../wor
 
    `cp .env.example .env` si fa **solo la prima volta**: crea il file con i dati del database del vostro computer. Le volte dopo bastano `cd sviluppo/backend` e `./gradlew bootRun`.
 
-3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit. Serve internet.
+3. La prima volta ci vogliono alcuni minuti: si scaricano Gradle, le librerie e le immagini di PostgreSQL e Mailpit, e si costruisce il container del motore di gioco (nel terminale scorrono molte righe che iniziano con `#`: è normale). Serve internet. Le volte dopo il motore si ricostruisce in pochi secondi.
 4. Il backend è pronto quando nel terminale compare una riga con **`Started DreamscapeApiApplication`**. **Lasciate aperto quel terminale**: se lo chiudete, il backend si ferma. Per fermarlo voi: **Ctrl+C**.
 5. Controllo: aprite [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) nel browser. Deve comparire `{"status":"UP"}`.
 
@@ -274,6 +274,7 @@ Con tutti e due accesi, aprite nel browser [http://localhost:5173/api/v1/packs](
 | Sul Mac `docker --version` funziona ma il backend dice che **non trova `docker`** | In Docker Desktop: **Settings** (l'ingranaggio) → **Advanced** → scegliete **System** → **Apply & restart**. Poi riaprite il terminale |
 | Dopo un `git pull`, `./gradlew bootRun` si ferma con **Validate failed** o **Migrations have failed validation** | È arrivata una migration nuova e il database di sviluppo è vecchio. Da `sviluppo/backend`: `docker compose down -v`, poi di nuovo `./gradlew bootRun`. Il database di sviluppo si ricrea con i dati di prova (quello che avevate scritto a mano si perde) |
 | **Port 8080 was already in use** | Il backend è già acceso in un altro terminale: usate quello, oppure fermatelo con Ctrl+C |
+| **8081** già in uso, oppure un errore che parla del servizio **engine** | La porta 8081 serve al motore di gioco: chiudete il programma che la usa. Se l'errore è nella costruzione del motore, da `sviluppo/backend` scrivete `docker compose build engine` e mandate a Marco o Cristian le ultime righe |
 | `./gradlew: Permission denied` (Mac) | Scrivete `chmod +x gradlew` una volta, poi riprovate |
 | `npm` o `node`: **command not found** | Chiudete e riaprite il terminale. Se non basta, reinstallate Node.js (1.4) |
 | Vite dice che serve **Node.js 20.19+ o 22.12+** | Node.js è vecchio: installate la LTS (1.4) |

@@ -14,6 +14,8 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import FriendsPage from './pages/FriendsPage.jsx'
 import TradesPage from './pages/TradesPage.jsx'
 import NewTradePage from './pages/NewTradePage.jsx'
+import ChallengesPage from './pages/ChallengesPage.jsx'
+import MatchPage from './pages/MatchPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -30,14 +32,16 @@ const pages = {
   '/amici': { title: 'Amici', render: () => <FriendsPage /> },
   '/scambi': { title: 'Scambi', render: () => <TradesPage /> },
   '/scambi/nuovo': { title: 'Nuovo scambio', render: () => <NewTradePage /> },
+  '/sfide': { title: 'Sfide', render: () => <ChallengesPage /> },
 }
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'
-// L'apertura di un pacchetto ha l'id nell'indirizzo: /negozio/apertura/{openingId}
+// Pagine con l'id nell'indirizzo: /negozio/apertura/{openingId} e /partite/{matchId}
 const openingMatch = pathname.match(/^\/negozio\/apertura\/([^/]+)$/)
-const page = openingMatch
-  ? { title: 'Apertura del pacchetto', render: () => <PackOpeningPage openingId={openingMatch[1]} /> }
-  : pages[pathname] ?? pages['/']
+const matchMatch = pathname.match(/^\/partite\/([^/]+)$/)
+let page = pages[pathname] ?? pages['/']
+if (openingMatch) page = { title: 'Apertura del pacchetto', render: () => <PackOpeningPage openingId={openingMatch[1]} /> }
+if (matchMatch) page = { title: 'Partita', render: () => <MatchPage matchId={matchMatch[1]} /> }
 document.title = `Dreamscape | ${page.title}`
 
 // All'avvio si chiede un token nuovo con il cookie: chi è già collegato non rifà l'accesso

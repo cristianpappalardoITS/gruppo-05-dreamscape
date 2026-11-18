@@ -166,6 +166,7 @@ export default function FriendsPage() {
                   </span>
                   <span className="social-buttons">
                     <a className="social-action" href={`/scambi/nuovo?amico=${friend.user.id}`}>Proponi scambio</a>
+                    <a className="social-action social-action--quiet" href={`/sfide?amico=${friend.user.id}`}>Sfida</a>
                     <button type="button" className="social-action social-action--quiet" onClick={() => removeFriend(friend)}>Togli</button>
                   </span>
                 </li>

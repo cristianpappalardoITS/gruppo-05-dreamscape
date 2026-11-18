@@ -16,6 +16,7 @@ const playerLinks = [
   { label: 'Negozio', href: '/negozio' },
   { label: 'Amici', href: '/amici' },
   { label: 'Scambi', href: '/scambi' },
+  { label: 'Sfide', href: '/sfide' },
 ];
 
 export default function HomeHeader() {

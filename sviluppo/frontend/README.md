@@ -31,6 +31,8 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 | `/amici` | Cerca un Dreamweaver, richieste ricevute e inviate, amici (serve l'accesso) | `GET /users`, `GET/POST /friend-requests`, `GET /friends`, `DELETE /friends/{userId}` |
 | `/scambi` | Scambi ricevuti, inviati e storico; accetta (con gli avvisi), rifiuta, annulla (serve l'accesso) | `GET /trades`, `GET /trades/{tradeId}/deck-warnings`, `POST /trades/{tradeId}/accept`, `/reject`, `/cancel` |
 | `/scambi/nuovo` | Proposta di scambio a un amico, anche `?amico=` (serve l'accesso) | `GET /me/cards`, `GET /users/{userId}/cards`, `POST /trades/preview`, `POST /trades` |
+| `/sfide` | Sfida un amico con un mazzo valido, accetta e gioca (con il tuo mazzo), rifiuta, annulla; anche `?amico=` (serve l'accesso) | `GET /friends`, `GET /decks`, `GET /challenges`, `POST /challenges`, `POST /challenges/{challengeId}/accept`, `/reject`, `/cancel` |
+| `/partite/{matchId}` | Risultato della partita e cronaca round per round, con riproduzione (serve l'accesso) | `GET /matches/{matchId}`, `GET /me`, `GET /cards/{cardId}` |
 | `/mazzi/editor` | Nuovo mazzo, o modifica con `?id=` (serve l'accesso): contatori in diretta con i numeri del regolamento | `GET /rules`, `GET /me/cards`, `GET /decks/{deckId}`, `POST /decks`, `PUT /decks/{deckId}` |
 
 I percorsi che non esistono ancora (per esempio `/admin`) mostrano la home. Dopo l'accesso il giocatore va alla Dashboard, l'admin a `/admin`.
@@ -51,9 +53,10 @@ src/
     home/                   Intestazione, footer e icone della home
     Mazzi/                  Regole del mazzo per l'editor e stili dei mazzi
     Negozio/                Stili del negozio
+    Partita/                Frasi della cronaca (matchLog.js) e stili di sfide e partita
     Scambi/                 Carte e avvisi degli scambi, stili di amici e scambi
     Login/                  Campi e componenti dei form di accesso
-  pages/                    HomePage, LoginPage, RegisterPage, DashboardPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage, ShopPage, PackOpeningPage, FriendsPage, TradesPage, NewTradePage
+  pages/                    HomePage, LoginPage, RegisterPage, DashboardPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage, ShopPage, PackOpeningPage, FriendsPage, TradesPage, NewTradePage, ChallengesPage, MatchPage
   styles/                   Palette e stili della home
   api.js                    L'unico file che parla con il backend (dalla guida)
   main.jsx                  Pagina in base al percorso e rinnovo del token all'avvio

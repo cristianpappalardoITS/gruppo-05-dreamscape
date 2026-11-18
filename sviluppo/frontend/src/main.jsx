@@ -6,6 +6,8 @@ import RegisterPage from './pages/RegisterPage.jsx'
 import HomePage from './pages/HomePage.jsx'
 import CollectionPage from './pages/CollectionPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
+import DecksPage from './pages/DecksPage.jsx'
+import DeckEditorPage from './pages/DeckEditorPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /dashboard) mostrano la home
@@ -15,6 +17,8 @@ const pages = {
   '/register': { title: 'Registrati', render: () => <RegisterPage /> },
   '/benvenuto': { title: 'Benvenuto', render: () => <WelcomePage /> },
   '/collezione': { title: 'Collezione', render: () => <CollectionPage /> },
+  '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },
+  '/mazzi/editor': { title: 'Editor del mazzo', render: () => <DeckEditorPage /> },
 }
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'

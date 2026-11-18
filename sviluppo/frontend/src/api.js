@@ -11,11 +11,13 @@ let refreshing = null;
 
 // Errore delle API: stessi campi della risposta del backend
 export class ApiError extends Error {
-  constructor({ status, code, message, fieldErrors }) {
+  constructor({ status, code, message, fieldErrors, problems }) {
     super(message);
     this.status = status;
     this.code = code;
     this.fieldErrors = fieldErrors ?? [];
+    // Solo negli errori con un elenco di problemi (es. INVALID_DECK)
+    this.problems = problems ?? [];
   }
 }
 

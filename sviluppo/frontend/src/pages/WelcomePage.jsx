@@ -226,7 +226,8 @@ function WelcomeGifts({ welcome, factions }) {
         <h1>Le tue prime carte</h1>
         <p>Sono già nella tua collezione. Tocca una carta per vederne i dettagli.</p>
         <div className="home-button-row">
-          <a className="home-button home-button--filled" href="/collezione">Vai alla collezione</a>
+          <a className="home-button home-button--filled" href="/mazzi/editor">Componi il tuo primo mazzo</a>
+          <a className="home-button home-button--outlined" href="/collezione">Vai alla collezione</a>
         </div>
       </div>
 

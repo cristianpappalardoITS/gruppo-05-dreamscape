@@ -172,8 +172,9 @@
   font-weight: 400;
 }
 
-/* Pannello dei filtri, aperto dal pulsante */
-.collection-page .collection-filters {
+/* Pannello dei filtri, aperto dal pulsante (Collezione ed editor del mazzo) */
+.collection-page .collection-filters,
+.deck-editor .collection-filters {
   padding: 16px 18px;
   align-items: flex-end;
   border: 1px solid var(--input-border);

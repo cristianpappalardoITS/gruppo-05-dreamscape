@@ -144,12 +144,61 @@ div.deck-problems ul {
   padding-left: 16px;
 }
 
-/* Editor: pannello del mazzo */
-.deck-panel {
-  padding: 18px;
+/* Editor come nel mockup: mazzo a sinistra, collezione a destra, divisi da una linea */
+.deck-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.deck-editor__deck {
+  padding-right: clamp(20px, 2.6vw, 40px);
+}
+
+.deck-editor__collection {
+  min-height: 70vh;
+  padding-left: clamp(20px, 2.6vw, 40px);
+  border-left: 1px solid var(--input-border);
+}
+
+.deck-editor__heading {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.deck-editor__heading h1,
+.deck-editor__total {
+  margin: 0;
+  color: var(--text-light);
+  font-family: var(--font-title);
+  font-size: clamp(20px, 1.8vw, 28px);
+  font-weight: 400;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.deck-editor__total.is-ok {
+  color: #8fd4a4;
+}
+
+/* Barra sotto il titolo: nome, limiti per rarità, salvataggio */
+.deck-editor__bar {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 18px;
   border: 1px solid var(--input-border);
   border-radius: 12px;
   background: var(--card-bg);
+}
+
+.deck-editor__bar .deck-name {
+  flex: 1 1 200px;
 }
 
 .deck-name {
@@ -174,99 +223,46 @@ div.deck-problems ul {
   color: #f0a0a7;
 }
 
-.deck-counters {
-  margin: 16px 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.deck-counters div {
-  padding: 8px 4px;
+.deck-limits {
+  margin: 0;
+  padding: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.deck-limits li {
+  padding: 8px 12px;
   border: 1px solid var(--input-border);
-  border-radius: 8px;
-}
-
-.deck-counters span {
+  border-radius: 999px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 
-.deck-counters strong {
-  font-size: 17px;
+.deck-limits strong {
+  color: var(--text-light);
 }
 
-.deck-counters .is-ok {
-  border-color: #62b47c;
-  color: #8fd4a4;
-}
-
-.deck-counters .is-over {
+.deck-limits .is-over {
   border-color: #b5545c;
   color: #f0a0a7;
 }
 
-.deck-entries {
-  max-height: 46vh;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  list-style: none;
+.deck-limits .is-over strong {
+  color: #f0a0a7;
 }
 
-.deck-entry {
-  padding: 7px 4px 7px 10px;
+.deck-editor__actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border-left: 3px solid var(--rarity-color, var(--input-border));
-}
-
-.deck-entry + .deck-entry {
-  margin-top: 4px;
-}
-
-.deck-entry__name {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-}
-
-.deck-entry__name small {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.deck-entry__quantity {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.deck-entry__quantity button {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  background: var(--input-bg);
-  color: var(--text-light);
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.deck-entry__quantity button:disabled {
-  opacity: .35;
-  cursor: default;
+  gap: 16px;
 }
 
 .deck-save {
-  width: 100%;
-  min-height: 50px;
-  margin-top: 16px;
+  min-height: 44px;
+  padding: 8px 22px;
   cursor: pointer;
 }
 
@@ -276,10 +272,32 @@ div.deck-problems ul {
 }
 
 .deck-hint {
-  margin: 8px 0 0;
+  margin: 0 0 10px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.deck-editor__empty {
+  min-height: 320px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px dashed var(--input-border);
+  border-radius: 12px;
+  color: var(--text-muted);
   text-align: center;
+}
+
+/* Griglie a 4 colonne, come nel mockup: a destra le carte vengono più piccole */
+.deck-editor .deck-editor__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 22px);
+}
+
+.deck-editor__collection .deck-editor__grid {
+  gap: clamp(10px, 1vw, 16px);
 }
 
 /* Editor: carte della collezione */
@@ -297,25 +315,34 @@ div.deck-problems ul {
   cursor: default;
 }
 
-.deck-tile__in-deck {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--gold-primary);
-  color: var(--bg-dark);
-  font-size: 11px;
-  font-weight: 600;
-}
-
 @media (max-width: 800px) {
   .deck-row {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .deck-entries {
-    max-height: none;
+  .deck-editor {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .deck-editor__deck {
+    padding-right: 0;
+  }
+
+  .deck-editor__collection {
+    min-height: 0;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--input-border);
+    border-left: 0;
+  }
+
+  .deck-editor .deck-editor__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .deck-editor__actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }

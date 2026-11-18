@@ -8,6 +8,8 @@ import CollectionPage from './pages/CollectionPage.jsx'
 import WelcomePage from './pages/WelcomePage.jsx'
 import DecksPage from './pages/DecksPage.jsx'
 import DeckEditorPage from './pages/DeckEditorPage.jsx'
+import ShopPage from './pages/ShopPage.jsx'
+import PackOpeningPage from './pages/PackOpeningPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /dashboard) mostrano la home
@@ -19,10 +21,15 @@ const pages = {
   '/collezione': { title: 'Collezione', render: () => <CollectionPage /> },
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },
   '/mazzi/editor': { title: 'Editor del mazzo', render: () => <DeckEditorPage /> },
+  '/negozio': { title: 'Negozio', render: () => <ShopPage /> },
 }
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'
-const page = pages[pathname] ?? pages['/']
+// L'apertura di un pacchetto ha l'id nell'indirizzo: /negozio/apertura/{openingId}
+const openingMatch = pathname.match(/^\/negozio\/apertura\/([^/]+)$/)
+const page = openingMatch
+  ? { title: 'Apertura del pacchetto', render: () => <PackOpeningPage openingId={openingMatch[1]} /> }
+  : pages[pathname] ?? pages['/']
 document.title = `Dreamscape | ${page.title}`
 
 // All'avvio si chiede un token nuovo con il cookie: chi è già collegato non rifà l'accesso

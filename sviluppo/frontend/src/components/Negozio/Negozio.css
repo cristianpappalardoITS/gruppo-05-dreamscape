@@ -1,0 +1,137 @@
+/* Negozio dei pacchetti (stessi colori della home) */
+
+.shop-page {
+  min-height: 100vh;
+}
+
+.shop-content .collection-title-row h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.shop-balance {
+  padding: 8px 16px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  color: var(--text-light);
+  font-size: 15px;
+}
+
+.shop-balance strong {
+  color: var(--gold-hover);
+}
+
+.shop-error {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(181, 84, 92, .14);
+  color: #f0c4c8;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.shop-pack--dreams { --faction-color: #88c8f3; }
+.shop-pack--nightmares { --faction-color: #b07ac8; }
+.shop-pack--memories { --faction-color: #d9a466; }
+
+.shop-pack {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--faction-color, var(--input-border));
+  border-radius: 14px;
+  background: var(--card-bg);
+}
+
+.shop-pack__image {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--input-bg);
+}
+
+.shop-pack__image img:not(.faction-emblem) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.shop-pack__image .faction-emblem {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 56px;
+  height: 56px;
+  padding: 6px;
+  border: 2px solid var(--faction-color);
+  border-radius: 50%;
+  background: #10131f;
+}
+
+.shop-pack__body {
+  flex: 1;
+  padding: 18px 18px 6px;
+}
+
+.shop-pack__body h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-title);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.shop-pack__description {
+  margin: 0 0 12px;
+  color: #d8d2dc;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.shop-pack__slots {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.shop-pack__until {
+  margin: 10px 0 0;
+  color: var(--gold-primary);
+  font-size: 13px;
+}
+
+.shop-pack__buy {
+  padding: 14px 18px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shop-pack__buy .home-button {
+  flex: 1;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.shop-pack__buy .home-button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.shop-cancel {
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  text-decoration: underline;
+  cursor: pointer;
+}

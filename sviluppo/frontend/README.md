@@ -25,6 +25,8 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 | `/benvenuto` | Scelta della fazione, set iniziale e pacchetti di benvenuto (serve l'accesso) | `GET/POST /me/welcome`, `GET /factions`, `GET /cards/{cardId}` |
 | `/collezione` | Collezione con filtri e dettaglio della carta (serve l'accesso) | `GET /me/cards` |
 | `/mazzi` | I mazzi, con validità e problemi; eliminazione (serve l'accesso) | `GET /decks`, `DELETE /decks/{deckId}` |
+| `/negozio` | Pacchetti in vendita con il saldo e l'acquisto (serve l'accesso) | `GET /packs`, `GET /me/summary`, `POST /packs/{packId}/open` |
+| `/negozio/apertura/{openingId}` | Apertura del pacchetto comprato, una carta alla volta (serve l'accesso) | `GET /pack-openings/{openingId}` |
 | `/mazzi/editor` | Nuovo mazzo, o modifica con `?id=` (serve l'accesso): contatori in diretta con i numeri del regolamento | `GET /rules`, `GET /me/cards`, `GET /decks/{deckId}`, `POST /decks`, `PUT /decks/{deckId}` |
 
 I percorsi che non esistono ancora (per esempio `/dashboard`) mostrano la home. Finché non c'è la Dashboard, dopo l'accesso si va alla Collezione.
@@ -43,8 +45,9 @@ src/
     Collezione/             Carta nella griglia e dettaglio della carta
     home/                   Intestazione, footer e icone della home
     Mazzi/                  Regole del mazzo per l'editor e stili dei mazzi
+    Negozio/                Stili del negozio
     Login/                  Campi e componenti dei form di accesso
-  pages/                    HomePage, LoginPage, RegisterPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage
+  pages/                    HomePage, LoginPage, RegisterPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage, ShopPage, PackOpeningPage
   styles/                   Palette e stili della home
   api.js                    L'unico file che parla con il backend (dalla guida)
   main.jsx                  Pagina in base al percorso e rinnovo del token all'avvio

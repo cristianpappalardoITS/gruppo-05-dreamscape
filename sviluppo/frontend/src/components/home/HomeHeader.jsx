@@ -7,6 +7,7 @@ const navigationLinks = [
   { label: 'Regolamento', href: '/#regolamento' },
   { label: 'Collezione', href: '/collezione' },
   { label: 'Mazzi', href: '/mazzi' },
+  { label: 'Negozio', href: '/negozio' },
 ];
 
 export default function HomeHeader() {

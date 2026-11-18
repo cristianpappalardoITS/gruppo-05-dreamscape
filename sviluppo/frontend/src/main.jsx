@@ -16,6 +16,7 @@ import TradesPage from './pages/TradesPage.jsx'
 import NewTradePage from './pages/NewTradePage.jsx'
 import ChallengesPage from './pages/ChallengesPage.jsx'
 import MatchPage from './pages/MatchPage.jsx'
+import ProfilePage from './pages/ProfilePage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -24,6 +25,7 @@ const pages = {
   '/login': { title: 'Accedi', render: () => <LoginPage /> },
   '/register': { title: 'Registrati', render: () => <RegisterPage /> },
   '/dashboard': { title: 'Dashboard', render: () => <DashboardPage /> },
+  '/profilo': { title: 'Profilo', render: () => <ProfilePage /> },
   '/benvenuto': { title: 'Benvenuto', render: () => <WelcomePage /> },
   '/collezione': { title: 'Collezione', render: () => <CollectionPage /> },
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },

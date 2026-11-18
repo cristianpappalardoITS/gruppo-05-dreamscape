@@ -628,7 +628,7 @@ Tutte le partite usano le regole BASE e vengono simulate subito dal server, senz
 | Partita rapida | Scelto a caso dal matchmaking | `CASUAL` | No | No |
 | Partita classificata | Scelto dal matchmaking con punteggio simile | `RANKED` | Sì | Sì, ma non contro un amico |
 
-**Sfida a un amico** (`challenges`): sfidante e sfidato devono essere amici, e tra loro ci può essere al massimo una sfida in attesa (`uq_challenges_pending_pair`). Le sfide non scadono: chi sfida può annullare. Quando lo sfidato accetta, il service ricontrolla i mazzi, gioca la partita (vedi sotto) e imposta `status = 'COMPLETED'`.
+**Sfida a un amico** (`challenges`): sfidante e sfidato devono essere amici, e tra loro ci può essere al massimo una sfida in attesa (`uq_challenges_pending_pair`). Le sfide non scadono: chi sfida può annullare. Quando lo sfidato accetta, il service blocca la riga della sfida (accettazione, rifiuto e annullamento decidono uno alla volta), ricontrolla amicizia e mazzi, gioca la partita (vedi sotto) e imposta `status = 'COMPLETED'` e `opponent_deck_id`. Se non sono più amici la sfida passa a `CANCELLED`; se il mazzo di chi sfida non è più valido (o è stato cancellato) non si gioca e la sfida resta `PENDING`, come se il motore non rispondesse. Il blocco delle righe in `users` (punto 1 sotto) serve a rank e crediti: le sfide, sempre rapide, non lo usano.
 
 **Matchmaking** (partita rapida e classificata): chi preme "Cerca partita" sceglie un suo mazzo valido. Il service cerca un avversario tra i giocatori attivi con un mazzo classificato valido (`users.ranked_deck_id`), escluso chi cerca. L'avversario non deve essere collegato: si gioca con il suo mazzo classificato.
 - Partita rapida: un avversario a caso.
@@ -1018,6 +1018,15 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### 18 novembre 2026: sfide e partite (#94)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Accettazione con il mazzo di chi sfida non più valido | Non deciso | Risposta `409 CHALLENGER_DECK_INVALID`, niente partita e la sfida resta `PENDING`; i due lo vedono nelle liste delle sfide |
+| Versione del motore e moneta | — | Si leggono da `round_log` (`engineVersion`, `coinTossWinner`), che il motore scrive sempre: nessuna colonna in più in `matches` |
+
+Nessuna migration: le tabelle `challenges` e `matches` c'erano già (V6).
 
 ### 17 novembre 2026: scambi, ultima copia e copie mancanti (#93)
 

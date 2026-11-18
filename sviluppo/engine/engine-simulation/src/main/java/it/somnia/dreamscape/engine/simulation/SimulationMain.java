@@ -23,9 +23,6 @@ import java.util.Random;
  */
 public final class SimulationMain {
 
-    private static final int DEFAULT_GAMES = 5_000;
-    private static final long DEFAULT_SEED = 87;
-
     /** I punti vita provati: 20 è il valore di oggi (decisione 008). */
     private static final int[] LIFE_POINTS = {10, 15, 20, 25, 30};
 
@@ -46,19 +43,24 @@ public final class SimulationMain {
     /**
      * Avvia le simulazioni.
      *
+     * <p>Con argomenti sbagliati scrive l'errore ed esce con il codice 2, senza giocare.
+     *
      * @param args {@code --partite N} per il numero di partite, {@code --seed S} per il seed
      * @throws IOException se non si legge il catalogo o non si scrive il resoconto
      */
     public static void main(String[] args) throws IOException {
-        int gameCount = DEFAULT_GAMES;
-        long seed = DEFAULT_SEED;
-        for (int i = 0; i + 1 < args.length; i += 2) {
-            switch (args[i]) {
-                case "--partite" -> gameCount = Integer.parseInt(args[i + 1]);
-                case "--seed" -> seed = Long.parseLong(args[i + 1]);
-                default -> throw new IllegalArgumentException("Opzione sconosciuta: " + args[i]);
-            }
+        SimulationOptions options;
+        try {
+            options = SimulationOptions.parse(args);
+        } catch (IllegalArgumentException wrongArgs) {
+            // Ci si ferma prima di giocare: il resoconto della volta prima resta com'era
+            System.err.println(wrongArgs.getMessage());
+            System.err.println(SimulationOptions.USAGE);
+            System.exit(2);
+            return;
         }
+        int gameCount = options.games();
+        long seed = options.seed();
         Path catalogDir = Path.of(requiredProperty("dreamscape.catalog"));
         Path outputFile = Path.of(requiredProperty("dreamscape.output"));
 

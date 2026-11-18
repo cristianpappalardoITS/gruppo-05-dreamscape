@@ -91,6 +91,16 @@ gruppo-05-dreamscape/
 └── .github/     # Template di issue e pull request
 ```
 
+## Lavoro svolto sul frontend - Daniele
+
+- **Home (`/`)**: aggiunta la pagina iniziale statica con illustrazione, navigazione, panoramica del gioco, fazioni, riepilogo del regolamento e collegamenti all'accesso.
+- **Login (`/login`)**: corretto il caricamento della pagina, mantenuto il layout a colonna su mobile e introdotto il layout a due colonne su desktop. Se le credenziali sono rifiutate, il form mostra un messaggio con un link alla registrazione.
+- **Registrazione (`/register`)**: aggiunto il form con username, email, password, conferma e accettazione di Termini e Privacy. Il form controlla che le password coincidano prima dell'invio e mostra gli errori restituiti dal backend.
+- **Design e navigazione**: condivisi font e palette tra le pagine, inseriti i loghi forniti nella navbar, nel footer e nelle schermate di autenticazione, e aggiunta la freccia per tornare alla home da login e registrazione.
+- **Collegamento al backend**: le richieste di login e registrazione passano da [`src/api.js`](sviluppo/frontend/src/api.js). In sviluppo, Vite inoltra `/api` al backend su `localhost:8080`.
+
+Build e lint del frontend sono stati verificati. La creazione di un account e l'accesso richiedono backend e PostgreSQL attivi. Il flusso completo non è stato verificato perché il backend locale non rispondeva. Le destinazioni dopo l'autenticazione (`/benvenuto`, `/dashboard` e `/admin`) ricadono ancora sulla home nel frontend attuale.
+
 ## Documentazione
 
 Le linee guida del progetto sono in [`docs/`](docs/README.md):

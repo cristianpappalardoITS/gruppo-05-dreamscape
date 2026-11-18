@@ -1,28 +1,46 @@
-/* Importa un font elegante per i titoli (es. Cinzel o Playfair Display) 
-   e uno pulito per i testi (es. Montserrat o Inter) */
-@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500&display=swap");
-
-:root {
-  --bg-dark: #121016;
-  --card-bg: #211d2b;
-  --text-light: #e0d9cf;
-  --text-muted: #9c95a8;
-  --gold-primary: #dca466;
-  --gold-hover: #c48e53;
-  --input-bg: #1a1622;
-  --input-border: #332c40;
-  --font-title: "Cinzel", serif;
-  --font-body: "Montserrat", sans-serif;
-}
-
-body {
-  margin: 0;
-  background-color: var(--bg-dark);
-  color: var(--text-light);
-  font-family: var(--font-body);
-}
-
 /* --- Layout della pagina --- */
+.auth-page {
+  position: relative;
+}
+
+.auth-official-logo {
+  display: block;
+  aspect-ratio: 309 / 358;
+  background-color: var(--text-light);
+  -webkit-mask: url('/artwork/dreamscape-symbol.svg') center / contain no-repeat;
+  mask: url('/artwork/dreamscape-symbol.svg') center / contain no-repeat;
+}
+
+.auth-mobile-logo {
+  width: 72px;
+  margin: 44px auto 20px;
+}
+
+.auth-back-home {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--text-light);
+  text-decoration: none;
+}
+
+.auth-back-home svg {
+  width: 26px;
+  height: 26px;
+}
+
+.auth-back-home:hover,
+.auth-back-home:focus-visible {
+  background: var(--card-bg);
+  outline: 1px solid var(--gold-primary);
+}
+
 .login-page-wrapper {
   min-height: 100vh;
   display: flex;
@@ -50,7 +68,7 @@ body {
 
 .brand-title {
   font-family: var(--font-title);
-  font-size: 2.5rem;
+  font-size: clamp(1.9rem, 7vw, 2.5rem);
   margin: 0;
   font-weight: 600;
   letter-spacing: 2px;
@@ -160,6 +178,9 @@ body {
   left: 10px;
   color: var(--text-muted);
   font-size: 0.9rem;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
 }
 
 /* --- Opzioni (Ricordami / Password dimenticata) --- */
@@ -272,4 +293,317 @@ body {
   font-size: 0.75rem;
   color: var(--text-muted);
   text-align: center;
+}
+
+.auth-artwork,
+.desktop-intro {
+  display: none;
+}
+
+.auth-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-card {
+  box-sizing: border-box;
+}
+
+.field-error,
+.form-message {
+  display: block;
+  margin: 6px 0 0;
+  color: #efb3ad;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.form-message {
+  margin: 0 0 14px;
+}
+
+.form-message a {
+  color: inherit;
+}
+
+.register-consents {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 20px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.register-consents .checkbox-container {
+  justify-content: flex-start;
+}
+
+@media (min-width: 900px) {
+  :root {
+    color-scheme: dark;
+  }
+
+  .auth-page {
+    --artwork-inset: clamp(64px, calc(25vw - 180px), 180px);
+    --content-shift: clamp(-60px, calc(90px - 10vw), 0px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .auth-artwork {
+    box-sizing: border-box;
+    width: 47%;
+    min-height: 100vh;
+    padding: clamp(34px, 5.3vh, 70px) var(--artwork-inset) clamp(26px, 5vh, 52px);
+    display: block;
+    position: relative;
+    flex: none;
+    color: var(--text-light);
+  }
+
+  .artwork-wordmark {
+    font-family: var(--font-editorial);
+    font-size: clamp(25px, 4.25vw, 60px);
+    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+  }
+
+  .artwork-tagline {
+    margin-top: 10px;
+    font-family: var(--font-editorial);
+    font-size: clamp(9px, 1.25vw, 18px);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: #aaa7ad;
+  }
+
+  .artwork-symbol {
+    position: absolute;
+    top: 23%;
+    left: var(--artwork-inset);
+    width: clamp(145px, 22vw, 310px);
+    color: var(--text-light);
+  }
+
+  .artwork-copy {
+    position: absolute;
+    top: 67%;
+    left: var(--artwork-inset);
+    right: 18px;
+  }
+
+  .artwork-headline {
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-size: clamp(25px, 2.8vw, 40px);
+    line-height: 1.35;
+    letter-spacing: -0.025em;
+  }
+
+  .artwork-description {
+    margin: 14px 0 0;
+    color: #aaa6ae;
+    font-family: var(--font-editorial);
+    font-size: clamp(11px, 1.4vw, 20px);
+    line-height: 1.4;
+  }
+
+  .artwork-footer {
+    position: absolute;
+    bottom: 5%;
+    left: var(--artwork-inset);
+    margin: 0;
+    font-family: var(--font-editorial);
+    font-style: italic;
+    font-size: clamp(10px, 1.18vw, 17px);
+    color: #84818d;
+  }
+
+  .auth-content {
+    box-sizing: border-box;
+    width: 53%;
+    min-height: 100vh;
+    padding: clamp(42px, 11vh, 112px) 0 40px clamp(20px, 3vw, 44px);
+    align-items: center;
+  }
+
+  .mobile-header,
+  .mobile-social,
+  .page-bottom-text {
+    display: none;
+  }
+
+  .desktop-intro {
+    display: block;
+    width: min(500px, calc(100% - 80px));
+    position: relative;
+    left: var(--content-shift);
+  }
+
+  .desktop-eyebrow {
+    color: #aaa6b1;
+    font-size: clamp(9px, 0.72vw, 12px);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+  }
+
+  .desktop-intro h1 {
+    margin: 18px 0 6px;
+    font-family: var(--font-title);
+    font-size: clamp(23px, 2.8vw, 40px);
+    font-weight: 600;
+    font-variant: small-caps;
+    line-height: 1.1;
+  }
+
+  .desktop-intro p {
+    margin: 0;
+    color: #9792a0;
+    font-family: var(--font-editorial);
+    font-style: italic;
+    font-size: clamp(12px, 1.15vw, 16px);
+  }
+
+  .login-card {
+    position: relative;
+    left: var(--content-shift);
+    width: min(500px, calc(100% - 80px));
+    max-width: none;
+    margin-top: 10px;
+    padding: clamp(24px, 2.6vw, 38px);
+    border: 1px solid var(--input-border);
+    border-radius: 22px;
+    box-shadow: 0 22px 34px rgba(0, 0, 0, 0.2);
+  }
+
+  .card-subtitle-top {
+    margin-bottom: 16px;
+    color: #b4aeb6;
+    font-size: clamp(9px, 0.68vw, 11px);
+    letter-spacing: 0;
+  }
+
+  .card-title {
+    margin-bottom: 7px;
+    font-size: clamp(21px, 2vw, 30px);
+    font-variant: small-caps;
+    letter-spacing: -0.01em;
+  }
+
+  .card-description {
+    margin: 0 0 25px;
+    font-family: var(--font-editorial);
+    font-style: normal;
+    font-size: clamp(11px, 1vw, 15px);
+    color: #9691a1;
+  }
+
+  .input-group {
+    margin-bottom: 18px;
+  }
+
+  .input-group label {
+    margin-bottom: 8px;
+    color: #aaa5af;
+    font-size: clamp(9px, 0.7vw, 11px);
+    letter-spacing: 0.02em;
+  }
+
+  .input-wrapper input {
+    height: clamp(48px, 4.1vw, 58px);
+    padding-left: 45px;
+    border-radius: 7px;
+    font-size: clamp(12px, 0.95vw, 15px);
+  }
+
+  .input-icon {
+    left: 16px;
+    width: 20px;
+    height: 20px;
+    color: #d5d3dd;
+  }
+
+  .login-options {
+    margin: 4px 0 20px;
+    color: #a19baa;
+    font-size: clamp(11px, 0.8vw, 13px);
+  }
+
+  .forgot-password {
+    color: #c9955d;
+  }
+
+  .btn-primary {
+    height: clamp(49px, 4.2vw, 59px);
+    background: #a4a0b2;
+    color: #111522;
+    font-size: clamp(12px, 0.9vw, 15px);
+    letter-spacing: 0;
+    border-radius: 7px;
+  }
+
+  .btn-primary:hover {
+    background: #bebacc;
+  }
+
+  .auth-footer {
+    margin-top: 17px;
+    color: #c9c4cc;
+    font-size: clamp(11px, 0.78vw, 13px);
+  }
+
+  .auth-footer a {
+    color: #e8d9c4;
+  }
+
+  .register-page .login-card {
+    margin-top: 10px;
+    padding: 24px 32px;
+  }
+
+  .register-page .auth-content {
+    padding-top: 7vh;
+  }
+
+  .register-page .input-wrapper input {
+    height: 48px;
+  }
+
+  .register-page .input-group {
+    margin-bottom: 11px;
+  }
+
+  .register-page .card-description {
+    margin-bottom: 14px;
+  }
+
+  .register-consents {
+    margin: 0 0 12px;
+    gap: 4px;
+    font-size: clamp(11px, 0.77vw, 13px);
+  }
+}
+
+@media (min-width: 900px) and (max-height: 730px) {
+  .auth-content {
+    padding-top: 8vh;
+  }
+
+  .register-page .login-card {
+    margin-top: 10px;
+  }
+
+  .register-page .input-wrapper input {
+    height: 43px;
+  }
+
+  .register-page .input-group {
+    margin-bottom: 10px;
+  }
 }

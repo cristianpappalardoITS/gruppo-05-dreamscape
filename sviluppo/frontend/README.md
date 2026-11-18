@@ -1,16 +1,37 @@
-# React + Vite
+# Frontend Dreamscape
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React e Vite del progetto Dreamscape.
 
-Currently, two official plugins are available:
+## Avvio
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
 
-## React Compiler
+Apri `http://localhost:5173/`. La home statica è la pagina iniziale. Le pagine di accesso e registrazione sono su `/login` e `/register`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Organizzazione
 
-## Expanding the ESLint configuration
+```text
+public/
+  artwork/                  Immagini usate dalle pagine
+src/
+  components/
+    branding/               Simboli riutilizzati del marchio
+    home/                   Componenti della home
+    Login/                  Campi e componenti dei form di accesso
+  pages/                    HomePage, LoginPage, RegisterPage
+  styles/                   Palette e stili della home
+  api.js                    Chiamate al backend per l'autenticazione
+  main.jsx                  Selezione della pagina in base al percorso
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+L'illustrazione principale si trova in `public/artwork/dreamscape-worlds.png`. Il percorso `/images` è riservato al proxy del backend, quindi gli asset statici del frontend stanno in `/artwork`.
+
+## Verifica
+
+```powershell
+npm.cmd run lint
+npm.cmd run build
+```

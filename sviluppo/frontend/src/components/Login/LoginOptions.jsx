@@ -1,10 +1,9 @@
-import React from 'react';
 
 const LoginOptions=()=>{
     return(
         <div className='login-options'>
             <label className='checkbox-container'>
-                <input type='checkbox'/>
+                <input type='checkbox' name='remember'/>
                 Ricordami
             </label>
           <a href='#' className='forgot-password'>Password dimenticata?</a>

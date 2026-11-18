@@ -1,0 +1,30 @@
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@400;500;600&display=swap");
+
+:root {
+  --bg-dark: #111522;
+  --card-bg: #1d1d2b;
+  --text-light: #e8d9c4;
+  --text-muted: #9693a2;
+  --gold-primary: #c9955d;
+  --gold-hover: #deb484;
+  --input-bg: #111521;
+  --input-border: #363446;
+  --font-title: "Cinzel", serif;
+  --font-body: "Inter", sans-serif;
+  --font-editorial: "Cormorant Garamond", Georgia, serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  font-family: var(--font-body);
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,4 +1,3 @@
-import React, { Children } from "react";
 
 const LoginButton = ({ children, ...props }) => {
   return (

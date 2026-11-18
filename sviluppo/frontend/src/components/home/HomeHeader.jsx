@@ -23,7 +23,7 @@ export default function HomeHeader() {
         {navigationLinks.map(({ label, href }) => <a key={label} href={href}>{label}</a>)}
       </nav>
 
-      <a className="home-header__account" href={loggedIn ? '/collezione' : '/login'} aria-label={loggedIn ? 'La tua collezione' : 'Accedi al tuo account'}>
+      <a className="home-header__account" href={loggedIn ? '/dashboard' : '/login'} aria-label={loggedIn ? 'La tua dashboard' : 'Accedi al tuo account'}>
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" strokeWidth="2" />
           <circle cx="16" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="2" />

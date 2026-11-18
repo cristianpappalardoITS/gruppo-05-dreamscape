@@ -22,6 +22,7 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 | `/` | Home | `GET /factions`, `GET /rules`, `GET /cards?featured=true` |
 | `/login` | Accesso | `POST /auth/login` |
 | `/register` | Registrazione, poi accesso e passaggio al Benvenuto | `POST /auth/register` |
+| `/dashboard` | Riepilogo: crediti, lega, cose in attesa, missioni e ultime carte (serve l'accesso) | `GET /me/summary`, `GET /me/welcome` |
 | `/benvenuto` | Scelta della fazione, set iniziale e pacchetti di benvenuto (serve l'accesso) | `GET/POST /me/welcome`, `GET /factions`, `GET /cards/{cardId}` |
 | `/collezione` | Collezione con filtri e dettaglio della carta (serve l'accesso) | `GET /me/cards` |
 | `/mazzi` | I mazzi, con validità e problemi; eliminazione (serve l'accesso) | `GET /decks`, `DELETE /decks/{deckId}` |
@@ -29,7 +30,7 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 | `/negozio/apertura/{openingId}` | Apertura del pacchetto comprato, una carta alla volta (serve l'accesso) | `GET /pack-openings/{openingId}` |
 | `/mazzi/editor` | Nuovo mazzo, o modifica con `?id=` (serve l'accesso): contatori in diretta con i numeri del regolamento | `GET /rules`, `GET /me/cards`, `GET /decks/{deckId}`, `POST /decks`, `PUT /decks/{deckId}` |
 
-I percorsi che non esistono ancora (per esempio `/dashboard`) mostrano la home. Finché non c'è la Dashboard, dopo l'accesso si va alla Collezione.
+I percorsi che non esistono ancora (per esempio `/admin`) mostrano la home. Dopo l'accesso il giocatore va alla Dashboard, l'admin a `/admin`.
 
 In sviluppo usate Chrome o Firefox: Safari non salva il cookie del refresh token su `http://localhost` e a ogni cambio pagina si perde l'accesso (guida per il frontend, 4.2).
 
@@ -43,11 +44,12 @@ src/
     branding/               Simboli riutilizzati del marchio
     Benvenuto/              Apertura dei pacchetti e stili della pagina Benvenuto
     Collezione/             Carta nella griglia e dettaglio della carta
+    Dashboard/              Stili della dashboard
     home/                   Intestazione, footer e icone della home
     Mazzi/                  Regole del mazzo per l'editor e stili dei mazzi
     Negozio/                Stili del negozio
     Login/                  Campi e componenti dei form di accesso
-  pages/                    HomePage, LoginPage, RegisterPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage, ShopPage, PackOpeningPage
+  pages/                    HomePage, LoginPage, RegisterPage, DashboardPage, WelcomePage, CollectionPage, DecksPage, DeckEditorPage, ShopPage, PackOpeningPage
   styles/                   Palette e stili della home
   api.js                    L'unico file che parla con il backend (dalla guida)
   main.jsx                  Pagina in base al percorso e rinnovo del token all'avvio

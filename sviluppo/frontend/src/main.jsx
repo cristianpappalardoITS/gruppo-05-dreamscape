@@ -10,13 +10,15 @@ import DecksPage from './pages/DecksPage.jsx'
 import DeckEditorPage from './pages/DeckEditorPage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import PackOpeningPage from './pages/PackOpeningPage.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
 import './styles/design-tokens.css'
 
-// Pagine per percorso: quelle che non esistono ancora (es. /dashboard) mostrano la home
+// Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
 const pages = {
   '/': { title: 'Home', render: () => <HomePage /> },
   '/login': { title: 'Accedi', render: () => <LoginPage /> },
   '/register': { title: 'Registrati', render: () => <RegisterPage /> },
+  '/dashboard': { title: 'Dashboard', render: () => <DashboardPage /> },
   '/benvenuto': { title: 'Benvenuto', render: () => <WelcomePage /> },
   '/collezione': { title: 'Collezione', render: () => <CollectionPage /> },
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },

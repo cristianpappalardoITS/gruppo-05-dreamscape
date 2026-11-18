@@ -83,7 +83,8 @@ export default function HomePage() {
                 <h2 id="home-cta-title">Le tue carte ti aspettano</h2>
                 <p>Guarda la tua collezione, scopri gli effetti delle carte e preparati alla prossima sfida.</p>
                 <div className="home-button-row">
-                  <a className="home-button home-button--filled" href="/collezione">Vai alla collezione</a>
+                  <a className="home-button home-button--filled" href="/dashboard">Vai alla dashboard</a>
+                  <a className="home-button home-button--outlined" href="/collezione">Vai alla collezione</a>
                 </div>
               </>
             ) : (

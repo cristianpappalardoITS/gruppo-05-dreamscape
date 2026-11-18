@@ -19,8 +19,7 @@ const LoginPage = () => {
     setError(null);
     try {
       const user = await login(form.get('login'), form.get('password'));
-      // Finché la Dashboard non esiste, il giocatore va alla Collezione
-      window.location.assign(user.role === 'ADMIN' ? '/admin' : '/collezione');
+      window.location.assign(user.role === 'ADMIN' ? '/admin' : '/dashboard');
     } catch (err) {
       setError(err);
     } finally {

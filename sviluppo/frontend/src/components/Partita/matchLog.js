@@ -105,3 +105,32 @@ export function startFields(rounds) {
   });
   return fields;
 }
+
+// Numeri di un lato nel round, per il campo: ATT e DIF della carta che ha combattuto (anche se
+// è morta), danno subito dalla carta e variazione dei punti vita del giocatore.
+// side: 'CHALLENGER' o 'OPPONENT'; lifeBefore: punti vita a inizio round;
+// previous: lo stato del lato a fine del round prima (null nel primo round)
+export function sideNumbers(round, side, cardId, lifeBefore, previous) {
+  const key = side === 'CHALLENGER' ? 'challenger' : 'opponent';
+  const after = round.afterRound[key];
+  const alive = cardId && after.cardId === cardId;
+  // Se la carta era già in campo, si parte dai suoi numeri del round prima
+  const wasInField = previous?.cardId === cardId;
+  let attack = alive ? after.attack : wasInField ? previous.attack : null;
+  let defense = alive ? after.defense : wasInField ? previous.defense : null;
+  let damageTaken = 0;
+
+  round.events.forEach((event) => {
+    if (event.type === 'CARD_PLAYED' && event.cardId === cardId && attack === null) {
+      attack = event.attack;
+      if (!alive) defense = event.defense;
+    }
+    // Il colpo dell'altro lato colpisce la carta di questo lato
+    if (event.type === 'ATTACK' && event.side !== side) {
+      damageTaken += event.damage;
+      if (!alive) defense = event.defenseAfter;
+    }
+  });
+
+  return { attack, defense, damageTaken, lifeDelta: after.lifePoints - lifeBefore };
+}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import HomeHeader from '../components/home/HomeHeader';
-import { buildNames, combatCards, describeRound, endReasonNames, startFields } from '../components/Partita/matchLog.js';
+import { buildNames, combatCards, describeRound, endReasonNames, sideNumbers, startFields } from '../components/Partita/matchLog.js';
 import '../styles/home.css';
 import '../components/Collezione/Collezione.css';
 import '../components/Mazzi/Mazzi.css';
@@ -13,36 +13,72 @@ const PLAY_DELAY_MS = 1600;
 
 const phaseNames = { START: 'Inizio', COMBAT: 'Combattimento', END: 'Fine' };
 
-// Un lato del campo: giocatore e punti vita a fine round, la carta che ha combattuto nel round
-// (segnata se è stata eliminata), mazzo e scarti
-function Side({ name, state, startingLifePoints, cardId, cardName, image, isWinner }) {
+const factionNames = { DREAMS: 'Dreams', NIGHTMARES: 'Nightmares', MEMORIES: 'Memories' };
+
+// Un lato del campo: il giocatore (punti vita a fine round e variazione nel round) e la carta
+// che ha combattuto nel round, come una carta vera: cornice della fazione, illustrazione,
+// effetto, ATT e DIF, danno subito. Se è morta nel round è grigia con il timbro "Eliminata".
+function Side({ name, state, startingLifePoints, cardId, snapshot, card, numbers, isWinner, align }) {
   const eliminated = cardId && !state.cardId;
   const life = Math.max(state.lifePoints, 0);
+  const faction = (card?.faction.code ?? snapshot?.faction ?? '').toLowerCase();
+  const rarityName = card?.rarity.name ?? snapshot?.rarity;
+  const effect = card?.effect;
+
   return (
-    <div className={`match-side${isWinner ? ' is-winner' : ''}`}>
-      <div className="match-side__player">
-        <strong>{name}</strong>
-        <span>{life} PV</span>
-      </div>
-      <div className="match-life" aria-hidden="true">
+    <div className={`arena-side arena-side--${align}${isWinner ? ' is-winner' : ''}`}>
+      <header className="arena-player">
+        <span className="arena-avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
+        <div className="arena-player__name">
+          <strong>{name}</strong>
+          <small>Mazzo {state.cardsInDeck} · Scarti {state.cardsInDiscard}</small>
+        </div>
+        <div className="arena-life">
+          <strong>{life}</strong>
+          <span>PV</span>
+          {numbers && numbers.lifeDelta !== 0 && (
+            <em className={numbers.lifeDelta < 0 ? 'is-loss' : 'is-gain'}>
+              {numbers.lifeDelta > 0 ? '+' : ''}{numbers.lifeDelta}
+            </em>
+          )}
+        </div>
+      </header>
+      <div className="arena-lifebar" aria-hidden="true">
         {/* Gli effetti possono portare i punti vita sopra quelli iniziali: la barra si ferma al pieno */}
         <span style={{ width: `${Math.min(life / startingLifePoints, 1) * 100}%` }} />
       </div>
-      <div className={`match-field${eliminated ? ' is-eliminated' : ''}`}>
-        {cardId ? (
-          <>
-            <div className="match-field__image">
-              {image ? <img src={image.url} alt="" style={{ objectPosition: `center ${image.focusY * 100}%` }} /> : <span className="match-field__empty" />}
-              {eliminated && <span className="match-field__badge">Eliminata</span>}
-            </div>
-            <p className="match-field__name">{cardName}</p>
-            <p className="match-field__stats">{eliminated ? 'Va negli scarti' : `ATT ${state.attack} · DIF ${state.defense}`}</p>
-          </>
-        ) : (
-          <p className="match-field__none">Nessuna creatura in campo</p>
-        )}
-      </div>
-      <p className="match-side__piles">Mazzo {state.cardsInDeck} · Scarti {state.cardsInDiscard}</p>
+
+      {cardId ? (
+        <article className={`arena-card arena-card--${faction}${eliminated ? ' is-eliminated' : ''}`}>
+          <div className="arena-card__art">
+            {card?.illustrationThumbUrl
+              ? <img src={card.illustrationThumbUrl} alt="" style={{ objectPosition: `center ${card.illustrationFocusY * 100}%` }} />
+              : <span className="arena-card__empty" />}
+            {eliminated && <span className="arena-card__stamp">Eliminata</span>}
+            {numbers?.damageTaken > 0 && <span className="arena-card__damage">-{numbers.damageTaken}</span>}
+          </div>
+          <div className="arena-card__title">
+            <h3>{snapshot?.name ?? card?.name}</h3>
+            <small>{rarityName}{factionNames[snapshot?.faction] ? ` · ${factionNames[snapshot.faction]}` : ''}</small>
+          </div>
+          <div className="arena-card__effect">
+            {effect ? (
+              <>
+                <strong>{effect.name}</strong>
+                <p>{effect.text}</p>
+              </>
+            ) : (
+              <p className="arena-card__no-effect">Nessun effetto</p>
+            )}
+          </div>
+          <div className="arena-card__stats">
+            <span className="arena-stat arena-stat--attack"><strong>{numbers?.attack ?? '-'}</strong><small>ATT</small></span>
+            <span className="arena-stat arena-stat--defense"><strong>{numbers?.defense ?? '-'}</strong><small>DIF</small></span>
+          </div>
+        </article>
+      ) : (
+        <div className="arena-card arena-card--none">Nessuna creatura in campo</div>
+      )}
     </div>
   );
 }
@@ -52,7 +88,8 @@ function Side({ name, state, startingLifePoints, cardId, cardName, image, isWinn
 export default function MatchPage({ matchId }) {
   const [match, setMatch] = useState(null);
   const [me, setMe] = useState(null);
-  const [images, setImages] = useState({});
+  // Le carte complete (illustrazione ed effetto), da GET /cards/{cardId}
+  const [cardsById, setCardsById] = useState({});
   const [roundIndex, setRoundIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(null);
@@ -61,14 +98,11 @@ export default function MatchPage({ matchId }) {
     api(`/matches/${matchId}`)
       .then((data) => {
         setMatch(data);
-        // Illustrazioni delle carte dei due mazzi (le copie dei mazzi non le hanno)
+        // Illustrazioni ed effetti delle carte dei due mazzi (le copie dei mazzi hanno solo i dati di gioco)
         const ids = new Set([...(data.decks?.challenger?.cards ?? []), ...(data.decks?.opponent?.cards ?? [])].map((card) => card.cardId));
         ids.forEach((cardId) => {
           api(`/cards/${cardId}`)
-            .then((card) => setImages((current) => ({
-              ...current,
-              [cardId]: card.illustrationThumbUrl ? { url: card.illustrationThumbUrl, focusY: card.illustrationFocusY } : null,
-            })))
+            .then((card) => setCardsById((current) => ({ ...current, [cardId]: card })))
             .catch(() => {});
         });
       })
@@ -122,52 +156,55 @@ export default function MatchPage({ matchId }) {
   }
 
   const round = rounds[roundIndex];
+  // Il risultato si scopre solo all'ultimo round, come alla fine di una partita vera
+  const isFinished = roundIndex === rounds.length - 1;
   const lines = round ? describeRound(round, names, fields[roundIndex]) : [];
   const fighters = round ? combatCards(round, fields[roundIndex]) : {};
-  const imageFor = (cardId) => (cardId ? images[cardId] : null);
+  const previous = roundIndex > 0 ? rounds[roundIndex - 1].afterRound : null;
+  const numbersFor = (side, key) => (round
+    ? sideNumbers(round, side, fighters[side], previous ? previous[key].lifePoints : match.startingLifePoints, previous ? previous[key] : null)
+    : null);
 
   return (
     <div className="match-page">
       <HomeHeader />
 
       <main className="decks-content match-content">
-        <section className="match-result" aria-labelledby="match-title">
+        <section className="match-intro" aria-labelledby="match-title">
           <span className="dashboard-eyebrow">{match.matchType === 'RANKED' ? 'Partita classificata' : 'Partita rapida'}</span>
-          <h1 id="match-title">{title}</h1>
-          <p>
-            {match.challenger.username} {match.finalLifePoints.challenger} PV · {match.opponent.username} {match.finalLifePoints.opponent} PV
-            {' · '}{match.totalRounds} round · {endReasonNames[match.endReason] ?? match.endReason}
-          </p>
-          {(match.ratingChange || match.creditsEarned > 0 || match.leagueReached) && (
-            <p className="match-rewards">
-              {match.ratingChange && mySide && `Punteggio ${match.ratingChange[mySide] > 0 ? '+' : ''}${match.ratingChange[mySide]}`}
-              {match.creditsEarned > 0 && ` · +${match.creditsEarned} DC`}
-              {match.leagueReached && ` · Nuova lega: ${match.leagueReached.name}`}
-            </p>
-          )}
+          <h1 id="match-title">{match.challenger.username} contro {match.opponent.username}</h1>
+          <p>Guarda la partita round per round: il risultato arriva alla fine.</p>
         </section>
 
         {round && (
           <>
-            <div className="match-arena">
+            <div className="arena" key={roundIndex}>
               <Side
+                align="left"
                 name={match.challenger.username}
                 state={round.afterRound.challenger}
                 startingLifePoints={match.startingLifePoints}
                 cardId={fighters.CHALLENGER}
-                cardName={names.card(fighters.CHALLENGER)}
-                image={imageFor(fighters.CHALLENGER)}
-                isWinner={match.winnerId === match.challenger.id && roundIndex === rounds.length - 1}
+                snapshot={names.cardData(fighters.CHALLENGER)}
+                card={cardsById[fighters.CHALLENGER]}
+                numbers={numbersFor('CHALLENGER', 'challenger')}
+                isWinner={isFinished && match.winnerId === match.challenger.id}
               />
-              <span className="match-versus">VS</span>
+              <div className="arena-center" aria-hidden="true">
+                <span className="arena-center__round">Round {round.round}</span>
+                <span className="arena-center__vs">VS</span>
+                <span className="arena-center__clash">Scontro {round.clash}</span>
+              </div>
               <Side
+                align="right"
                 name={match.opponent.username}
                 state={round.afterRound.opponent}
                 startingLifePoints={match.startingLifePoints}
                 cardId={fighters.OPPONENT}
-                cardName={names.card(fighters.OPPONENT)}
-                image={imageFor(fighters.OPPONENT)}
-                isWinner={match.winnerId === match.opponent.id && roundIndex === rounds.length - 1}
+                snapshot={names.cardData(fighters.OPPONENT)}
+                card={cardsById[fighters.OPPONENT]}
+                numbers={numbersFor('OPPONENT', 'opponent')}
+                isWinner={isFinished && match.winnerId === match.opponent.id}
               />
             </div>
 
@@ -188,6 +225,9 @@ export default function MatchPage({ matchId }) {
               <button type="button" onClick={() => { setPlaying(false); setRoundIndex(Math.min(roundIndex + 1, rounds.length - 1)); }} disabled={roundIndex + 1 >= rounds.length}>
                 Avanti
               </button>
+              <button type="button" onClick={() => { setPlaying(false); setRoundIndex(rounds.length - 1); }} disabled={isFinished}>
+                Vai alla fine
+              </button>
             </div>
             <label className="match-slider">
               <span>Round {round.round} di {rounds.length} · scontro {round.clash}</span>
@@ -199,6 +239,24 @@ export default function MatchPage({ matchId }) {
                 onChange={(event) => { setPlaying(false); setRoundIndex(Number(event.target.value)); }}
               />
             </label>
+
+            {isFinished && (
+              <section className="match-result" aria-labelledby="result-title">
+                <span className="dashboard-eyebrow">Fine della partita</span>
+                <h2 id="result-title">{title}</h2>
+                <p>
+                  {match.challenger.username} {match.finalLifePoints.challenger} PV · {match.opponent.username} {match.finalLifePoints.opponent} PV
+                  {' · '}{match.totalRounds} round · {endReasonNames[match.endReason] ?? match.endReason}
+                </p>
+                {(match.ratingChange || match.creditsEarned > 0 || match.leagueReached) && (
+                  <p className="match-rewards">
+                    {match.ratingChange && mySide && `Punteggio ${match.ratingChange[mySide] > 0 ? '+' : ''}${match.ratingChange[mySide]}`}
+                    {match.creditsEarned > 0 && ` · +${match.creditsEarned} DC`}
+                    {match.leagueReached && ` · Nuova lega: ${match.leagueReached.name}`}
+                  </p>
+                )}
+              </section>
+            )}
 
             <section className="dashboard-panel match-log" aria-labelledby="log-title">
               <h2 id="log-title">Cronaca del round {round.round}</h2>

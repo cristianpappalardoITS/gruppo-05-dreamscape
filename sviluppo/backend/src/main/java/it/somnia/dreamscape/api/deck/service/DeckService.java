@@ -162,6 +162,39 @@ public class DeckService {
         deckRepository.deleteDeckById(deck.getId());
     }
 
+    /**
+     * Controlla un mazzo dell'utente prima di giocarlo (sfide tra amici, #94; matchmaking, #127).
+     *
+     * @param userId l'utente collegato
+     * @param deckId il mazzo scelto
+     * @return il mazzo con le carte e i problemi di adesso
+     * @throws DeckNotFoundException se il mazzo non esiste o è di un altro utente
+     */
+    @Transactional(readOnly = true)
+    public DeckCheck checkOwnDeck(UUID userId, UUID deckId) {
+        Deck deck = deckRepository.findByIdAndUser_Id(deckId, userId).orElseThrow(DeckNotFoundException::new);
+        return checkDeck(deck);
+    }
+
+    /**
+     * Controlla un mazzo con le regole di adesso e le copie che il suo proprietario possiede adesso: un mazzo
+     * valido quando è stato salvato può non esserlo più (scambio, carta disattivata).
+     *
+     * @param deck il mazzo, anche di un altro giocatore (es. quello di chi ha lanciato una sfida)
+     * @return il mazzo con le carte in ordine di codice e i problemi
+     */
+    @Transactional(readOnly = true)
+    public DeckCheck checkDeck(Deck deck) {
+        List<DeckCards> deckCards = deckCardsRepository.findAllByDeck_Id(deck.getId()).stream()
+                .sorted(Comparator.comparing(deckCard -> deckCard.getCard().getCode()))
+                .toList();
+        Map<Card, Integer> quantities = new LinkedHashMap<>();
+        deckCards.forEach(deckCard -> quantities.put(deckCard.getCard(), deckCard.getQuantity()));
+        List<String> problems = deckValidator.findProblems(toEntries(quantities),
+                collectionService.ownedQuantities(deck.getUser().getId()));
+        return new DeckCheck(deck, deckCards, problems);
+    }
+
     // Le carte della richiesta con le copie sommate, dopo il controllo delle regole
     private Map<Card, Integer> validCards(UUID userId, DeckRequest request) {
         Map<UUID, Integer> quantityByCardId = new LinkedHashMap<>();

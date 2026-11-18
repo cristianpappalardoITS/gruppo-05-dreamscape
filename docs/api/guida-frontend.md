@@ -1127,7 +1127,7 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 - `latestCards` sono le carte dell'ultima apertura (comprata o regalata), nell'ordine di uscita, con la stessa forma di `GET /pack-openings/{openingId}`. Lista vuota se il giocatore non ha mai aperto pacchetti.
 - `league` è la lega del punteggio attuale; nella lega più alta `nextLeagueName` e `nextLeagueMinRating` sono `null`.
 - `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
-- `pendingFriendRequests` sono le richieste di amicizia ricevute in attesa, `pendingTrades` gli scambi ricevuti in attesa di una risposta. Per ora `missions` è una lista vuota e `pendingChallenges` vale `0`: si riempiono quando sono pronte missioni (#125) e sfide (#94). La forma della risposta non cambia, quindi la pagina si può già fare tutta.
+- `pendingFriendRequests` sono le richieste di amicizia ricevute in attesa, `pendingTrades` gli scambi ricevuti in attesa di una risposta, `pendingChallenges` le sfide ricevute in attesa più quelle lanciate con un mazzo da sistemare. Per ora `missions` è una lista vuota: si riempie quando sono pronte le missioni (#125). La forma della risposta non cambia, quindi la pagina si può già fare tutta.
 - `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
 - Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 
@@ -1468,7 +1468,32 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 - Se il motore di gioco non risponde, `POST /matches/...` e `POST /challenges/{challengeId}/accept` rispondono `503` con `code: "ENGINE_UNAVAILABLE"`: la partita non si gioca, niente crediti né punti, la sfida resta in attesa. Si mostra "Partita non disponibile, riprova tra poco".
 - `PUT /me/ranked-deck` risponde `204`; `POST /challenges` risponde `201` con la sfida; rifiuto e annullamento rispondono `204`.
 - Tra due amici c'è al massimo una sfida in attesa: la seconda risponde `409`. Le sfide non scadono: chi sfida può annullarla.
-- Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita.
+- Dopo la partita si va su `/partite/{matchId}`, che legge `GET /matches/{matchId}`: ricaricare la pagina non fa giocare un'altra partita. La partita la vedono solo i due giocatori: per gli altri `404` con `code: "MATCH_NOT_FOUND"`.
+
+**Sfide tra amici (pronte, #94).** `GET /challenges?box=received` sono le sfide da accettare o rifiutare, `?box=sent` quelle lanciate: solo quelle in attesa, dalla più recente. Ogni sfida, come la risposta di `POST /challenges`:
+
+```json
+{
+  "id": "019a2e10-1b2c-7d3e-8f40-a1b2c3d4e5f6",
+  "challenger": { "id": "019a1f2e-7c41-7d3a-9b2e-5f6a7b8c9d01", "username": "lucida" },
+  "opponent": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" },
+  "challengerDeckId": "019a2a10-1b2c-7d3e-8f40-a1b2c3d4e5f6",
+  "challengerDeckName": "Incubi veloci",
+  "challengerDeckValid": true,
+  "challengerDeckProblems": [],
+  "createdAt": "2026-11-18T10:15:00Z"
+}
+```
+
+- `challengerDeckValid` si calcola a ogni lettura: il mazzo di chi sfida poteva essere valido quando ha lanciato la sfida e non esserlo più (carte scambiate, carta disattivata, mazzo cancellato). Se è `false`:
+  - tra le inviate si mostra "Il tuo mazzo Incubi veloci non è più valido: sistemalo", con `challengerDeckProblems`;
+  - tra le ricevute si mostra "Il mazzo di lucida non è più valido: aspetta che lo sistemi o rifiuta la sfida";
+  - accettando arriva `409` con `code: "CHALLENGER_DECK_INVALID"` e `problems`: niente partita, la sfida resta in attesa.
+- Se il mazzo è stato cancellato, `challengerDeckId` e `challengerDeckName` sono `null` e il problema è "Il mazzo della sfida è stato cancellato.".
+- Il mazzo di chi accetta deve essere valido: altrimenti `400` con `code: "INVALID_DECK"` e `problems`, come per `POST /challenges`.
+- Accetta e rifiuta solo chi è sfidato, annulla solo chi sfida: le altre combinazioni rispondono `403` con `code: "FORBIDDEN"`.
+- Se all'accettazione non siete più amici, la sfida si annulla da sola (`409` con `code: "CHALLENGE_CANCELLED"`). Togliere un amico o cancellare l'account annulla subito le sfide in attesa tra i due.
+- `pendingChallenges` di `GET /me/summary` conta le sfide ricevute in attesa e quelle lanciate con un mazzo da sistemare: è il numero da mostrare nel menu.
 
 Il risultato:
 
@@ -1793,7 +1818,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /packs` | utente | Pacchetti in vendita nel negozio |
 | `POST /packs/{packId}/open` | utente | Compra e apre un pacchetto |
 | `GET /pack-openings/{openingId}` | utente | Rilegge un'apertura |
-| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte, richieste di amicizia e scambi in attesa (missioni e sfide arrivano con #125 e #94) |
+| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte, richieste di amicizia, scambi e sfide in attesa (le missioni arrivano con #125) |
 | `GET /cards` | pubblico | Catalogo, con filtri e pagine (anche `?featured=true` per la Home) |
 | `GET /cards/{cardId}` | pubblico | Una carta |
 | `GET /factions` | pubblico | Le tre fazioni con il loro Lord |
@@ -1821,6 +1846,12 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /trades/{tradeId}/accept` | utente | Accetta uno scambio e sposta le carte |
 | `POST /trades/{tradeId}/reject` | utente | Rifiuta uno scambio |
 | `POST /trades/{tradeId}/cancel` | utente | Annulla (chi propone) |
+| `GET /challenges?box=` | utente | Sfide in attesa ricevute o inviate, con lo stato del mazzo di chi sfida |
+| `POST /challenges` | utente | Sfida un amico |
+| `POST /challenges/{challengeId}/accept` | utente | Accetta e gioca: la partita si gioca subito |
+| `POST /challenges/{challengeId}/reject` | utente | Rifiuta (chi è sfidato) |
+| `POST /challenges/{challengeId}/cancel` | utente | Annulla (chi sfida) |
+| `GET /matches/{matchId}` | utente | Risultato e replay di una partita, solo per i due giocatori |
 | `GET /admin/cards`, `GET /admin/cards/{cardId}` | admin | Le carte, anche full art e disattivate |
 | `POST /admin/cards`, `PUT /admin/cards/{cardId}` | admin | Nuova carta o full art; modifica e disattivazione |
 | `POST /admin/images` | admin | Caricamento di illustrazioni e copertine, con le copie WebP |
@@ -1835,12 +1866,6 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /matches/ranked` | utente | Gioca una classificata | #127 | Cristian | 6 |
 | `POST /matches/casual` | utente | Gioca una rapida | #127 | Cristian | 6 |
 | `GET /me/matches` | utente | Storico delle partite | #127 | Cristian | 6 |
-| `GET /matches/{matchId}` | utente | Risultato e replay | #94 | Cristian | 5 |
-| `GET /challenges?box=` | utente | Sfide ricevute o inviate | #94 | Cristian | 5 |
-| `POST /challenges` | utente | Sfida un amico | #94 | Cristian | 5 |
-| `POST /challenges/{challengeId}/accept` | utente | Accetta e gioca | #94 | Cristian | 5 |
-| `POST /challenges/{challengeId}/reject` | utente | Rifiuta | #94 | Cristian | 5 |
-| `POST /challenges/{challengeId}/cancel` | utente | Annulla | #94 | Cristian | 5 |
 | `GET /leagues` | utente | Le leghe con soglie e premi | #106 | Cristian | 6 |
 | `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
 | `GET /admin/stats`, configurazione, messaggi | admin | Il resto del backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | dopo il SAL |
@@ -1899,6 +1924,14 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `CARDS_LOCKED_IN_TRADE` | 409 | Copie già offerte in altri scambi in attesa |
 | `REQUESTED_CARDS_NOT_AVAILABLE` | 409 | Le copie richieste non sono disponibili: alla proposta, o all'accettazione (lo scambio resta in attesa) |
 | `TRADE_CANCELLED` | 409 | All'accettazione non siete più amici: lo scambio si è annullato |
+| `INVALID_CHALLENGE` | 400 | Sfida a se stessi |
+| `CHALLENGE_ALREADY_PENDING` | 409 | C'è già una sfida in attesa tra voi due, in una delle due direzioni |
+| `CHALLENGE_NOT_FOUND` | 404 | Sfida che non esiste o non vi riguarda |
+| `CHALLENGE_NOT_PENDING` | 409 | Sfida già giocata, rifiutata o annullata |
+| `CHALLENGE_CANCELLED` | 409 | All'accettazione non siete più amici: la sfida si è annullata |
+| `CHALLENGER_DECK_INVALID` | 409 | All'accettazione il mazzo di chi ha sfidato non è più valido (`problems` dice perché): la sfida resta in attesa |
+| `MATCH_NOT_FOUND` | 404 | Partita che non esiste o che non avete giocato |
+| `ENGINE_UNAVAILABLE` | 503 | Il motore di gioco non risponde: la partita non si gioca, la sfida resta in attesa |
 | `CARD_CODE_TAKEN`, `CARD_NAME_TAKEN` | 409 | Backoffice: codice o nome della carta già usati |
 | `FULL_ART_EXISTS` | 409 | Backoffice: la carta ha già la sua full art |
 | `PACK_NAME_TAKEN` | 409 | Backoffice: nome del pacchetto già usato |
@@ -1907,7 +1940,7 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 
 **Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.
 
-**Da fare** (arriveranno con le loro issue): `NO_OPPONENT_FOUND`, `ENGINE_UNAVAILABLE` e quelli delle sfide.
+**Da fare** (arriverà con il matchmaking, #127): `NO_OPPONENT_FOUND`.
 
 ---
 

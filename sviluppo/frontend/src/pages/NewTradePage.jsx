@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import HomeHeader from '../components/home/HomeHeader';
+import Card from '../components/Carta/Card';
 import CardGridItem from '../components/Collezione/CardGridItem';
 import { loadAllCards } from '../components/Collezione/loadAllCards.js';
-import { TradeCards, TradeWarnings } from '../components/Scambi/TradeParts.jsx';
+import { TradeWarnings } from '../components/Scambi/TradeParts.jsx';
 import { hasWarnings } from '../components/Scambi/hasWarnings.js';
 import '../styles/home.css';
 import '../components/Collezione/Collezione.css';
@@ -25,34 +26,69 @@ function removeCopy(entries, card) {
     .filter((entry) => entry.quantity > 0);
 }
 
-// Griglia di una collezione per lo scambio: solo le carte con copie disponibili (availableForTrade)
-function TradeCollection({ title, items, chosen, onAdd, search, onSearch }) {
-  const text = search.trim().toLowerCase();
-  const visible = items.filter((entry) => entry.availableForTrade > 0 && (!text || entry.card.name.toLowerCase().includes(text)));
+const countCards = (entries) => entries.reduce((sum, entry) => sum + entry.quantity, 0);
+const cardsLabel = (count) => (count === 1 ? '1 carta' : `${count} carte`);
+
+// Un lato dello scambio, come nel mockup: titolo, numero di carte e carte con la × per toglierle
+function TradeSide({ title, entries, onRemove, emptyText, note }) {
   return (
-    <section className="dashboard-panel trade-collection" aria-label={title}>
-      <h2>{title}</h2>
-      <input className="trade-search" type="search" value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Cerca una carta" maxLength={80} />
-      {visible.length === 0 && <p className="collection-message">Nessuna carta da scambiare.</p>}
-      <div className="collection-grid">
-        {visible.map((entry) => {
-          const inTrade = chosen.find((item) => item.card.id === entry.card.id)?.quantity ?? 0;
-          const maxed = inTrade >= entry.availableForTrade;
-          return (
-            <div key={entry.card.id} className={`deck-tile${maxed ? ' is-maxed' : ''}`}>
-              <CardGridItem entry={{ card: entry.card, quantity: entry.availableForTrade }} isSelected={inTrade > 0} onSelect={() => onAdd(entry)} />
-              {inTrade > 0 && <span className="deck-tile__in-deck">Nello scambio: {inTrade}</span>}
-            </div>
-          );
-        })}
+    <section className="trade-side" aria-label={title}>
+      <div className="trade-side__header">
+        <h2>{title}</h2>
+        <span className="trade-side__count">{cardsLabel(countCards(entries))}</span>
       </div>
+      {entries.length === 0 ? (
+        <p className="trade-side__empty">{emptyText}</p>
+      ) : (
+        <ul className="trade-side__cards">
+          {entries.map(({ card, quantity }) => (
+            <li key={card.id}>
+              <Card card={card} />
+              {quantity > 1 && <span className="grid-card__quantity">x{quantity}</span>}
+              <button type="button" className="trade-side__remove" onClick={() => onRemove(card)} aria-label={`Togli una copia di ${card.name}`}>×</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {note && <p className="trade-side__note">{note}</p>}
     </section>
   );
 }
 
-// Nuovo scambio: /scambi/nuovo (anche ?amico={userId}). Si sceglie l'amico, le carte da dare
-// (GET /me/cards) e da chiedere (GET /users/{userId}/cards). Prima di proporre si leggono gli
-// avvisi (POST /trades/preview) e, se ce ne sono, si chiede conferma; poi POST /trades.
+// Carte da cui scegliere (le tue o quelle dell'amico): solo quelle con copie disponibili
+// (availableForTrade), con il pulsante "+" o "In offerta" sotto ogni carta
+function TradePool({ items, chosen, onAdd, search, chosenText }) {
+  const text = search.trim().toLowerCase();
+  const visible = items.filter((entry) => entry.availableForTrade > 0 && (!text || entry.card.name.toLowerCase().includes(text)));
+  if (visible.length === 0) return <p className="collection-message">Nessuna carta da scambiare.</p>;
+  return (
+    <div className="trade-pool__grid">
+      {visible.map((entry) => {
+        const inTrade = chosen.find((item) => item.card.id === entry.card.id)?.quantity ?? 0;
+        const maxed = inTrade >= entry.availableForTrade;
+        const add = () => onAdd(entry);
+        return (
+          <div key={entry.card.id} className={`trade-pool__tile${maxed ? ' is-maxed' : ''}`}>
+            <CardGridItem
+              entry={{ card: entry.card, quantity: entry.availableForTrade }}
+              isSelected={inTrade > 0}
+              onSelect={add}
+              label={`Aggiungi ${entry.card.name} allo scambio (${inTrade} su ${entry.availableForTrade} copie)`}
+            />
+            <button type="button" className={`trade-pool__add${inTrade > 0 ? ' is-chosen' : ''}`} onClick={add} disabled={maxed} tabIndex={-1} aria-hidden="true">
+              {inTrade > 0 ? `✓ ${chosenText}${entry.availableForTrade > 1 ? ` ${inTrade}/${entry.availableForTrade}` : ''}` : '+'}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Nuovo scambio come nel mockup: /scambi/nuovo (anche ?amico={userId}). In alto le due offerte,
+// in basso le carte da cui scegliere: le tue (GET /me/cards) e quelle dell'amico
+// (GET /users/{userId}/cards). Prima di proporre si leggono gli avvisi (POST /trades/preview)
+// e, se ce ne sono, si chiede conferma; poi POST /trades.
 export default function NewTradePage() {
   const [friends, setFriends] = useState(null);
   const [friendId, setFriendId] = useState(new URLSearchParams(window.location.search).get('amico') ?? '');
@@ -61,8 +97,8 @@ export default function NewTradePage() {
   const [offered, setOffered] = useState([]);
   const [requested, setRequested] = useState([]);
   const [message, setMessage] = useState('');
-  const [mySearch, setMySearch] = useState('');
-  const [friendSearch, setFriendSearch] = useState('');
+  const [poolTab, setPoolTab] = useState('mine');
+  const [search, setSearch] = useState('');
   const [warnings, setWarnings] = useState(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
@@ -129,6 +165,7 @@ export default function NewTradePage() {
   };
 
   const friend = friends?.find((item) => item.user.id === friendId);
+  const friendName = friend?.user.username;
   const canPropose = friendId && offered.length > 0 && requested.length > 0 && !sending;
 
   // Ogni modifica alle carte rende vecchi gli avvisi già letti
@@ -139,19 +176,16 @@ export default function NewTradePage() {
     <div className="decks-page">
       <HomeHeader />
 
-      <main className="decks-content social-content">
-        <div className="collection-title-row">
-          <h1>Nuovo scambio</h1>
-          <a className="deck-back" href="/scambi">Torna agli scambi</a>
-        </div>
+      <main className="decks-content trade-new">
+        <h1 className="visually-hidden">Nuovo scambio</h1>
 
         {friends && friends.length === 0 && (
           <p className="collection-message">Si scambia solo con gli amici: <a href="/amici">aggiungi un amico</a>.</p>
         )}
 
         {friends && friends.length > 0 && (
-          <label className="deck-name trade-friend">
-            <span>Con chi scambi</span>
+          <label className="trade-friend">
+            <span>Scambia con</span>
             <select value={friendId} onChange={(event) => chooseFriend(event.target.value)}>
               <option value="">Scegli un amico</option>
               {friends.map((item) => <option key={item.user.id} value={item.user.id}>{item.user.username}</option>)}
@@ -163,76 +197,82 @@ export default function NewTradePage() {
 
         {friend && (
           <>
-            <div className="dashboard-panel trade-summary">
-              <div className="trade__sides">
-                <div>
-                  <h3>Tu dai</h3>
-                  <TradeCards entries={offered} emptyText="Tocca le tue carte qui sotto." />
-                  {offered.length > 0 && (
-                    <div className="trade-remove">
-                      {offered.map(({ card }) => (
-                        <button type="button" key={card.id} onClick={() => changeOffered(removeCopy(offered, card))}>- {card.name}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3>Chiedi a {friend.user.username}</h3>
-                  <TradeCards entries={requested} emptyText={`Tocca le carte di ${friend.user.username} qui sotto.`} />
-                  {requested.length > 0 && (
-                    <div className="trade-remove">
-                      {requested.map(({ card }) => (
-                        <button type="button" key={card.id} onClick={() => changeRequested(removeCopy(requested, card))}>- {card.name}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <label className="deck-name">
-                <span>Messaggio (facoltativo)</span>
-                <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={255} placeholder="Ti va?" />
-              </label>
-
-              {warnings && (
-                <div className="trade-confirm">
-                  <p>Prima di proporre:</p>
-                  <TradeWarnings warnings={warnings} />
-                </div>
-              )}
-
-              <div className="social-buttons trade-propose">
-                <button type="button" className="home-button home-button--filled" onClick={warnings ? propose : check} disabled={!canPropose}>
-                  {sending ? 'Attendi...' : warnings ? 'Proponi lo stesso' : 'Proponi lo scambio'}
-                </button>
-                {!canPropose && !sending && <span className="deck-hint">Serve almeno una carta per lato.</span>}
-              </div>
+            <div className="trade-offers">
+              <TradeSide
+                title="La tua offerta"
+                entries={offered}
+                onRemove={(card) => changeOffered(removeCopy(offered, card))}
+                emptyText="Scegli qui sotto le carte che dai."
+              />
+              <span className="trade-offers__swap" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </span>
+              <TradeSide
+                title={`Offerta di ${friendName}`}
+                entries={requested}
+                onRemove={(card) => changeRequested(removeCopy(requested, card))}
+                emptyText={`Scegli qui sotto le carte che chiedi a ${friendName}.`}
+              />
             </div>
 
-            <div className="trade-collections">
-              {myCards && (
-                <TradeCollection
-                  title="Le tue carte"
+            <label className="deck-name trade-message">
+              <span>Messaggio per {friendName} (facoltativo)</span>
+              <input type="text" value={message} onChange={(event) => setMessage(event.target.value)} maxLength={255} placeholder="Ti va?" />
+            </label>
+
+            {warnings && (
+              <div className="trade-confirm">
+                <p>Prima di proporre:</p>
+                <TradeWarnings warnings={warnings} />
+              </div>
+            )}
+
+            <div className="trade-actions">
+              <a className="home-button home-button--outlined" href="/scambi">Annulla</a>
+              <button type="button" className="home-button home-button--filled" onClick={warnings ? propose : check} disabled={!canPropose}>
+                {sending ? 'Attendi...' : warnings ? 'Proponi lo stesso' : 'Conferma offerta'}
+              </button>
+            </div>
+            <p className="trade-actions__note">
+              {canPropose || sending
+                ? `Lo scambio avviene quando ${friendName} lo accetta.`
+                : 'Serve almeno una carta per lato.'}
+            </p>
+
+            <section className="trade-pool" aria-label="Carte da scegliere">
+              <div className="trade-pool__header">
+                <div className="trade-pool__tabs" role="tablist">
+                  <button type="button" role="tab" aria-selected={poolTab === 'mine'} className={poolTab === 'mine' ? 'is-active' : ''} onClick={() => setPoolTab('mine')}>
+                    La tua collezione
+                  </button>
+                  <button type="button" role="tab" aria-selected={poolTab === 'friend'} className={poolTab === 'friend' ? 'is-active' : ''} onClick={() => setPoolTab('friend')}>
+                    Le carte di {friendName}
+                  </button>
+                </div>
+                <input className="trade-pool__search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cerca..." maxLength={80} aria-label="Cerca una carta" />
+              </div>
+
+              {poolTab === 'mine' && myCards && (
+                <TradePool
                   items={myCards}
                   chosen={offered}
                   onAdd={(entry) => changeOffered(addCopy(offered, entry.card, entry.availableForTrade))}
-                  search={mySearch}
-                  onSearch={setMySearch}
+                  search={search}
+                  chosenText="In offerta"
                 />
               )}
-              {friendCards ? (
-                <TradeCollection
-                  title={`Le carte di ${friend.user.username}`}
+              {poolTab === 'friend' && (friendCards ? (
+                <TradePool
                   items={friendCards}
                   chosen={requested}
                   onAdd={(entry) => changeRequested(addCopy(requested, entry.card, entry.availableForTrade))}
-                  search={friendSearch}
-                  onSearch={setFriendSearch}
+                  search={search}
+                  chosenText="Richiesta"
                 />
               ) : (
-                <p className="collection-message">Caricamento delle carte di {friend.user.username}...</p>
-              )}
-            </div>
+                <p className="collection-message">Caricamento delle carte di {friendName}...</p>
+              ))}
+            </section>
           </>
         )}
       </main>

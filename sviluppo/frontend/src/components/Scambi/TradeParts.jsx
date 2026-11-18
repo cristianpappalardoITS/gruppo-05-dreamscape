@@ -1,20 +1,15 @@
 // Pezzi in comune tra la pagina Scambi e il Nuovo scambio
+import Card from '../Carta/Card';
 
-// Carte di un lato dello scambio: [{ card, quantity }], con miniatura, nome e copie
+// Carte di un lato dello scambio: [{ card, quantity }], come piccole carte con le copie
 export function TradeCards({ entries, emptyText = 'Nessuna carta' }) {
   if (entries.length === 0) return <p className="collection-message">{emptyText}</p>;
   return (
     <ul className="trade-cards">
       {entries.map(({ card, quantity }) => (
-        <li key={card.id} className={`grid-card--${card.rarity.code.toLowerCase()}`}>
-          {card.illustrationThumbUrl
-            ? <img src={card.illustrationThumbUrl} alt="" style={{ objectPosition: `center ${card.illustrationFocusY * 100}%` }} />
-            : <span className="trade-cards__placeholder" />}
-          <span className="trade-cards__name">
-            {card.name}
-            <small>{card.rarity.name}{card.variantType === 'FULL_ART' ? ' · Full art' : ''}</small>
-          </span>
-          <strong>x{quantity}</strong>
+        <li key={card.id}>
+          <Card card={card} />
+          {quantity > 1 && <span className="grid-card__quantity">x{quantity}</span>}
         </li>
       ))}
     </ul>

@@ -1,4 +1,4 @@
-// Una carta nella griglia della collezione: miniatura, nome, rarità e copie possedute
+// Una carta nella griglia: miniatura, nome, rarità e copie (se quantity c'è)
 export default function CardGridItem({ entry, isSelected, onSelect }) {
   const { card, quantity } = entry;
   const isFullArt = card.variantType === 'FULL_ART';
@@ -21,7 +21,7 @@ export default function CardGridItem({ entry, isSelected, onSelect }) {
         ) : (
           <span className="grid-card__placeholder">{card.code}</span>
         )}
-        <span className="grid-card__quantity">x{quantity}</span>
+        {quantity !== undefined && <span className="grid-card__quantity">x{quantity}</span>}
       </div>
       <span className="grid-card__name">{card.name}</span>
       <span className="grid-card__meta">

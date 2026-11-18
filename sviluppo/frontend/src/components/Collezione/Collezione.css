@@ -84,6 +84,10 @@
   color: var(--text-muted);
 }
 
+.collection-message a {
+  color: var(--gold-primary);
+}
+
 /* Due colonne: dettaglio a sinistra, griglia a destra */
 .collection-columns {
   display: flex;

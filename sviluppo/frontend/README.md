@@ -21,10 +21,11 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 |----------|--------|------|
 | `/` | Home | `GET /factions`, `GET /rules`, `GET /cards?featured=true` |
 | `/login` | Accesso | `POST /auth/login` |
-| `/register` | Registrazione, poi accesso | `POST /auth/register` |
+| `/register` | Registrazione, poi accesso e passaggio al Benvenuto | `POST /auth/register` |
+| `/benvenuto` | Scelta della fazione, set iniziale e pacchetti di benvenuto (serve l'accesso) | `GET/POST /me/welcome`, `GET /factions`, `GET /cards/{cardId}` |
 | `/collezione` | Collezione con filtri e dettaglio della carta (serve l'accesso) | `GET /me/cards` |
 
-I percorsi che non esistono ancora (per esempio `/benvenuto` e `/dashboard`) mostrano la home. Finché non ci sono Benvenuto e Dashboard, dopo l'accesso e dopo la registrazione si va alla Collezione.
+I percorsi che non esistono ancora (per esempio `/dashboard`) mostrano la home. Finché non c'è la Dashboard, dopo l'accesso si va alla Collezione.
 
 In sviluppo usate Chrome o Firefox: Safari non salva il cookie del refresh token su `http://localhost` e a ogni cambio pagina si perde l'accesso (guida per il frontend, 4.2).
 
@@ -36,10 +37,11 @@ public/
 src/
   components/
     branding/               Simboli riutilizzati del marchio
+    Benvenuto/              Apertura dei pacchetti e stili della pagina Benvenuto
     Collezione/             Carta nella griglia e dettaglio della carta
     home/                   Intestazione, footer e icone della home
     Login/                  Campi e componenti dei form di accesso
-  pages/                    HomePage, LoginPage, RegisterPage, CollectionPage
+  pages/                    HomePage, LoginPage, RegisterPage, WelcomePage, CollectionPage
   styles/                   Palette e stili della home
   api.js                    L'unico file che parla con il backend (dalla guida)
   main.jsx                  Pagina in base al percorso e rinnovo del token all'avvio

@@ -59,6 +59,8 @@ export default function CollectionPage() {
     setPage(0);
   };
 
+  const hasFilters = Object.values(filters).some((value) => value.trim());
+
   const handleLogout = async () => {
     await logout().catch(() => {});
     window.location.assign('/');
@@ -108,7 +110,11 @@ export default function CollectionPage() {
               </p>
 
               {collection.items.length === 0 ? (
-                <p className="collection-message">Nessuna carta trovata.</p>
+                <p className="collection-message">
+                  {hasFilters
+                    ? 'Nessuna carta trovata.'
+                    : <>Non hai ancora carte: <a href="/benvenuto">scegli la tua fazione</a> e ricevi il set iniziale.</>}
+                </p>
               ) : (
                 <div className="collection-grid">
                   {collection.items.map((entry) => (

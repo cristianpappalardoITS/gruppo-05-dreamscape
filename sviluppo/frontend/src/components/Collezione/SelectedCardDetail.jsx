@@ -48,9 +48,12 @@ export default function SelectedCardDetail({ entry }) {
 
       {card.description && <p className="card-detail__description">{card.description}</p>}
 
-      <p className="card-detail__copies">
-        Copie: {quantity} · Disponibili per gli scambi: {availableForTrade}
-      </p>
+      {quantity !== undefined && (
+        <p className="card-detail__copies">
+          Copie: {quantity}
+          {availableForTrade !== undefined && ` · Disponibili per gli scambi: ${availableForTrade}`}
+        </p>
+      )}
     </article>
   );
 }

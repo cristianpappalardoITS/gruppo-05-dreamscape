@@ -439,10 +439,9 @@
   .home-header__navigation {
     order: 3;
     width: 100%;
-    justify-content: flex-start;
-    gap: 26px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 22px;
   }
 
   .home-header__navigation a { font-size: 10px; }
@@ -452,9 +451,9 @@
   .home-challenge { min-height: auto; padding: 52px 24px; }
   .home-challenge ol { max-width: 620px; margin: auto; line-height: 1.55; }
   .home-factions { min-height: auto; padding: 60px 16px; }
-  .home-factions__cards { gap: 15px; }
-  .home-faction-card { width: min(30vw, 180px); height: 220px; border-width: 5px; }
-  .home-faction-card svg { width: 75px; height: 75px; }
+  .home-factions__cards { flex-direction: column; align-items: center; gap: 18px; }
+  .home-faction-card { width: min(100%, 340px); min-height: 0; border-width: 5px; }
+  .home-faction-card .faction-emblem { width: 90px; height: 90px; }
   .home-rules { min-height: auto; padding: 65px 20px; }
   .home-rules__cards { grid-template-columns: repeat(2, minmax(0, 220px)); }
   .home-final-call { min-height: 480px; }
@@ -470,9 +469,7 @@
   .home-final-call .home-button { width: min(100%, 320px); }
   .home-button { min-height: 50px; }
   .home-factions h2 { font-size: 21px; }
-  .home-faction-card { width: 31%; height: 170px; padding: 12px 4px; }
-  .home-faction-card svg { width: 60px; height: 60px; }
-  .home-faction-card h3 { font-size: 12px; }
+  .home-faction-card { padding: 24px 12px 20px; }
   .home-rules__cards { gap: 14px; }
   .home-rule-card { min-height: 170px; }
   .home-final-call { padding: 54px 18px; }

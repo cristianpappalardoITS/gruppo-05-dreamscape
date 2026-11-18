@@ -45,11 +45,11 @@ export default function RegisterPage() {
       return;
     }
 
-    // Account creato: si entra subito. Finché la pagina Benvenuto non esiste si va alla Collezione.
+    // Account creato: si entra subito e si passa al Benvenuto per scegliere la fazione.
     // Se l'accesso non riesce, l'utente lo rifà dalla pagina di accesso.
     try {
       await login(form.get('email'), password);
-      window.location.assign('/collezione');
+      window.location.assign('/benvenuto');
     } catch {
       window.location.assign('/login');
     }

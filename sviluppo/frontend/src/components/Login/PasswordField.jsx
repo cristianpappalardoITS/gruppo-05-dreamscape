@@ -1,15 +1,5 @@
-import React, { lazy } from "react";
+import InputField from './InputField';
 
-const PasswordField = ({ label, ...props }) => {
-  return (
-    <div className="input-group">
-      <label>{label}</label>
-      <div className="input-wrapper">
-        <span className="input-icon">🔑</span>
-        <input type="password" {...props} />
-      </div>
-    </div>
-  );
-};
+const PasswordField = (props) => <InputField {...props} type="password" icon="key" />;
 
 export default PasswordField;

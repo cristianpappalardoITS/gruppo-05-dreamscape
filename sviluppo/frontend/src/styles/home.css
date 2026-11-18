@@ -1,0 +1,481 @@
+.home-page {
+  overflow: hidden;
+  background: #111522;
+}
+
+.home-page h1,
+.home-page h2,
+.home-page h3,
+.home-page p {
+  margin-top: 0;
+}
+
+.home-header {
+  height: 112px;
+  padding: 12px clamp(24px, 3.4vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #10131f;
+}
+
+.home-header__brand {
+  width: 112px;
+  height: 70px;
+  display: block;
+  flex: none;
+  text-decoration: none;
+}
+
+.home-header__logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--gold-primary);
+  -webkit-mask: url('/artwork/dreamscape-logo-with-wordmark.svg') center / contain no-repeat;
+  mask: url('/artwork/dreamscape-logo-with-wordmark.svg') center / contain no-repeat;
+}
+
+.home-header__navigation {
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 4.6vw, 74px);
+  margin: 0 auto;
+}
+
+.home-header__navigation a {
+  color: #d8d1cf;
+  font-family: var(--font-title);
+  font-size: clamp(11px, 0.85vw, 14px);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.home-header__navigation a:hover,
+.home-header__navigation a:focus-visible {
+  color: var(--gold-primary);
+}
+
+.home-header__account {
+  width: 48px;
+  height: 48px;
+  color: #f1eeee;
+  display: grid;
+  place-items: center;
+}
+
+.home-header__account svg {
+  width: 45px;
+  height: 45px;
+}
+
+.home-hero {
+  height: min(53vw, 760px);
+  min-height: 460px;
+  background: #151827;
+}
+
+.home-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 52%;
+}
+
+.home-section-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.home-introduction {
+  min-height: 470px;
+  padding: 72px 24px 55px;
+  text-align: center;
+  background: radial-gradient(circle at 90% 4%, #39314b 0, transparent 47%), #121624;
+}
+
+.home-introduction h1,
+.home-challenge h2,
+.home-rules h2,
+.home-final-call h2 {
+  color: #d4a467;
+  font-family: var(--font-title);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.home-introduction h1 {
+  margin-bottom: 12px;
+  font-size: clamp(38px, 3.65vw, 56px);
+}
+
+.home-introduction h2 {
+  margin-bottom: 19px;
+  color: #f0e9e5;
+  font-family: var(--font-title);
+  font-size: clamp(24px, 2.4vw, 37px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.home-introduction p {
+  max-width: 1160px;
+  margin: 0 auto 32px;
+  color: #d1c9cc;
+  font-size: clamp(13px, 1.15vw, 17px);
+  line-height: 1.45;
+}
+
+.home-button-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.home-button {
+  min-height: 64px;
+  padding: 12px 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #b8844e;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.1vw, 17px);
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color .2s, color .2s;
+}
+
+.home-introduction .home-button {
+  width: min(500px, 43%);
+}
+
+.home-button--filled {
+  background: #ce985e;
+  border-color: #ce985e;
+  color: #17151c;
+}
+
+.home-button--filled:hover,
+.home-button--filled:focus-visible {
+  background: #e3ae72;
+  border-color: #e3ae72;
+}
+
+.home-button--outlined {
+  background: rgba(17, 21, 34, .34);
+  color: #c9965f;
+}
+
+.home-button--outlined:hover,
+.home-button--outlined:focus-visible {
+  background: rgba(205, 151, 91, .12);
+}
+
+.home-challenge {
+  min-height: 290px;
+  padding: 55px 24px 56px;
+  background: #11131e;
+}
+
+.home-section-content--narrow {
+  max-width: 1080px;
+}
+
+.home-challenge h2 {
+  margin-bottom: 18px;
+  font-size: clamp(29px, 3.2vw, 47px);
+  text-align: center;
+}
+
+.home-challenge ol {
+  margin: 0;
+  padding-left: 26px;
+  color: #ddd7da;
+  font-size: clamp(12px, .98vw, 15px);
+  line-height: 1.32;
+}
+
+.home-factions {
+  min-height: 570px;
+  padding: 76px 24px 88px;
+  background: linear-gradient(105deg, #74568e 0%, #9789b8 42%, #95c8f4 100%);
+  text-align: center;
+}
+
+.home-factions h2 {
+  margin-bottom: 44px;
+  color: #302637;
+  font-family: var(--font-title);
+  font-size: clamp(25px, 2.2vw, 34px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.home-factions__cards {
+  display: flex;
+  justify-content: center;
+  gap: clamp(30px, 6vw, 88px);
+}
+
+.home-faction-card {
+  width: 220px;
+  min-height: 300px;
+  padding: 36px 12px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  border: 8px double #686077;
+  border-radius: 10px;
+  background: #252331;
+  box-shadow: 0 8px 14px rgba(19, 15, 31, .18);
+}
+
+.home-faction-card .faction-emblem {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 12px;
+}
+
+.home-faction-card h3 {
+  margin-bottom: 0;
+  font-family: var(--font-title);
+  font-size: clamp(17px, 1.45vw, 22px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.home-faction-card p {
+  margin: 12px 0 0;
+  color: #d8d2dc;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.home-faction-card--memories { color: #c28e50; }
+.home-faction-card--dreams { color: #88c8f3; }
+.home-faction-card--nightmares { color: #8d619f; }
+
+/* Invito a registrarsi (o ad aprire la collezione, se collegati) */
+.home-cta {
+  padding: 72px 24px;
+  background: #161a2a;
+}
+
+.home-cta__panel {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 44px clamp(20px, 5vw, 56px);
+  border: 1px solid rgba(201, 149, 93, .45);
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 0%, rgba(149, 200, 244, .14), transparent 65%), var(--card-bg);
+  text-align: center;
+}
+
+.home-cta h2 {
+  margin-bottom: 14px;
+  font-family: var(--font-title);
+  font-size: clamp(25px, 2.4vw, 36px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.home-cta p {
+  margin: 0 auto 28px;
+  max-width: 520px;
+  color: #d8d2dc;
+  font-family: var(--font-editorial);
+  font-size: clamp(17px, 1.4vw, 20px);
+  line-height: 1.45;
+}
+
+.home-rules {
+  min-height: 590px;
+  padding: 82px 24px 72px;
+  text-align: center;
+  background: #111522;
+}
+
+.home-rules h2 {
+  margin-bottom: 48px;
+  font-size: clamp(30px, 3vw, 44px);
+}
+
+.home-rules__cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 250px));
+  justify-content: center;
+  gap: clamp(22px, 3vw, 50px);
+}
+
+.home-rule-card {
+  min-height: 205px;
+  padding: 28px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #9bd1f1 0%, #b8c5ca 47%, #d9ae82 100%);
+  color: #191a22;
+}
+
+.home-rule-card svg {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+}
+
+.home-rule-card h3 {
+  max-width: 145px;
+  margin-bottom: 0;
+  color: #151620;
+  font-size: clamp(13px, 1.1vw, 16px);
+  font-weight: 600;
+  line-height: 1.18;
+}
+
+.home-final-call {
+  min-height: 650px;
+  padding: 80px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(rgba(17, 20, 35, .12), rgba(17, 20, 35, .28)), url('/artwork/dreamscape-worlds.webp') center 72% / cover;
+}
+
+.home-final-call__panel {
+  width: min(1140px, 100%);
+  min-height: 300px;
+  padding: 62px 60px;
+  border: 1px solid rgba(226, 210, 204, .35);
+  border-radius: 24px;
+  background: rgba(18, 20, 34, .8);
+  box-shadow: 0 20px 50px rgba(5, 6, 16, .35);
+  text-align: center;
+}
+
+.home-final-call h2 {
+  margin-bottom: 32px;
+  font-size: clamp(31px, 3vw, 45px);
+}
+
+.home-final-call .home-button {
+  min-width: 360px;
+}
+
+.home-footer {
+  min-height: 320px;
+  padding: 32px 24px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #111522;
+  text-align: center;
+}
+
+.home-footer__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #e8d9c4;
+  font-family: var(--font-title);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.home-footer__logo {
+  display: block;
+  width: 111px;
+  height: 70px;
+  background: var(--text-light);
+  -webkit-mask: url('/artwork/dreamscape-logo-with-wordmark.svg') center / contain no-repeat;
+  mask: url('/artwork/dreamscape-logo-with-wordmark.svg') center / contain no-repeat;
+}
+
+.home-footer p {
+  margin: 12px 0 14px;
+  color: #d9d1d3;
+  font-family: var(--font-title);
+  font-size: clamp(12px, 1.15vw, 17px);
+}
+
+.home-footer__social {
+  display: flex;
+  gap: 24px;
+  color: #ece7e8;
+  font-size: 22px;
+}
+
+.home-footer__contact,
+.home-footer small {
+  color: #bbb8bf;
+  font-family: var(--font-editorial);
+  font-size: 14px;
+  font-style: normal;
+}
+
+.home-footer__contact {
+  margin: 11px 0 6px;
+}
+
+@media (max-width: 800px) {
+  .home-header {
+    height: auto;
+    min-height: 100px;
+    flex-wrap: wrap;
+    row-gap: 12px;
+    padding: 10px 18px 14px;
+  }
+
+  .home-header__brand { width: 88px; height: 56px; }
+  .home-header__account { margin-left: auto; }
+  .home-header__navigation {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 26px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .home-header__navigation a { font-size: 10px; }
+  .home-hero { height: 54vw; min-height: 250px; }
+  .home-introduction { min-height: auto; padding: 58px 18px; }
+  .home-introduction p { max-width: 620px; }
+  .home-challenge { min-height: auto; padding: 52px 24px; }
+  .home-challenge ol { max-width: 620px; margin: auto; line-height: 1.55; }
+  .home-factions { min-height: auto; padding: 60px 16px; }
+  .home-factions__cards { gap: 15px; }
+  .home-faction-card { width: min(30vw, 180px); height: 220px; border-width: 5px; }
+  .home-faction-card svg { width: 75px; height: 75px; }
+  .home-rules { min-height: auto; padding: 65px 20px; }
+  .home-rules__cards { grid-template-columns: repeat(2, minmax(0, 220px)); }
+  .home-final-call { min-height: 480px; }
+  .home-final-call__panel { padding: 42px 25px; min-height: auto; }
+  .home-final-call .home-button { min-width: 0; }
+}
+
+@media (max-width: 520px) {
+  .home-introduction h1 { font-size: 32px; }
+  .home-introduction h2 { font-size: 22px; }
+  .home-button-row { flex-direction: column; align-items: center; gap: 12px; }
+  .home-introduction .home-button,
+  .home-final-call .home-button { width: min(100%, 320px); }
+  .home-button { min-height: 50px; }
+  .home-factions h2 { font-size: 21px; }
+  .home-faction-card { width: 31%; height: 170px; padding: 12px 4px; }
+  .home-faction-card svg { width: 60px; height: 60px; }
+  .home-faction-card h3 { font-size: 12px; }
+  .home-rules__cards { gap: 14px; }
+  .home-rule-card { min-height: 170px; }
+  .home-final-call { padding: 54px 18px; }
+  .home-final-call h2 { font-size: 28px; }
+  .home-footer { min-height: 280px; }
+}

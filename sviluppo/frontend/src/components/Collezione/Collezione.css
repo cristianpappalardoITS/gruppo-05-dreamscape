@@ -1,0 +1,323 @@
+/* Pagina Collezione: stessi colori e caratteri della home (design-tokens.css) */
+
+.collection-page {
+  min-height: 100vh;
+}
+
+.collection-content {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px clamp(16px, 3vw, 40px) 64px;
+}
+
+.collection-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.collection-title-row h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.collection-logout,
+.collection-pagination button {
+  padding: 8px 18px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gold-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.collection-logout:hover,
+.collection-pagination button:not(:disabled):hover {
+  background: var(--gold-primary);
+  color: var(--bg-dark);
+}
+
+.collection-pagination button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+
+/* Filtri */
+.collection-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.collection-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.collection-filters select,
+.collection-filters input {
+  min-width: 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.collection-search {
+  flex: 1;
+}
+
+.collection-message {
+  color: var(--text-muted);
+}
+
+/* Due colonne: dettaglio a sinistra, griglia a destra */
+.collection-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 36px;
+}
+
+.collection-detail-column {
+  flex: 0 0 340px;
+  position: sticky;
+  top: 24px;
+}
+
+.collection-grid-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.collection-counter {
+  margin: 0 0 14px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+/* Colore del bordo per rarità */
+.grid-card--common, .card-detail--common { --rarity-color: #9c95a8; }
+.grid-card--rare, .card-detail--rare { --rarity-color: #4da6ff; }
+.grid-card--epic, .card-detail--epic { --rarity-color: #b366ff; }
+.grid-card--legendary, .card-detail--legendary { --rarity-color: #dca466; }
+
+.grid-card {
+  padding: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 2px solid var(--rarity-color, var(--input-border));
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.grid-card:hover,
+.grid-card:focus-visible {
+  transform: translateY(-2px);
+}
+
+.grid-card.is-selected {
+  box-shadow: 0 0 0 3px var(--gold-primary);
+}
+
+.grid-card__image {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  background: var(--input-bg);
+}
+
+.grid-card__image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.grid-card__placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.grid-card__quantity {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(17, 21, 34, .85);
+  color: var(--gold-hover);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.grid-card__name {
+  margin: 8px 10px 2px;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.grid-card__meta {
+  margin: 0 10px;
+  color: var(--rarity-color);
+  font-size: 12px;
+}
+
+/* Dettaglio della carta */
+.card-detail {
+  padding: 20px;
+  border: 2px solid var(--rarity-color, var(--input-border));
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.card-detail--empty {
+  color: var(--text-muted);
+}
+
+.card-detail__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.card-detail h2 {
+  margin: 12px 0 4px;
+  font-family: var(--font-title);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.card-detail__lord {
+  margin: 0 0 8px;
+  color: var(--gold-primary);
+  font-size: 13px;
+}
+
+.card-detail__image {
+  margin: 12px 0 16px;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--input-bg);
+}
+
+.card-detail__image--full-art {
+  aspect-ratio: 2 / 3;
+}
+
+.card-detail__image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.card-detail__stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.card-detail__stats div {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+}
+
+.card-detail__stats span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.card-detail__stats strong {
+  font-size: 22px;
+}
+
+.card-detail__effect p,
+.card-detail__description,
+.card-detail__copies {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.card-detail__description {
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-family: var(--font-editorial);
+  font-size: 17px;
+  font-style: italic;
+}
+
+.card-detail__copies {
+  margin-top: 16px;
+  color: var(--text-muted);
+}
+
+.collection-pagination {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Telefono: una colonna sola */
+@media (max-width: 800px) {
+  .collection-columns {
+    flex-direction: column;
+  }
+
+  .collection-detail-column {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .collection-filters select,
+  .collection-filters input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .collection-filters label {
+    flex: 1 1 140px;
+  }
+}

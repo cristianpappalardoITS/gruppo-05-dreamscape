@@ -18,4 +18,11 @@ public final class MatchExceptions {
             super(HttpStatus.SERVICE_UNAVAILABLE, "ENGINE_UNAVAILABLE", "Partita non disponibile, riprova tra poco.");
         }
     }
+
+    // La partita non esiste o l'utente non l'ha giocata: non si dice quale delle due
+    public static class MatchNotFoundException extends ApiException {
+        public MatchNotFoundException() {
+            super(HttpStatus.NOT_FOUND, "MATCH_NOT_FOUND", "Partita non trovata.");
+        }
+    }
 }

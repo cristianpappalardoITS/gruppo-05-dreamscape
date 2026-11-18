@@ -42,6 +42,7 @@ Linee guida e documentazione dettagliata. Per la panoramica del progetto vedi il
 | Documento | Contenuto |
 |-----------|-----------|
 | [Proposta di regolamento](proposte/proposta-regolamento-dreamscape.pdf) (PDF) | Regolamento di Dreamscape: modalità Base con effetti, mazzo, rarità, carte iniziali, amici e scambi, rank, punti da valutare. Da aggiornare con le partite classificate e rapide ([decisione 010](decisioni/010-tipi-di-partita-e-rank.md)) |
+| [Simulazioni delle partite](proposte/simulazioni-partite.md) | **Da confermare con Maie e Nicolas (#87).** 75.000 partite con il motore e il catalogo veri: confermare 20 punti vita e limite di 60 round, Il Campanile tra le Nuvole con Permanenza 5 |
 | [Rilascio su AWS](proposte/rilascio-aws.md) | **Ipotesi, fuori dalla consegna.** Architettura su AWS, motore su Lambda, regole da seguire da subito per poterci arrivare senza riscrivere il codice |
 
 ## Materiale del gioco

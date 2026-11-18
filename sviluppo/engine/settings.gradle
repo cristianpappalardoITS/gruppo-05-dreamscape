@@ -1,8 +1,10 @@
-// Motore di gioco: un microservizio con due parti (decisione 029).
+// Motore di gioco: un microservizio con due parti (decisione 029), più le simulazioni.
 // engine-core: le regole in Java puro. engine-service: il servizio HTTP che le espone al backend.
+// engine-simulation: le simulazioni delle partite (#87), uno strumento che non va in produzione.
 // Il backend include questo progetto (sviluppo/backend/settings.gradle) e usa le classi di engine-core
 // per la richiesta al motore: la forma della chiamata è scritta una volta sola.
 rootProject.name = 'dreamscape-engine'
 
 include 'engine-core'
 include 'engine-service'
+include 'engine-simulation'

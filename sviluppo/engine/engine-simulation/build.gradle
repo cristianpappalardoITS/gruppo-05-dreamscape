@@ -1,0 +1,45 @@
+// Simulazioni delle partite (#87): gioca migliaia di partite con il catalogo vero e il motore vero
+// per scegliere punti vita e limite di round. È solo uno strumento: non entra nel servizio né nel backend.
+//   ./gradlew :engine-simulation:run
+//   ./gradlew :engine-simulation:run --args="--partite 2000 --seed 7"
+plugins {
+    id 'application'
+}
+
+group = 'it.somnia'
+version = '0.2.0'
+description = 'Simulazioni delle partite di Dreamscape'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':engine-core')
+    testImplementation platform('org.junit:junit-bom:6.0.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'it.somnia.dreamscape.engine.simulation.SimulationMain'
+}
+
+// Il catalogo si legge dalla migration del backend: una sola fonte per carte ed effetti
+def catalogFile = rootProject.file('../backend/src/main/resources/db/migration/V102__seed_base_set.sql')
+
+tasks.named('run') {
+    systemProperty 'dreamscape.catalog', catalogFile.absolutePath
+    systemProperty 'dreamscape.output', layout.buildDirectory.file('simulazioni/risultati.md').get().asFile.absolutePath
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'dreamscape.catalog', catalogFile.absolutePath
+}

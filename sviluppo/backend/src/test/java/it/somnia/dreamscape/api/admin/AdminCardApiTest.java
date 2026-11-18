@@ -1,13 +1,17 @@
 package it.somnia.dreamscape.api.admin;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +25,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import it.somnia.dreamscape.api.TestcontainersConfiguration;
+import jakarta.persistence.EntityManagerFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 // Carte nel backoffice (GET, POST, PUT /admin/cards), con le carte di prova di V900. Le liste si limitano
 // alle carte di prova (search "TEST-"), così non dipendono da quante carte ha il catalogo vero
@@ -41,6 +47,9 @@ class AdminCardApiTest extends AdminApiTestSupport {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     private String admin;
 
@@ -217,6 +226,114 @@ class AdminCardApiTest extends AdminApiTestSupport {
     }
 
     @Test
+    void updateCard_withoutIllustrationFields_keepsIllustrationAndFocus() throws Exception {
+        // Given: TEST-007 con un'illustrazione e un ritaglio suoi
+        ObjectNode card = cardRequest("TEST-007");
+        card.put("illustrationUrl", "/images/cards/test-007-v1.webp");
+        card.put("illustrationThumbUrl", "/images/cards/test-007-v1-thumb.webp");
+        card.put("illustrationFocusY", 0.25);
+        updateCard("TEST-007", card).andExpect(status().isOk());
+
+        // When: un PUT con i soli dati della carta
+        card.remove(List.of("illustrationUrl", "illustrationThumbUrl", "illustrationFocusY"));
+        card.put("attack", 5);
+
+        // Then
+        updateCard("TEST-007", card)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.attack").value(5))
+                .andExpect(jsonPath("$.illustrationUrl").value("/images/cards/test-007-v1.webp"))
+                .andExpect(jsonPath("$.illustrationThumbUrl").value("/images/cards/test-007-v1-thumb.webp"))
+                .andExpect(jsonPath("$.illustrationFocusY").value(0.25));
+    }
+
+    @Test
+    void updateCard_emptyIllustrationUrls_removesIllustration() throws Exception {
+        // Given
+        ObjectNode card = cardRequest("TEST-007");
+        card.put("illustrationUrl", "/images/cards/test-007-v1.webp");
+        card.put("illustrationThumbUrl", "/images/cards/test-007-v1-thumb.webp");
+        updateCard("TEST-007", card).andExpect(status().isOk());
+
+        // When / Then
+        card.put("illustrationUrl", "");
+        card.put("illustrationThumbUrl", "");
+        updateCard("TEST-007", card)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.illustrationUrl").doesNotExist())
+                .andExpect(jsonPath("$.illustrationThumbUrl").doesNotExist());
+    }
+
+    @Test
+    void updateCard_lordToAnotherFaction_isRefused() throws Exception {
+        // Given: il Lord di Dreams del set base (V102)
+        String lord = jdbcTemplate.queryForObject("SELECT c.code FROM factions f JOIN cards c ON c.id = f.lord_card_id "
+                + "WHERE f.code = 'DREAMS'", String.class);
+        ObjectNode card = cardRequest(lord);
+        card.put("factionCode", "NIGHTMARES");
+
+        // When / Then
+        updateCard(lord, card)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("factionCode"));
+    }
+
+    @Test
+    void updateCard_lordNoLongerLegendary_isRefused() throws Exception {
+        String lord = jdbcTemplate.queryForObject("SELECT c.code FROM factions f JOIN cards c ON c.id = f.lord_card_id "
+                + "WHERE f.code = 'DREAMS'", String.class);
+        ObjectNode card = cardRequest(lord);
+        card.put("rarityCode", "EPIC");
+
+        updateCard(lord, card)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("rarityCode"));
+    }
+
+    @Test
+    void updateCard_legendaryWithFullArtNoLongerLegendary_isRefused() throws Exception {
+        // Given: TEST-026 ha la sua full art (V900)
+        ObjectNode card = cardRequest("TEST-026");
+        card.put("rarityCode", "EPIC");
+
+        // When / Then
+        updateCard("TEST-026", card)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Questa carta ha la full art: resta Leggendaria."));
+    }
+
+    @Test
+    void updateCard_legendaryWithFullArtNewStats_isSaved() throws Exception {
+        ObjectNode card = cardRequest("TEST-026");
+        card.put("attack", 10);
+
+        updateCard("TEST-026", card)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.attack").value(10));
+    }
+
+    @Test
+    void listCards_wholeTestSet_usesAFewQueriesNotSomeForEachCard() throws Exception {
+        // Given
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+
+        // When: 42 carte, fra normali e full art
+        try {
+            mockMvc.perform(get("/api/v1/admin/cards").param("search", "TEST-").param("size", "100")
+                            .header(HttpHeaders.AUTHORIZATION, admin))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.items.length()").value(42));
+
+            // Then: prima erano più di 120 (tre per carta)
+            assertThat(statistics.getPrepareStatementCount()).isLessThan(10);
+        } finally {
+            statistics.setStatisticsEnabled(false);
+        }
+    }
+
+    @Test
     void updateCard_differentCode_isRefused() throws Exception {
         mockMvc.perform(put("/api/v1/admin/cards/{cardId}", cardId("TEST-007")).header(HttpHeaders.AUTHORIZATION, admin)
                         .contentType(MediaType.APPLICATION_JSON).content(NEW_LEGENDARY))
@@ -248,6 +365,24 @@ class AdminCardApiTest extends AdminApiTestSupport {
     private ResultActions createCard(String body) throws Exception {
         return mockMvc.perform(post("/api/v1/admin/cards").header(HttpHeaders.AUTHORIZATION, admin)
                 .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private ResultActions updateCard(String code, ObjectNode body) throws Exception {
+        return mockMvc.perform(put("/api/v1/admin/cards/{cardId}", cardId(code))
+                .header(HttpHeaders.AUTHORIZATION, admin)
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(body)));
+    }
+
+    // La carta come la rimanda il backoffice in un PUT: i dati di GET /admin/cards/{cardId}, senza i campi in sola
+    // lettura
+    private ObjectNode cardRequest(String code) throws Exception {
+        String body = mockMvc.perform(get("/api/v1/admin/cards/{cardId}", cardId(code))
+                        .header(HttpHeaders.AUTHORIZATION, admin))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        ObjectNode card = (ObjectNode) objectMapper.readTree(body);
+        card.remove(List.of("id", "variantType", "deckCount"));
+        return card;
     }
 
     private UUID cardId(String code) {

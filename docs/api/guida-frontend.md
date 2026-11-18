@@ -1563,7 +1563,8 @@ Una carta del backoffice (dati salvati, non quelli presi dalla carta base):
 ```
 
 - `deckCount`: in quanti mazzi è usata la carta, contando anche la sua full art. Prima di disattivarla conviene chiedere conferma: "12 mazzi diventeranno non validi".
-- `POST` (risponde `201`) e `PUT` (risponde `200`) mandano gli stessi campi, senza `id` e `deckCount`. Con `PUT` si manda tutta la carta: i campi mancanti si svuotano (es. senza `effectCode` l'effetto si toglie).
+- `POST` (risponde `201`) e `PUT` (risponde `200`) mandano gli stessi campi, senza `id` e `deckCount`. Con `PUT` si mandano tutti i dati della carta: quelli mancanti si svuotano (es. senza `effectCode` l'effetto si toglie). Fanno eccezione l'illustrazione e il ritaglio: se `illustrationUrl`, `illustrationThumbUrl` o `illustrationFocusY` mancano, restano come sono; per togliere l'illustrazione si mandano le due URL vuote (`""`).
+- **Lord e full art:** la carta che fa da Lord di una fazione non cambia fazione e resta Leggendaria; una carta con la full art resta Leggendaria. Altrimenti `400 VALIDATION_ERROR` sul campo `factionCode` o `rarityCode`.
 - **Carta normale:** obbligatori `code` (lettere maiuscole, numeri e trattini), `name`, `attack`, `defense` (da 1 a 99), `factionCode`, `rarityCode`, `cardSetCode`. `effectCode` è facoltativo; `effectValue` c'è solo per gli effetti con la X (da 1 a 20). `illustrationFocusY` va da 0 a 1 (di base 0,40).
 - **Full art:** solo `code` (il codice della carta base + `-FA`, es. `BASE-013-FA`), `baseCardId`, l'illustrazione e `isActive`. Oggi solo per le Leggendarie, una per carta. Nome, testi, statistiche ed effetto restano vuoti: li prende dalla carta base.
 - Il codice e la carta base non si cambiano.
@@ -1573,7 +1574,7 @@ Errori: `409 CARD_CODE_TAKEN`, `409 CARD_NAME_TAKEN`, `409 FULL_ART_EXISTS`, `40
 
 #### Immagini: `POST /admin/images`
 
-Form `multipart/form-data` con tre campi: `file` (PNG o JPEG, al massimo 15 MB), `code` e `type`:
+Form `multipart/form-data` con tre campi: `file` (PNG o JPEG, al massimo 15 MB, 8000 pixel per lato e 40 milioni di pixel in tutto), `code` e `type`:
 
 | `type` | `code` | Cosa crea | Risposta `201` |
 |--------|--------|-----------|----------------|
@@ -1591,7 +1592,7 @@ form.append("type", "ILLUSTRATION");
 // Con FormData non si mette Content-Type: lo aggiunge il browser
 ```
 
-Errori: `400 INVALID_IMAGE` (non è un PNG o un JPEG), `400 VALIDATION_ERROR` (codice non valido), `413 FILE_TOO_LARGE`, `400 MALFORMED_REQUEST` (manca il file o il tipo).
+Errori: `400 INVALID_IMAGE` (non è un PNG o un JPEG, o ha troppi pixel), `400 VALIDATION_ERROR` (codice non valido), `413 FILE_TOO_LARGE`, `400 MALFORMED_REQUEST` (manca il file o il tipo).
 
 #### Pacchetti: `GET/POST /admin/packs`, `GET/PUT /admin/packs/{packId}`
 
@@ -1613,7 +1614,7 @@ Errori: `400 INVALID_IMAGE` (non è un PNG o un JPEG), `400 VALIDATION_ERROR` (c
 - `POST` (risponde `201`) e `PUT` (risponde `200`) mandano gli stessi campi, senza `id`. Nelle copertine, `id` serve solo per modificarne una che c'è già.
 - `packType`: `SHOP` (si compra, prezzo maggiore di 0), `STARTER` o `WELCOME` (gratis, prezzo 0).
 - **Slot:** almeno uno; i pesi (`weight`) di ogni slot sono percentuali e **sommano a 100**. Con `PUT` gli slot sostituiscono quelli di prima.
-- **Copertine:** quelle con `id` si modificano, quelle senza `id` si aggiungono, quelle che mancano si spengono (non si cancellano: le aperture già fatte le ricordano).
+- **Copertine:** quelle con `id` si modificano, quelle senza `id` si aggiungono, quelle che mancano dalla lista si spengono (non si cancellano: le aperture già fatte le ricordano). Senza il campo `covers` le copertine restano come sono; con `"covers": []` si spengono tutte.
 - `availableFrom` e `availableUntil` (UTC) sono facoltativi: la fine viene dopo l'inizio. `fullArtChance` va da 0 a 100.
 
 Errori: `409 PACK_NAME_TAKEN`, `404 PACK_NOT_FOUND`, `400 VALIDATION_ERROR` (es. "Le probabilità dello slot 2 sommano a 95: devono fare 100.").
@@ -1901,7 +1902,7 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `CARD_CODE_TAKEN`, `CARD_NAME_TAKEN` | 409 | Backoffice: codice o nome della carta già usati |
 | `FULL_ART_EXISTS` | 409 | Backoffice: la carta ha già la sua full art |
 | `PACK_NAME_TAKEN` | 409 | Backoffice: nome del pacchetto già usato |
-| `INVALID_IMAGE` | 400 | Backoffice: il file non è un PNG o un JPEG |
+| `INVALID_IMAGE` | 400 | Backoffice: il file non è un PNG o un JPEG, o ha troppi pixel |
 | `FILE_TOO_LARGE` | 413 | Backoffice: file oltre i 15 MB |
 
 **Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.

@@ -57,14 +57,17 @@ public record AdminCardRequest(
         @Min(value = 1, message = "Il valore X è almeno 1.") @Max(value = 20, message = "Il valore X è al massimo 20.")
         Integer effectValue,
 
-        @Schema(description = "url ricevuto da POST /admin/images", example = "/images/cards/base-013-v1.webp")
+        @Schema(description = "url ricevuto da POST /admin/images. Nella modifica, senza le due URL l'illustrazione "
+                + "resta quella di prima; con le due URL vuote (\"\") si toglie",
+                example = "/images/cards/base-013-v1.webp")
         @Size(max = 500) String illustrationUrl,
 
         @Schema(description = "thumbUrl ricevuto da POST /admin/images: sempre insieme a illustrationUrl",
                 example = "/images/cards/base-013-v1-thumb.webp")
         @Size(max = 500) String illustrationThumbUrl,
 
-        @Schema(description = "Il punto del ritaglio in verticale, da 0 (in alto) a 1; di base 0.40", example = "0.40")
+        @Schema(description = "Il punto del ritaglio in verticale, da 0 (in alto) a 1; di base 0.40. Nella modifica, "
+                + "se manca resta quello di prima", example = "0.40")
         @DecimalMin(value = "0", message = "Il ritaglio va da 0 a 1.")
         @DecimalMax(value = "1", message = "Il ritaglio va da 0 a 1.") BigDecimal illustrationFocusY,
 

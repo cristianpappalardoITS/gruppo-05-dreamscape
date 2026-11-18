@@ -37,12 +37,14 @@ public class AdminImageController {
             + "caricamento ha una versione nuova nel nome (-v1, -v2...). Non modifica la carta: gli indirizzi si "
             + "salvano poi nella carta o nel pacchetto.")
     @ApiResponse(responseCode = "201", description = "Indirizzi delle copie WebP (thumbUrl non c'è per COVER)")
-    @ApiResponse(responseCode = "400", description = "INVALID_IMAGE (non è un PNG o un JPEG), VALIDATION_ERROR "
-            + "(codice non valido) o MALFORMED_REQUEST (manca il file o il tipo)")
+    @ApiResponse(responseCode = "400", description = "INVALID_IMAGE (non è un PNG o un JPEG, o ha troppi pixel), "
+            + "VALIDATION_ERROR (codice non valido) o MALFORMED_REQUEST (manca il file o il tipo)")
     @ApiResponse(responseCode = "413", description = "FILE_TOO_LARGE: oltre 15 MB")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImageUploadResponse> uploadImage(
-            @Parameter(description = "Il file PNG o JPEG, al massimo 15 MB") @RequestPart("file") MultipartFile file,
+            @Parameter(description = "Il file PNG o JPEG: al massimo 15 MB, 8000 pixel per lato e 40 milioni di "
+                    + "pixel")
+            @RequestPart("file") MultipartFile file,
             @Parameter(description = "Codice della carta (es. BASE-013, anche BASE-013-FA per FULL_ART) o nome del "
                     + "pacchetto (es. dream-pack)")
             @RequestParam String code,

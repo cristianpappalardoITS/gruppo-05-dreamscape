@@ -76,20 +76,37 @@ class AdminPackApiTest extends AdminApiTestSupport {
     }
 
     @Test
-    void updatePack_newSlotsAndRemovedCover_replacesSlotsAndTurnsCoverOff() throws Exception {
+    void updatePack_newSlotsAndEmptyCovers_replacesSlotsAndTurnsCoverOff() throws Exception {
         // Given
         String packId = idOf(createPack(NEW_PACK));
 
-        // When: uno slot solo e nessuna copertina
+        // When: uno slot solo e la lista delle copertine vuota
         mockMvc.perform(put("/api/v1/admin/packs/{packId}", packId).header(HttpHeaders.AUTHORIZATION, admin)
                         .contentType(MediaType.APPLICATION_JSON).content("""
                                 { "name": "Sogno Breve", "packType": "SHOP", "priceCredits": 300, "fullArtChance": 10,
-                                  "slots": [ { "cardCount": 5, "rarities": [ { "rarityCode": "COMMON", "weight": 100 } ] } ] }"""))
+                                  "slots": [ { "cardCount": 5, "rarities": [ { "rarityCode": "COMMON", "weight": 100 } ] } ],
+                                  "covers": [] }"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.priceCredits").value(300))
                 .andExpect(jsonPath("$.slots.length()").value(1))
                 .andExpect(jsonPath("$.slots[0].cardCount").value(5))
                 .andExpect(jsonPath("$.covers[0].isActive").value(false));
+    }
+
+    @Test
+    void updatePack_withoutCoversField_keepsCovers() throws Exception {
+        // Given
+        String packId = idOf(createPack(NEW_PACK));
+
+        // When: un PUT con il solo prezzo cambiato, senza il campo covers
+        mockMvc.perform(put("/api/v1/admin/packs/{packId}", packId).header(HttpHeaders.AUTHORIZATION, admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                { "name": "Sogno Breve", "packType": "SHOP", "priceCredits": 350, "fullArtChance": 10,
+                                  "slots": [ { "cardCount": 5, "rarities": [ { "rarityCode": "COMMON", "weight": 100 } ] } ] }"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.priceCredits").value(350))
+                .andExpect(jsonPath("$.covers[0].name").value("Copertina Dreams"))
+                .andExpect(jsonPath("$.covers[0].isActive").value(true));
     }
 
     @Test

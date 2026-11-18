@@ -80,8 +80,10 @@ public class AdminCardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminCardService.createCard(request));
     }
 
-    @Operation(summary = "Modifica o disattivazione di una carta", description = "Si manda tutta la carta: i campi "
-            + "mancanti si svuotano. Il codice e la carta base non si cambiano. Prima di disattivare conviene "
+    @Operation(summary = "Modifica o disattivazione di una carta", description = "Si mandano tutti i dati della "
+            + "carta: quelli mancanti si svuotano, tranne illustrazione e ritaglio, che restano come sono (le due URL "
+            + "vuote tolgono l'illustrazione). Il codice e la carta base non si cambiano; il Lord non cambia fazione "
+            + "e, come una carta con la full art, resta Leggendaria. Prima di disattivare conviene "
             + "guardare deckCount.")
     @ApiResponse(responseCode = "200", description = "Carta aggiornata")
     @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR, anche per un codice o una carta base diversi")

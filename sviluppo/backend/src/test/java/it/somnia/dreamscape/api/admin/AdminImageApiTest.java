@@ -10,10 +10,13 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.zip.CRC32;
 
 import javax.imageio.ImageIO;
 
@@ -137,6 +140,26 @@ class AdminImageApiTest extends AdminApiTestSupport {
     }
 
     @Test
+    void upload_pngDeclaringHugeSize_returnsInvalidImageWithoutDecodingIt() throws Exception {
+        // Given: pochi byte che dichiarano 50.000 x 50.000 pixel (decodificati sarebbero circa 10 GB)
+        byte[] huge = pngHeaderOnly(50_000, 50_000);
+
+        // When / Then
+        upload(huge, code, "ILLUSTRATION", admin)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_IMAGE"))
+                .andExpect(jsonPath("$.message").value(
+                        "L'immagine è troppo grande: al massimo 8000 pixel per lato e 40 milioni di pixel in tutto."));
+    }
+
+    @Test
+    void upload_tooManyPixelsWithinTheSideLimit_returnsInvalidImage() throws Exception {
+        upload(pngHeaderOnly(7_000, 7_000), code, "ILLUSTRATION", admin)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_IMAGE"));
+    }
+
+    @Test
     void upload_invalidCode_returnsValidationError() throws Exception {
         upload(png(100, 100), "../segreti", "ILLUSTRATION", admin)
                 .andExpect(status().isBadRequest())
@@ -163,6 +186,27 @@ class AdminImageApiTest extends AdminApiTestSupport {
         MockMultipartFile file = new MockMultipartFile("file", "illustrazione.png", "image/png", content);
         return mockMvc.perform(multipart("/api/v1/admin/images").file(file).param("code", cardCode)
                 .param("type", type).header(HttpHeaders.AUTHORIZATION, token));
+    }
+
+    // Un PNG con la sola intestazione (firma, IHDR e IEND): basta per leggere le dimensioni, non per decodificarlo
+    private static byte[] pngHeaderOnly(int width, int height) {
+        ByteBuffer header = ByteBuffer.allocate(13).putInt(width).putInt(height)
+                .put((byte) 8).put((byte) 2).put((byte) 0).put((byte) 0).put((byte) 0);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        bytes.writeBytes(new byte[] { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' });
+        writeChunk(bytes, "IHDR", header.array());
+        writeChunk(bytes, "IEND", new byte[0]);
+        return bytes.toByteArray();
+    }
+
+    private static void writeChunk(ByteArrayOutputStream bytes, String type, byte[] data) {
+        CRC32 crc = new CRC32();
+        crc.update(type.getBytes(StandardCharsets.US_ASCII));
+        crc.update(data);
+        bytes.writeBytes(ByteBuffer.allocate(4).putInt(data.length).array());
+        bytes.writeBytes(type.getBytes(StandardCharsets.US_ASCII));
+        bytes.writeBytes(data);
+        bytes.writeBytes(ByteBuffer.allocate(4).putInt((int) crc.getValue()).array());
     }
 
     private static byte[] png(int width, int height) throws IOException {

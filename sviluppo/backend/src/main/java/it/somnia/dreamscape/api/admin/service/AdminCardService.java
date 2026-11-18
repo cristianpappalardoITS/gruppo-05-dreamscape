@@ -2,9 +2,14 @@ package it.somnia.dreamscape.api.admin.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -97,7 +102,8 @@ public class AdminCardService {
         }
         Page<Card> cards = cardRepository.findAll(Specification.allOf(filters), PageRequest.of(page, size,
                 Sort.by("code")));
-        return PageResponse.from(cards, this::toResponse);
+        return new PageResponse<>(toResponses(cards.getContent()), cards.getNumber(), cards.getSize(),
+                cards.getTotalElements(), cards.getTotalPages());
     }
 
     /**
@@ -140,9 +146,9 @@ public class AdminCardService {
             card = new Card(code, cardSet(request.cardSetCode()));
             applyCardData(card, request);
         }
-        applyIllustration(card, request);
+        applyIllustration(card, request, true);
         card.setActive(request.isActive() == null || request.isActive());
-        cardRepository.saveAndFlush(card);
+        saveCard(card);
         if (card.getBaseCard() == null) {
             applyEffect(card, request, null);
         }
@@ -177,12 +183,13 @@ public class AdminCardService {
         } else {
             card.setCardSet(cardSet(request.cardSetCode()));
             applyCardData(card, request);
+            checkLordAndFullArt(card);
         }
-        applyIllustration(card, request);
+        applyIllustration(card, request, false);
         if (request.isActive() != null) {
             card.setActive(request.isActive());
         }
-        cardRepository.saveAndFlush(card);
+        saveCard(card);
         if (card.getBaseCard() == null) {
             applyEffect(card, request, cardEffectRepository.findByCard(card).orElse(null));
         }
@@ -232,21 +239,67 @@ public class AdminCardService {
         card.setRarity(rarity(request.rarityCode()));
     }
 
-    private static void applyIllustration(Card card, AdminCardRequest request) {
-        String url = blankToNull(request.illustrationUrl());
-        String thumbUrl = blankToNull(request.illustrationThumbUrl());
-        if ((url == null) != (thumbUrl == null)) {
-            throw new InvalidAdminFieldException("illustrationThumbUrl",
-                    "Servono tutte e due le copie dell'illustrazione: grande e miniatura.");
+    // Nella modifica, URL e ritaglio che mancano (null) restano quelli di prima: così un PUT con i soli dati
+    // della carta non cancella l'illustrazione. Le due URL vuote ("") tolgono l'illustrazione
+    private static void applyIllustration(Card card, AdminCardRequest request, boolean creating) {
+        if (creating || request.illustrationUrl() != null || request.illustrationThumbUrl() != null) {
+            String url = blankToNull(request.illustrationUrl());
+            String thumbUrl = blankToNull(request.illustrationThumbUrl());
+            if ((url == null) != (thumbUrl == null)) {
+                throw new InvalidAdminFieldException("illustrationThumbUrl",
+                        "Servono tutte e due le copie dell'illustrazione: grande e miniatura.");
+            }
+            if (url != null && (!url.startsWith(IMAGES_PREFIX) || !thumbUrl.startsWith(IMAGES_PREFIX))) {
+                throw new InvalidAdminFieldException("illustrationUrl",
+                        "Usa gli indirizzi restituiti dal caricamento delle immagini (/images/...).");
+            }
+            card.setIllustrationUrl(url);
+            card.setIllustrationThumbUrl(thumbUrl);
         }
-        if (url != null && (!url.startsWith(IMAGES_PREFIX) || !thumbUrl.startsWith(IMAGES_PREFIX))) {
-            throw new InvalidAdminFieldException("illustrationUrl",
-                    "Usa gli indirizzi restituiti dal caricamento delle immagini (/images/...).");
+        if (request.illustrationFocusY() != null) {
+            card.setIllustrationFocusY(request.illustrationFocusY());
+        } else if (creating) {
+            card.setIllustrationFocusY(DEFAULT_FOCUS_Y);
         }
-        card.setIllustrationUrl(url);
-        card.setIllustrationThumbUrl(thumbUrl);
-        card.setIllustrationFocusY(request.illustrationFocusY() != null ? request.illustrationFocusY()
-                : DEFAULT_FOCUS_Y);
+    }
+
+    // Il Lord resta una Leggendaria della sua fazione (decisione 001) e una carta con la full art resta
+    // Leggendaria (decisione 025): altrimenti fazione e full art resterebbero collegate a una carta sbagliata
+    private void checkLordAndFullArt(Card card) {
+        boolean legendary = FULL_ART_RARITY.equals(card.getRarity().getCode());
+        factionRepository.findByLordCard(card).ifPresent(lordOf -> {
+            if (!lordOf.getId().equals(card.getFaction().getId())) {
+                throw new InvalidAdminFieldException("factionCode",
+                        "Questa carta è il Lord di " + lordOf.getName() + ": la fazione non si cambia.");
+            }
+            if (!legendary) {
+                throw new InvalidAdminFieldException("rarityCode",
+                        "Questa carta è il Lord di " + lordOf.getName() + ": resta Leggendaria.");
+            }
+        });
+        if (!legendary && cardRepository.findByBaseCardAndVariantType(card, CardVariantType.FULL_ART).isPresent()) {
+            throw new InvalidAdminFieldException("rarityCode", "Questa carta ha la full art: resta Leggendaria.");
+        }
+    }
+
+    // Due richieste nello stesso momento possono superare tutte e due i controlli su codice e nome: il vincolo
+    // UNIQUE del database ferma la seconda, che riceve lo stesso errore dei controlli
+    private void saveCard(Card card) {
+        try {
+            cardRepository.saveAndFlush(card);
+        } catch (DataIntegrityViolationException e) {
+            String cause = String.valueOf(e.getMostSpecificCause().getMessage());
+            if (cause.contains("uq_cards_code")) {
+                throw new CardCodeTakenException();
+            }
+            if (cause.contains("uq_cards_name")) {
+                throw new CardNameTakenException();
+            }
+            if (cause.contains("uq_cards_full_art")) {
+                throw new FullArtExistsException();
+            }
+            throw e;
+        }
     }
 
     // Al massimo un effetto per carta; il valore X solo per gli effetti che lo hanno (effects.has_value)
@@ -281,14 +334,34 @@ public class AdminCardService {
     }
 
     private AdminCardResponse toResponse(Card card) {
-        Card base = card.getBaseCard() != null ? card.getBaseCard() : card;
-        CardEffect effect = card.getBaseCard() == null ? cardEffectRepository.findByCard(card).orElse(null) : null;
-        List<UUID> ids = new ArrayList<>();
-        ids.add(card.getId());
-        if (card.getBaseCard() == null) {
-            cardRepository.findByBaseCard(base).forEach(version -> ids.add(version.getId()));
+        return toResponses(List.of(card)).getFirst();
+    }
+
+    // Tre query per tutte le carte insieme, non per ogni carta: effetti, versioni delle carte normali e mazzi.
+    // deckCount di una carta normale conta anche i mazzi che usano la sua full art
+    private List<AdminCardResponse> toResponses(List<Card> cards) {
+        List<Card> baseCards = cards.stream().filter(card -> card.getBaseCard() == null).toList();
+        Map<UUID, CardEffect> effects = new HashMap<>();
+        Map<UUID, Set<UUID>> countedCards = new HashMap<>();
+        cards.forEach(card -> countedCards.computeIfAbsent(card.getId(), id -> new HashSet<>()).add(card.getId()));
+        if (!baseCards.isEmpty()) {
+            cardEffectRepository.findByCardIn(baseCards)
+                    .forEach(effect -> effects.put(effect.getCard().getId(), effect));
+            cardRepository.findByBaseCardIn(baseCards)
+                    .forEach(version -> countedCards.get(version.getBaseCard().getId()).add(version.getId()));
         }
-        return AdminCardResponse.from(card, effect, deckCardsRepository.countDecksUsing(ids));
+        Set<UUID> allCardIds = new HashSet<>();
+        countedCards.values().forEach(allCardIds::addAll);
+        Map<UUID, Set<UUID>> decksByCard = new HashMap<>();
+        if (!allCardIds.isEmpty()) {
+            deckCardsRepository.findUsages(allCardIds).forEach(usage ->
+                    decksByCard.computeIfAbsent(usage.getCardId(), id -> new HashSet<>()).add(usage.getDeckId()));
+        }
+        return cards.stream().map(card -> {
+            Set<UUID> decks = new HashSet<>();
+            countedCards.get(card.getId()).forEach(id -> decks.addAll(decksByCard.getOrDefault(id, Set.of())));
+            return AdminCardResponse.from(card, effects.get(card.getId()), decks.size());
+        }).toList();
     }
 
     private Card findCard(UUID cardId) {

@@ -18,6 +18,13 @@
   margin-bottom: 24px;
 }
 
+/* Più pulsanti a destra del titolo */
+.title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .collection-title-row h1 {
   margin: 0;
   font-family: var(--font-title);
@@ -124,19 +131,19 @@
 .grid-card--epic, .card-detail--epic { --rarity-color: #b366ff; }
 .grid-card--legendary, .card-detail--legendary { --rarity-color: #dca466; }
 
+/* La carta disegnata è dentro (componente Card): il pulsante non ha bordo né sfondo */
 .grid-card {
-  padding: 0 0 10px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 2px solid var(--rarity-color, var(--input-border));
-  border-radius: 10px;
-  background: var(--card-bg);
+  position: relative;
+  padding: 0;
+  display: block;
+  border: 0;
+  border-radius: 6%;
+  background: none;
   color: var(--text-light);
   font-family: var(--font-body);
   text-align: left;
   cursor: pointer;
-  transition: transform .15s ease, box-shadow .15s ease;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
 }
 
 .grid-card:hover,
@@ -144,21 +151,14 @@
   transform: translateY(-2px);
 }
 
+.grid-card:focus-visible {
+  outline: 2px solid var(--gold-hover);
+  outline-offset: 3px;
+}
+
+/* Carta scelta: alone dorato attorno alla cornice */
 .grid-card.is-selected {
-  box-shadow: 0 0 0 3px var(--gold-primary);
-}
-
-.grid-card__image {
-  position: relative;
-  aspect-ratio: 3 / 2;
-  background: var(--input-bg);
-}
-
-.grid-card__image img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
+  filter: drop-shadow(0 0 3px var(--gold-hover)) drop-shadow(0 0 8px var(--gold-primary));
 }
 
 .grid-card__placeholder {
@@ -170,29 +170,18 @@
   font-size: 13px;
 }
 
+/* Copie possedute: in alto a sinistra, sopra la cornice */
 .grid-card__quantity {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
+  left: -4px;
+  top: -6px;
   padding: 2px 8px;
+  border: 1px solid var(--gold-primary);
   border-radius: 10px;
-  background: rgba(17, 21, 34, .85);
+  background: rgba(17, 21, 34, .92);
   color: var(--gold-hover);
   font-size: 12px;
   font-weight: 600;
-}
-
-.grid-card__name {
-  margin: 8px 10px 2px;
-  font-family: var(--font-title);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.grid-card__meta {
-  margin: 0 10px;
-  color: var(--rarity-color);
-  font-size: 12px;
 }
 
 /* Dettaglio della carta */

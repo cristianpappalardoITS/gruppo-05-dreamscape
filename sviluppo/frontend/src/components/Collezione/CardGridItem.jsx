@@ -1,7 +1,10 @@
-// Una carta nella griglia: miniatura, nome, rarità e copie (se quantity c'è)
+import Card from '../Carta/Card';
+
+// Una carta nella griglia: la carta montata e, se quantity c'è, il numero di copie
 export default function CardGridItem({ entry, isSelected, onSelect }) {
   const { card, quantity } = entry;
   const isFullArt = card.variantType === 'FULL_ART';
+  const label = `${card.name}${isFullArt ? ', full art' : ''}${quantity !== undefined ? `, ${quantity} copie` : ''}`;
 
   return (
     <button
@@ -9,24 +12,10 @@ export default function CardGridItem({ entry, isSelected, onSelect }) {
       className={`grid-card grid-card--${card.rarity.code.toLowerCase()}${isSelected ? ' is-selected' : ''}`}
       onClick={() => onSelect(entry)}
       aria-pressed={isSelected}
+      aria-label={label}
     >
-      <div className="grid-card__image">
-        {card.illustrationThumbUrl ? (
-          <img
-            src={card.illustrationThumbUrl}
-            alt=""
-            loading="lazy"
-            style={{ objectPosition: `center ${card.illustrationFocusY * 100}%` }}
-          />
-        ) : (
-          <span className="grid-card__placeholder">{card.code}</span>
-        )}
-        {quantity !== undefined && <span className="grid-card__quantity">x{quantity}</span>}
-      </div>
-      <span className="grid-card__name">{card.name}</span>
-      <span className="grid-card__meta">
-        {card.rarity.name}{isFullArt ? ' · Full art' : ''}
-      </span>
+      <Card card={card} />
+      {quantity !== undefined && <span className="grid-card__quantity">x{quantity}</span>}
     </button>
   );
 }

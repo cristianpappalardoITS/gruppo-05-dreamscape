@@ -43,27 +43,46 @@
   margin: 0 auto;
 }
 
+/* Cinzel mostra le minuscole come maiuscoletto: "Collezione" come nei mockup */
 .home-header__navigation a {
   color: #d8d1cf;
   font-family: var(--font-title);
-  font-size: clamp(11px, 0.85vw, 14px);
+  font-size: clamp(12px, 1.05vw, 16px);
   letter-spacing: 0.04em;
   text-decoration: none;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .home-header__navigation a:hover,
-.home-header__navigation a:focus-visible {
+.home-header__navigation a:focus-visible,
+.home-header__navigation a.is-active {
   color: var(--gold-primary);
 }
 
-.home-header__account {
+/* Carrello (Negozio) e profilo */
+.home-header__icons {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2vw, 30px);
+}
+
+.home-header__icon {
   width: 48px;
   height: 48px;
   color: #f1eeee;
   display: grid;
   place-items: center;
+}
+
+.home-header__icon:hover,
+.home-header__icon:focus-visible,
+.home-header__icon.is-active {
+  color: var(--gold-primary);
+}
+
+.home-header__icon svg {
+  width: 40px;
+  height: 40px;
 }
 
 .home-header__account svg {
@@ -435,7 +454,8 @@
   }
 
   .home-header__brand { width: 88px; height: 56px; }
-  .home-header__account { margin-left: auto; }
+  .home-header__icons { margin-left: auto; }
+  .home-header__icon svg { width: 34px; height: 34px; }
   .home-header__navigation {
     order: 3;
     width: 100%;

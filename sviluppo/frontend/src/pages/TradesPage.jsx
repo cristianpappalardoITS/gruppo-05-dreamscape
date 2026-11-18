@@ -87,7 +87,10 @@ export default function TradesPage() {
       <main className="decks-content social-content">
         <div className="collection-title-row">
           <h1>Scambi</h1>
-          <a className="home-button home-button--filled decks-new" href="/scambi/nuovo">Nuovo scambio</a>
+          <span className="title-actions">
+            <a className="home-button home-button--outlined decks-new" href="/amici">Amici</a>
+            <a className="home-button home-button--filled decks-new" href="/scambi/nuovo">Nuovo scambio</a>
+          </span>
         </div>
 
         <div className="trade-tabs" role="tablist">

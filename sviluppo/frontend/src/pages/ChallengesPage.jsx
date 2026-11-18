@@ -89,6 +89,7 @@ export default function ChallengesPage() {
       <main className="decks-content social-content">
         <div className="collection-title-row">
           <h1>Sfide</h1>
+          <a className="home-button home-button--outlined decks-new" href="/amici">Amici</a>
         </div>
 
         {message && <p className="social-message" role="status">{message}</p>}

@@ -1,0 +1,149 @@
+/* Carta montata: le misure dei testi sono in cqw (percento della larghezza della carta),
+   così la stessa carta va bene come miniatura e in grande */
+
+.card {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 260 / 362;
+  container-type: inline-size;
+  user-select: none;
+}
+
+.card__art {
+  position: absolute;
+  overflow: hidden;
+  background: #0d0f18;
+}
+
+.card__art img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.card__no-art {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 6cqw;
+}
+
+.card__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.card__zone {
+  position: absolute;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Nome nella barra in alto: sempre su una riga, centrato. Card.jsx rimpicciolisce i nomi
+   lunghi con --fit finché non entrano */
+.card__name {
+  align-items: center;
+  justify-content: center;
+  /* Le estremità della barra sono arrotondate: il nome resta lontano dai bordi */
+  padding: 0 4.5cqw;
+  color: #2b1d10;
+  font-family: var(--font-title);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.card__name span {
+  /* Cinzel tiene le lettere alte nella riga: si abbassa di poco per centrarle nella barra */
+  position: relative;
+  top: .14em;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font-size: calc(5.6cqw * var(--fit, 1));
+  white-space: nowrap;
+}
+
+/* Effetto e descrizione nella pergamena, centrati in orizzontale e in verticale.
+   Le misure interne sono in em, così --fit le riduce tutte insieme */
+.card__text {
+  align-items: center;
+  justify-content: center;
+  padding: 2cqw 4cqw;
+  color: #2b1d10;
+  font-family: var(--font-body);
+  text-align: center;
+}
+
+.card__text-inner {
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .35em;
+  overflow: hidden;
+  font-size: calc(4.3cqw * var(--fit, 1));
+  line-height: 1.22;
+}
+
+.card__text p {
+  margin: 0;
+}
+
+.card__effect strong {
+  font-weight: 600;
+}
+
+.card__description {
+  font-family: var(--font-editorial);
+  font-size: 1.12em;
+  font-style: italic;
+  line-height: 1.1;
+}
+
+.card__lord {
+  color: #6b4a1f;
+  font-family: var(--font-title);
+  font-size: .84em;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Attacco e difesa accanto alla spada e allo scudo */
+.card__stat {
+  align-items: center;
+  justify-content: center;
+  color: #f4ead8;
+  font-family: var(--font-title);
+  font-size: 7.4cqw;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+
+/* Full art: illustrazione su tutta la carta, testi su pannelli scuri */
+.card--full-art .card__art {
+  inset: 0;
+  border-radius: 4cqw;
+}
+
+.card--full-art .card__name,
+.card--full-art .card__text,
+.card--full-art .card__stat {
+  border-radius: 2.5cqw;
+  background: rgba(13, 15, 24, .68);
+  color: #f4ead8;
+}
+
+.card--full-art .card__lord {
+  color: var(--gold-hover);
+}

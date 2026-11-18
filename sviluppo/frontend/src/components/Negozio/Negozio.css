@@ -1,29 +1,10 @@
-/* Negozio dei pacchetti (stessi colori della home) */
+/* Negozio come nel mockup (stessi colori della home) */
 
 .shop-page {
   min-height: 100vh;
 }
 
-.shop-content .collection-title-row h1 {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: clamp(26px, 2.6vw, 38px);
-  font-weight: 400;
-  font-variant: small-caps;
-}
-
-.shop-balance {
-  padding: 8px 16px;
-  border: 1px solid var(--gold-primary);
-  border-radius: 999px;
-  color: var(--text-light);
-  font-size: 15px;
-}
-
-.shop-balance strong {
-  color: var(--gold-hover);
-}
-
+/* Messaggi di errore: li usano anche altre pagine */
 .shop-error {
   padding: 10px 14px;
   border-radius: 8px;
@@ -31,10 +12,104 @@
   color: #f0c4c8;
 }
 
+.shop-intro h1 {
+  margin: 0;
+  color: var(--gold-primary);
+  font-family: var(--font-title);
+  font-size: clamp(32px, 3.6vw, 56px);
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+
+.shop-intro p {
+  margin: 10px 0 0;
+  color: #d8d2dc;
+  font-family: var(--font-editorial);
+  font-size: clamp(17px, 1.4vw, 21px);
+}
+
+/* Moneta dei Dream Credits */
+.dc-coin {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #3b4f8c;
+  color: #f1eeee;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dc-coin--large {
+  width: 60px;
+  height: 60px;
+  font-size: 22px;
+}
+
+/* Fascia dei crediti */
+.shop-credits {
+  margin: 28px 0 40px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 28px;
+}
+
+.shop-credits__balance {
+  padding-right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-right: 1px solid var(--input-border);
+}
+
+.shop-credits__balance span:not(.dc-coin) {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.shop-credits__balance strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 17px;
+}
+
+.shop-credits p {
+  margin: 0;
+  padding-right: 28px;
+  border-right: 1px solid var(--input-border);
+  color: #d8d2dc;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.shop-credits__buy {
+  min-height: 56px;
+  border-radius: 10px;
+}
+
+.shop-credits__buy:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.shop-section-title {
+  margin: 0 0 22px;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.6vw, 40px);
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+
+/* Pacchetti: tre per riga, come nel mockup */
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  gap: clamp(20px, 3vw, 50px);
 }
 
 .shop-pack--dreams { --faction-color: #88c8f3; }
@@ -42,17 +117,18 @@
 .shop-pack--memories { --faction-color: #d9a466; }
 
 .shop-pack {
+  padding: 18px 18px 20px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--faction-color, var(--input-border));
+  border: 1px solid var(--faction-color, #c9c4cc);
   border-radius: 14px;
-  background: var(--card-bg);
 }
 
 .shop-pack__image {
   position: relative;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 6px;
   background: var(--input-bg);
 }
 
@@ -65,11 +141,11 @@
 
 .shop-pack__image .faction-emblem {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 56px;
-  height: 56px;
-  padding: 6px;
+  right: 10px;
+  bottom: 10px;
+  width: 48px;
+  height: 48px;
+  padding: 5px;
   border: 2px solid var(--faction-color);
   border-radius: 50%;
   background: #10131f;
@@ -77,51 +153,100 @@
 
 .shop-pack__body {
   flex: 1;
-  padding: 18px 18px 6px;
+  padding-top: 14px;
 }
 
-.shop-pack__body h2 {
-  margin: 0 0 8px;
-  font-family: var(--font-title);
-  font-size: 22px;
+.shop-pack__body h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-body);
+  font-size: 16px;
   font-weight: 600;
 }
 
 .shop-pack__description {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   color: #d8d2dc;
   font-size: 14px;
   line-height: 1.45;
 }
 
-.shop-pack__slots {
-  margin: 0;
-  padding-left: 18px;
+.shop-pack__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shop-pack__tags span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #33313f;
+  color: #d8d2dc;
+  font-size: 12px;
+}
+
+.shop-pack__details {
+  margin-top: 10px;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.shop-pack__details summary {
+  color: var(--gold-primary);
+  cursor: pointer;
+}
+
+.shop-pack__details ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
   line-height: 1.5;
 }
 
-.shop-pack__until {
-  margin: 10px 0 0;
-  color: var(--gold-primary);
-  font-size: 13px;
+.shop-pack__price {
+  margin: 16px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shop-pack__price strong {
+  font-size: 24px;
+  font-weight: 600;
 }
 
 .shop-pack__buy {
-  padding: 14px 18px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.shop-pack__buy .home-button {
+/* Acquista: a contorno come nel mockup, piena quando si conferma */
+.shop-buy {
   flex: 1;
-  min-height: 48px;
+  min-height: 46px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--gold-hover);
+  font-family: var(--font-body);
+  font-size: 16px;
   cursor: pointer;
 }
 
-.shop-pack__buy .home-button:disabled {
+.shop-buy:hover:not(:disabled),
+.shop-buy:focus-visible {
+  background: rgba(201, 149, 93, .14);
+}
+
+.shop-buy--confirm {
+  background: var(--gold-primary);
+  color: #17151c;
+}
+
+.shop-buy--confirm:hover:not(:disabled) {
+  background: var(--gold-hover);
+}
+
+.shop-buy:disabled {
   opacity: .5;
   cursor: default;
 }
@@ -134,4 +259,18 @@
   font-family: var(--font-body);
   text-decoration: underline;
   cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .shop-credits {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .shop-credits__balance,
+  .shop-credits p {
+    padding: 0 0 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--input-border);
+  }
 }

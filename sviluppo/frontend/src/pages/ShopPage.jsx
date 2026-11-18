@@ -33,8 +33,8 @@ function slotDescriptions(pack) {
   });
 }
 
-// Negozio (GET /packs): i pacchetti in vendita, il saldo (GET /me/summary) e l'acquisto
-// (POST /packs/{packId}/open), poi l'apertura su /negozio/apertura/{openingId}
+// Negozio come nel mockup (GET /packs): il saldo (GET /me/summary), i pacchetti in vendita e
+// l'acquisto con conferma (POST /packs/{packId}/open), poi l'apertura su /negozio/apertura/{openingId}
 export default function ShopPage() {
   const [packs, setPacks] = useState(null);
   const [balance, setBalance] = useState(null);
@@ -78,10 +78,27 @@ export default function ShopPage() {
       <HomeHeader />
 
       <main className="decks-content shop-content">
-        <div className="collection-title-row">
-          <h1>Negozio</h1>
-          {balance !== null && <span className="shop-balance">Saldo: <strong>{credits(balance)}</strong></span>}
+        <div className="shop-intro">
+          <h1>Il tuo negozio</h1>
+          <p>Acquista pacchetti di carte e controlla i tuoi crediti disponibili.</p>
         </div>
+
+        {/* Crediti, come nel mockup. L'acquisto di crediti con denaro vero non c'è in questa fase */}
+        <section className="shop-credits" aria-label="I tuoi crediti">
+          <div className="shop-credits__balance">
+            <span className="dc-coin dc-coin--large" aria-hidden="true">C</span>
+            <div>
+              <span>Crediti disponibili</span>
+              <strong>{balance !== null ? credits(balance).replace(' DC', '') : '...'}</strong>
+            </div>
+          </div>
+          <p>Usa i tuoi Dream Credits per acquistare pacchetti di carte. Ogni giorno, al primo accesso, ne ricevi 50 in regalo.</p>
+          <button type="button" className="home-button home-button--filled shop-credits__buy" disabled title="Arriverà in una fase successiva">
+            Acquista crediti · in arrivo
+          </button>
+        </section>
+
+        <h2 className="shop-section-title">Pacchetti disponibili</h2>
 
         {error && <p className="collection-message shop-error" role="alert">{error.message}</p>}
         {!error && !packs && <p className="collection-message">Caricamento pacchetti...</p>}
@@ -94,6 +111,7 @@ export default function ShopPage() {
               const tooExpensive = balance !== null && balance < pack.priceCredits;
               const isConfirming = confirmingPackId === pack.id;
               const isBuying = buyingPackId === pack.id;
+              const cardCount = pack.slots.reduce((sum, slot) => sum + slot.cardCount, 0);
 
               return (
                 <article key={pack.id} className={`shop-pack${pack.factionCode ? ` shop-pack--${pack.factionCode.toLowerCase()}` : ''}`}>
@@ -107,23 +125,31 @@ export default function ShopPage() {
                   </div>
 
                   <div className="shop-pack__body">
-                    <h2>{pack.name}</h2>
+                    <h3>{pack.name}</h3>
                     <p className="shop-pack__description">{pack.description}</p>
-                    <ul className="shop-pack__slots">
-                      {slotDescriptions(pack).map((text) => <li key={text}>{text}</li>)}
-                    </ul>
-                    {pack.availableUntil && (
-                      <p className="shop-pack__until">
-                        In vendita fino al {new Date(pack.availableUntil).toLocaleDateString('it-IT')}
-                      </p>
-                    )}
+                    <div className="shop-pack__tags">
+                      <span>{cardCount} carte</span>
+                      {pack.availableUntil && <span>Fino al {new Date(pack.availableUntil).toLocaleDateString('it-IT')}</span>}
+                    </div>
+                    <details className="shop-pack__details">
+                      <summary>Cosa contiene</summary>
+                      <ul>
+                        {slotDescriptions(pack).map((text) => <li key={text}>{text}</li>)}
+                      </ul>
+                    </details>
+                  </div>
+
+                  <div className="shop-pack__price">
+                    <span className="dc-coin" aria-hidden="true">C</span>
+                    <strong>{credits(pack.priceCredits).replace(' DC', '')}</strong>
+                    <span className="visually-hidden">Dream Credits</span>
                   </div>
 
                   <div className="shop-pack__buy">
                     {isConfirming ? (
                       <>
-                        <button type="button" className="home-button home-button--filled" onClick={() => buy(pack)} disabled={isBuying}>
-                          {isBuying ? 'Apertura...' : `Conferma · ${credits(pack.priceCredits)}`}
+                        <button type="button" className="shop-buy shop-buy--confirm" onClick={() => buy(pack)} disabled={isBuying}>
+                          {isBuying ? 'Apertura...' : 'Conferma acquisto'}
                         </button>
                         <button type="button" className="shop-cancel" onClick={() => setConfirmingPackId(null)} disabled={isBuying}>
                           Annulla
@@ -132,11 +158,11 @@ export default function ShopPage() {
                     ) : (
                       <button
                         type="button"
-                        className="home-button home-button--filled"
+                        className="shop-buy"
                         onClick={() => setConfirmingPackId(pack.id)}
                         disabled={tooExpensive || buyingPackId !== null}
                       >
-                        {tooExpensive ? `Servono ${credits(pack.priceCredits)}` : `Acquista · ${credits(pack.priceCredits)}`}
+                        {tooExpensive ? 'Crediti insufficienti' : 'Acquista'}
                       </button>
                     )}
                   </div>

@@ -52,7 +52,7 @@ BattleResult result = new BattleEngine().simulate(challengerDeck, opponentDeck, 
 |-------|---------------|
 | `engine-core` | Le regole del gioco in Java puro: niente Spring, database o HTTP. Package `it.somnia.dreamscape.engine` |
 | `engine-service` | Il servizio Spring Boot che espone il nucleo al backend con `POST /api/v1/simulations`. Package `it.somnia.dreamscape.engine.server`. Non contiene logica di gioco |
-| `engine-simulation` | Le simulazioni delle partite (#87): legge le carte dalla migration `V102` del backend e gioca migliaia di partite con ogni combinazione di punti vita e limite di round. Package `it.somnia.dreamscape.engine.simulation`. Non entra nell'immagine né nel backend |
+| `engine-simulation` | Le simulazioni delle partite (#87): legge le carte dalle migration del backend (`V102` e le correzioni successive, come `V103`) e gioca migliaia di partite con ogni combinazione di punti vita e limite di round. Package `it.somnia.dreamscape.engine.simulation`. Non entra nell'immagine né nel backend |
 | `Dockerfile` | L'immagine di `engine-service`: compila con il JDK, esegue il jar con il solo JRE e senza l'utente root |
 
 Package di `engine-core`:

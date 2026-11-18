@@ -59,10 +59,10 @@ public final class SimulationMain {
                 default -> throw new IllegalArgumentException("Opzione sconosciuta: " + args[i]);
             }
         }
-        Path catalogFile = Path.of(requiredProperty("dreamscape.catalog"));
+        Path catalogDir = Path.of(requiredProperty("dreamscape.catalog"));
         Path outputFile = Path.of(requiredProperty("dreamscape.output"));
 
-        List<CatalogCard> catalog = SeedCatalogReader.read(catalogFile);
+        List<CatalogCard> catalog = SeedCatalogReader.read(catalogDir);
         List<SimulatedGame> games = prepareGames(new DeckBuilder(catalog), gameCount, seed);
 
         BattleEngine engine = new BattleEngine();
@@ -86,7 +86,7 @@ public final class SimulationMain {
                 String.format("%d partite per combinazione, %d combinazioni: %d partite in %d secondi",
                         gameCount, statistics.size(), (long) gameCount * statistics.size(), seconds),
                 "Le stesse partite (mazzi e seed) per tutte le combinazioni; seed iniziale " + seed,
-                "Catalogo: " + catalog.size() + " carte da " + catalogFile.getFileName()
+                "Catalogo: " + catalog.size() + " carte dalle migration del backend (V102 e successive)"
                         + "; motore " + BattleEngine.ENGINE_VERSION + "; vantaggio di fazione +1 ATT",
                 "Mazzi di 20 carte: Tipico (11 Comuni, 6 Rare, 2 Epiche, 1 Leggendaria) o Forte"
                         + " (6, 8, 4, 2), di una sola fazione o misti, scelti a caso con la stessa probabilità");

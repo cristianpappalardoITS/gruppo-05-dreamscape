@@ -1,11 +1,11 @@
 # Simulazioni delle partite: punti vita e limite di round
 
-> **Stato:** proposta, da confermare con Maie e Nicolas (#87).
-> Dopo la loro risposta si aggiorna la [decisione 008](../decisioni/008-regole-della-partita.md) e, se il Campanile cambia, si scrive una migration nuova.
+> **Stato:** approvata da Maie e Nicolas il 18/11/2026 (#87), tutte e tre le proposte.
+> Esito nella [decisione 008](../decisioni/008-regole-della-partita.md); il Campanile cambia con la migration `V103__update_campanile_permanence.sql` ([capitolo 5](#5-dopo-lapprovazione)).
 
 ## 1. In breve
 
-| Domanda | Proposta | Perché |
+| Domanda | Proposta (approvata) | Perché |
 |---------|----------|--------|
 | Punti vita | **Confermare 20** | Una partita dura in media 22 round e l'88% finisce per punti vita. Con 25 o più, un quarto delle partite finisce per mazzo esaurito |
 | Limite di round | **Tenere 60** | Lo tocca solo lo 0,5% delle partite, quasi tutte bloccate. Con 30 si chiuderebbe in pareggio il 17% delle partite |
@@ -14,7 +14,7 @@
 ## 2. Come sono fatte le simulazioni
 
 - Le partite le gioca **il motore vero** (`engine-core`, versione 0.2.0) con le regole a–f della [decisione 029](../decisioni/029-motore-di-gioco.md) e i 19 effetti della [028](../decisioni/028-catalogo-degli-effetti.md).
-- Le carte sono le **99 del catalogo vero**, lette dalla migration `V102__seed_base_set.sql`. Vantaggio di fazione: +1 ATT, come in V100.
+- Le carte sono le **99 del catalogo vero**, lette dalle migration del backend: `V102__seed_base_set.sql` e le correzioni successive scritte nella stessa forma (come `V103`). Vantaggio di fazione: +1 ATT, come in V100.
 - **5.000 partite** per ogni combinazione di regole, **15 combinazioni**: punti vita 10, 15, 20, 25 e 30, limite di round 30, 60 e 90. In tutto 75.000 partite.
 - Le **stesse partite** (stessi mazzi e stesso seed) si giocano con tutte le regole: le differenze tra le righe dipendono solo dalle regole.
 - Ogni mazzo ha 20 carte valide per la [decisione 017](../decisioni/017-mazzi.md), scelte a caso:
@@ -32,9 +32,11 @@ Da `sviluppo/engine`:
 ```bash
 ./gradlew :engine-simulation:run
 ```
-Ci vogliono pochi secondi. Il resoconto completo con tutte le tabelle va in `engine-simulation/build/simulazioni/risultati.md`. Con `--args="--partite 10000 --seed 7"` si cambiano il numero di partite e il seed (di base 5.000 e 87). Con lo stesso seed i numeri sono sempre gli stessi.
+Ci vogliono pochi secondi. Il resoconto completo con tutte le tabelle va in `engine-simulation/build/simulazioni/risultati.md`. Con `--args="--partite 10000 --seed 7"` si cambiano il numero di partite e il seed (di base 5.000 e 87). Con lo stesso seed i numeri sono sempre gli stessi. Oggi il programma legge anche `V103`: i numeri che dà sono quelli del [capitolo 5](#5-dopo-lapprovazione), quelli del capitolo 3 sono del catalogo prima del cambio.
 
-## 3. Risultati
+## 3. Risultati della proposta
+
+Catalogo di `V102`, con Il Campanile tra le Nuvole ancora a Permanenza 6.
 
 ### Punti vita (limite 60)
 
@@ -115,14 +117,26 @@ Mazzi di una sola fazione, quota di vittorie della riga contro la colonna:
 
 Chi ha il vantaggio di fazione vince circa 7 partite su 10, con qualsiasi valore di punti vita. Non dipende da punti vita e limite: è la regola del +1 ATT, già segnalata con il bilanciamento del catalogo (#103). Qui la riportiamo solo come dato: la scelta resta a Maie e Nicolas.
 
-## 4. Cosa serve da Maie e Nicolas
+## 4. Cosa abbiamo chiesto a Maie e Nicolas
 
-1. Confermare **20 punti vita** e **limite di 60 round**.
-2. Approvare **Permanenza 5** per Il Campanile tra le Nuvole (oppure scegliere attacco 7).
-3. Dire se vogliono rivedere il vantaggio di fazione (fuori da questa proposta).
+1. Confermare **20 punti vita** e **limite di 60 round**: approvato.
+2. Approvare **Permanenza 5** per Il Campanile tra le Nuvole (oppure scegliere attacco 7): approvata Permanenza 5.
+3. Dire se vogliono rivedere il vantaggio di fazione: resta fuori da questa proposta.
 
-## 5. Dopo la risposta
+## 5. Dopo l'approvazione
 
-- [Decisione 008](../decisioni/008-regole-della-partita.md): "i punti vita restano da verificare con le simulazioni" diventa "verificati con le simulazioni (#87)", con il collegamento a questo documento.
-- Se il Campanile cambia: migration nuova con un `UPDATE` di `card_effects` (V102 non si modifica) e testo dell'effetto in `carte/compositore/carte.csv`. Il sito monta la carta da solo (decisione 007): la carta finita con la cornice si rifà con `componi_carte.py` solo se serve per le presentazioni.
-- Nessun cambiamento nel motore né in `game_modes` (V6): 20 e 60 sono già i valori di oggi.
+- [Decisione 008](../decisioni/008-regole-della-partita.md): punti vita e limite di round **verificati con le simulazioni**.
+- Migration `V103__update_campanile_permanence.sql`: Il Campanile tra le Nuvole passa a **Permanenza 5** (`UPDATE` di `card_effects`, V102 non si modifica). Testo dell'effetto aggiornato in `carte/compositore/carte.csv`. Il sito monta la carta da solo (decisione 007): la carta finita con la cornice si rifà con `componi_carte.py` solo se serve per le presentazioni.
+- Nessun cambiamento nel motore né in `game_modes` (V6): 20 e 60 erano già i valori di oggi.
+
+Le stesse 5.000 partite rigiocate con `V103` (20 punti vita):
+
+| Catalogo | Limite | Round medi | Fine per punti vita | Mazzo esaurito | Partite al limite | Pareggi | Partita più lunga |
+|----------|-------:|-----------:|--------------------:|---------------:|------------------:|--------:|------------------:|
+| Prima (Permanenza 6) | 60 | 21,8 | 87,8% | 11,7% | 0,5% | 1,5% | bloccata fino al limite |
+| **Dopo (Permanenza 5)** | **60** | **21,6** | **88,3%** | **11,7%** | **0,0%** | **1,0%** | **60 round** |
+| Dopo (Permanenza 5) | 90 | 21,6 | 88,3% | 11,7% | 0,0% | 1,0% | 67 round |
+
+- Le partite bloccate sono sparite, con tutti i valori di punti vita: con limite 60 o 90 nessuna partita resta ferma.
+- Con 20 punti vita la partita più lunga dura 67 round: con il limite a 60 quasi nessuna partita viene tagliata (meno dello 0,1%).
+- Il resto non cambia: mazzo Forte contro Tipico 84,5%, vantaggio di fazione 71,8%, moneta 49,8%.

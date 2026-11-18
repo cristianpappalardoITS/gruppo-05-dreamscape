@@ -31,15 +31,15 @@ application {
     mainClass = 'it.somnia.dreamscape.engine.simulation.SimulationMain'
 }
 
-// Il catalogo si legge dalla migration del backend: una sola fonte per carte ed effetti
-def catalogFile = rootProject.file('../backend/src/main/resources/db/migration/V102__seed_base_set.sql')
+// Il catalogo si legge dalle migration del backend (V102 e successive): una sola fonte per carte ed effetti
+def catalogDir = rootProject.file('../backend/src/main/resources/db/migration')
 
 tasks.named('run') {
-    systemProperty 'dreamscape.catalog', catalogFile.absolutePath
+    systemProperty 'dreamscape.catalog', catalogDir.absolutePath
     systemProperty 'dreamscape.output', layout.buildDirectory.file('simulazioni/risultati.md').get().asFile.absolutePath
 }
 
 tasks.named('test') {
     useJUnitPlatform()
-    systemProperty 'dreamscape.catalog', catalogFile.absolutePath
+    systemProperty 'dreamscape.catalog', catalogDir.absolutePath
 }

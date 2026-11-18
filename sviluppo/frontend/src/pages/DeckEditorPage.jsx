@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, errorsByField } from '../api.js';
 import HomeHeader from '../components/home/HomeHeader';
 import CardGridItem from '../components/Collezione/CardGridItem';
+import { loadAllCards } from '../components/Collezione/loadAllCards.js';
 import { canAddCopy, deckProblems, rarityPlural } from '../components/Mazzi/deckRules.js';
 import '../styles/home.css';
 import '../components/Collezione/Collezione.css';
@@ -13,16 +14,6 @@ const factionOptions = [
   { code: 'NIGHTMARES', name: 'Nightmares' },
   { code: 'MEMORIES', name: 'Memories' },
 ];
-
-// Tutta la collezione, pagina dopo pagina (GET /me/cards ne dà al massimo 100 per volta)
-async function loadWholeCollection() {
-  const items = [];
-  for (let page = 0; ; page += 1) {
-    const data = await api(`/me/cards?page=${page}&size=100`);
-    items.push(...data.items);
-    if (page + 1 >= data.totalPages) return items;
-  }
-}
 
 // Editor del mazzo: /mazzi/editor per un mazzo nuovo, /mazzi/editor?id=... per modificarne uno.
 // I contatori usano i numeri di GET /rules; si salvano solo mazzi validi (POST o PUT /decks).
@@ -40,7 +31,7 @@ export default function DeckEditorPage() {
   useEffect(() => {
     Promise.all([
       api('/rules'),
-      loadWholeCollection(),
+      loadAllCards('/me/cards'),
       deckId ? api(`/decks/${deckId}`) : Promise.resolve(null),
     ])
       .then(([rulesData, collectionItems, deck]) => {

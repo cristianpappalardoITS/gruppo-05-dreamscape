@@ -11,6 +11,9 @@ import DeckEditorPage from './pages/DeckEditorPage.jsx'
 import ShopPage from './pages/ShopPage.jsx'
 import PackOpeningPage from './pages/PackOpeningPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import FriendsPage from './pages/FriendsPage.jsx'
+import TradesPage from './pages/TradesPage.jsx'
+import NewTradePage from './pages/NewTradePage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -24,6 +27,9 @@ const pages = {
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },
   '/mazzi/editor': { title: 'Editor del mazzo', render: () => <DeckEditorPage /> },
   '/negozio': { title: 'Negozio', render: () => <ShopPage /> },
+  '/amici': { title: 'Amici', render: () => <FriendsPage /> },
+  '/scambi': { title: 'Scambi', render: () => <TradesPage /> },
+  '/scambi/nuovo': { title: 'Nuovo scambio', render: () => <NewTradePage /> },
 }
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'

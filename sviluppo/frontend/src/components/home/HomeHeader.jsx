@@ -1,13 +1,21 @@
 import { isLoggedIn } from '../../api.js';
 
-const navigationLinks = [
+// Menu per chi non è collegato: le parti della home
+const publicLinks = [
   { label: 'Home', href: '/' },
   { label: 'Gioco', href: '/#gioco' },
   { label: 'Fazioni', href: '/#fazioni' },
   { label: 'Regolamento', href: '/#regolamento' },
+];
+
+// Menu per chi è collegato: le pagine del gioco
+const playerLinks = [
+  { label: 'Dashboard', href: '/dashboard' },
   { label: 'Collezione', href: '/collezione' },
   { label: 'Mazzi', href: '/mazzi' },
   { label: 'Negozio', href: '/negozio' },
+  { label: 'Amici', href: '/amici' },
+  { label: 'Scambi', href: '/scambi' },
 ];
 
 export default function HomeHeader() {
@@ -20,7 +28,7 @@ export default function HomeHeader() {
       </a>
 
       <nav className="home-header__navigation" aria-label="Navigazione principale">
-        {navigationLinks.map(({ label, href }) => <a key={label} href={href}>{label}</a>)}
+        {(loggedIn ? playerLinks : publicLinks).map(({ label, href }) => <a key={label} href={href}>{label}</a>)}
       </nav>
 
       <a className="home-header__account" href={loggedIn ? '/dashboard' : '/login'} aria-label={loggedIn ? 'La tua dashboard' : 'Accedi al tuo account'}>

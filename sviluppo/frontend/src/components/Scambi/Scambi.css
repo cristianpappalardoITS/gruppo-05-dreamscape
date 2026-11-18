@@ -1,0 +1,307 @@
+/* Amici e scambi (usano anche i pannelli della dashboard e le carte della collezione) */
+
+.social-content .collection-title-row h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 400;
+  font-variant: small-caps;
+}
+
+.social-message {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(98, 180, 124, .15);
+  color: #b8e6c6;
+}
+
+.social-columns {
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.social-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.social-list li {
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--input-border);
+}
+
+.social-list li:first-child {
+  border-top: 0;
+}
+
+.social-list small {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.social-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.social-action {
+  padding: 7px 14px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 8px;
+  background: var(--gold-primary);
+  color: var(--bg-dark);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.social-action--quiet {
+  background: transparent;
+  color: var(--text-light);
+  border-color: var(--input-border);
+}
+
+/* Scambi */
+.trade-tabs {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 8px;
+}
+
+.trade-tabs button {
+  padding: 8px 18px;
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.trade-tabs button.is-active {
+  border-color: var(--gold-primary);
+  background: var(--gold-primary);
+  color: var(--bg-dark);
+}
+
+.trade-list {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  list-style: none;
+}
+
+.trade__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.trade-status {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.trade-status--pending { background: rgba(201, 149, 93, .2); color: var(--gold-hover); }
+.trade-status--accepted { background: rgba(98, 180, 124, .18); color: #8fd4a4; }
+.trade-status--rejected,
+.trade-status--cancelled { background: rgba(150, 147, 162, .18); color: var(--text-muted); }
+
+.trade__message {
+  margin: 10px 0 0;
+  color: #d8d2dc;
+  font-family: var(--font-editorial);
+  font-size: 17px;
+  font-style: italic;
+}
+
+.trade__sides {
+  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.trade__sides h3 {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.trade__date {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.trade-cards {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.trade-cards li {
+  padding: 4px 8px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid var(--rarity-color, var(--input-border));
+  border-radius: 6px;
+  background: var(--input-bg);
+}
+
+.trade-cards img,
+.trade-cards__placeholder {
+  width: 54px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--card-bg);
+}
+
+.trade-cards__name {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.trade-cards__name small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.trade-cards strong {
+  color: var(--gold-hover);
+}
+
+.trade-confirm {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 10px;
+  background: rgba(201, 149, 93, .1);
+}
+
+.trade-confirm p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.trade-warnings {
+  margin: 8px 0 12px;
+  padding-left: 20px;
+  color: #f0d6b8;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Nuovo scambio */
+.trade-friend {
+  max-width: 360px;
+  margin-bottom: 20px;
+}
+
+.trade-friend select {
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.trade-summary {
+  margin-bottom: 20px;
+}
+
+.trade-remove {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.trade-remove button {
+  padding: 3px 10px;
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.trade-propose {
+  margin-top: 16px;
+}
+
+.trade-propose .home-button {
+  min-height: 48px;
+  cursor: pointer;
+}
+
+.trade-propose .home-button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.trade-collections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.trade-collection h2 {
+  margin-bottom: 10px;
+}
+
+.trade-search {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--text-light);
+  font-family: var(--font-body);
+}
+
+.trade-collection .collection-grid {
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+}
+
+@media (max-width: 800px) {
+  .social-columns,
+  .trade__sides,
+  .trade-collections {
+    grid-template-columns: 1fr;
+  }
+}

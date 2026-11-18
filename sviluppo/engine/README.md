@@ -2,7 +2,7 @@
 
 Simula una partita di Dreamscape tra due mazzi e restituisce il risultato e il log round per round. È un microservizio separato dal backend ([decisione 029](../../docs/decisioni/029-motore-di-gioco.md)): il backend lo chiama via HTTP, il frontend mai.
 
-Ha due parti: il nucleo `engine-core`, versione `0.2.0` (`BattleEngine.ENGINE_VERSION`), con la partita completa e i 19 effetti delle carte, e `engine-service`, il servizio HTTP che il backend chiama (#161).
+Ha due parti, più le simulazioni: il nucleo `engine-core`, versione `0.2.0` (`BattleEngine.ENGINE_VERSION`), con la partita completa e i 19 effetti delle carte, e `engine-service`, il servizio HTTP che il backend chiama (#161). `engine-simulation` gioca migliaia di partite per scegliere i valori di gioco (#87).
 
 ## Requisiti
 - Java 25
@@ -23,6 +23,12 @@ Il servizio risponde su `http://localhost:8081`. Senza `ENGINE_API_KEY` non part
 ./gradlew test
 ```
 I test giocano partite vere con seed fissi, quindi il risultato è sempre lo stesso. Un test solo, o una classe: `./gradlew test --tests "*BattleEngineTest"`. Il resoconto si apre da `engine-core/build/reports/tests/test/index.html`. I test di `engine-core` provano le regole; quelli di `engine-service` la chiamata, la chiave, gli errori e i nomi dei campi del log, che devono restare quelli di [schema.md](../../docs/database/schema.md#formato-dei-campi-json-di-matches) perché il replay del frontend li legge.
+
+## Simulazioni
+```bash
+./gradlew :engine-simulation:run
+```
+Gioca 5.000 partite con il catalogo vero per ogni combinazione di punti vita (10-30) e limite di round (30, 60, 90), sempre con gli stessi mazzi e seed, e scrive le tabelle in `engine-simulation/build/simulazioni/risultati.md`. Ci vogliono pochi secondi. Partite e seed si cambiano con `--args="--partite 10000 --seed 7"`. Risultati e proposta in [simulazioni-partite.md](../../docs/proposte/simulazioni-partite.md).
 
 ## Come si usa
 ```java
@@ -46,6 +52,7 @@ BattleResult result = new BattleEngine().simulate(challengerDeck, opponentDeck, 
 |-------|---------------|
 | `engine-core` | Le regole del gioco in Java puro: niente Spring, database o HTTP. Package `it.somnia.dreamscape.engine` |
 | `engine-service` | Il servizio Spring Boot che espone il nucleo al backend con `POST /api/v1/simulations`. Package `it.somnia.dreamscape.engine.server`. Non contiene logica di gioco |
+| `engine-simulation` | Le simulazioni delle partite (#87): legge le carte dalle migration del backend (`V102` e le correzioni successive, come `V103`) e gioca migliaia di partite con ogni combinazione di punti vita e limite di round. Package `it.somnia.dreamscape.engine.simulation`. Non entra nell'immagine né nel backend |
 | `Dockerfile` | L'immagine di `engine-service`: compila con il JDK, esegue il jar con il solo JRE e senza l'utente root |
 
 Package di `engine-core`:

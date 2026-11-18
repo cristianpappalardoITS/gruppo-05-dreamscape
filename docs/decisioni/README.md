@@ -13,7 +13,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | [005](005-frontend-componenti-react.md) | Frontend: pagine HTML e componenti React | 2/11, 3/11 | Approvata |
 | [006](006-avvio-locale-e-dati.md) | Sito e API sullo stesso indirizzo, niente dati finti | 2/11 | Approvata |
 | [007](007-montaggio-della-carta.md) | Carta montata dal frontend, cornici in JavaScript, immagini WebP dal backend | 26/10–3/11 | Approvata |
-| [008](008-regole-della-partita.md) | Regole della partita: una modalità Base con effetti, 20 punti vita, vantaggio di fazione | 26/10–2/11 | Approvata (effetti: vedi 028) |
+| [008](008-regole-della-partita.md) | Regole della partita: una modalità Base con effetti, 20 punti vita e 60 round (verificati con le simulazioni), vantaggio di fazione | 26/10–18/11 | Approvata (effetti: vedi 028) |
 | [009](009-amici-e-scambi.md) | Amici e scambi | 26/10–3/11 | Approvata (sfide: vedi 010; carte bloccate: vedi 024; amicizia tolta: vedi 026) |
 | [010](010-tipi-di-partita-e-rank.md) | Partite classificate e rapide, matchmaking e rank | 3/11 | Approvata |
 | [011](011-premi-di-lega.md) | Leghe e premi di lega | 3/11 | Approvata, importi da proporre |
@@ -49,7 +49,6 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | Soglie e premi delle leghe | Maie | [011](011-premi-di-lega.md) |
 | DC a chi viene scelto dal matchmaking e vince | Maie, SWD | [010](010-tipi-di-partita-e-rank.md) |
 | Partite che contano per le missioni | Maie, Nicolas | [015](015-missioni.md) |
-| Punti vita dopo le simulazioni | Marco, Maie | [008](008-regole-della-partita.md) |
 | Bilanciamento degli effetti: valori di X, effetti da aggiungere o togliere | Nicolas, Maie | [028](028-catalogo-degli-effetti.md) |
 | Regole del round lasciate aperte dal regolamento (punti a–f) | Nicolas, Maie | [029](029-motore-di-gioco.md) |
 | Casi degli effetti lasciati aperti dal catalogo (Culla, Non Sequitur, Immunità) | Nicolas, Maie | [031](031-effetti-nel-motore.md) |

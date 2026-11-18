@@ -10,6 +10,8 @@ COPY gradle gradle
 # Prima solo Gradle e le build: le librerie scaricate restano nella cache anche quando cambia il codice
 COPY engine-core/build.gradle engine-core/
 COPY engine-service/build.gradle engine-service/
+# Le simulazioni (#87) non entrano nell'immagine, ma Gradle vuole la cartella di ogni modulo
+COPY engine-simulation/build.gradle engine-simulation/
 RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon -q help
 COPY engine-core/src engine-core/src
 COPY engine-service/src engine-service/src

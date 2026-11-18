@@ -222,22 +222,14 @@
   margin: -24px auto 0;
 }
 
-/* Carta più compatta, così carta e pulsanti stanno nello schermo */
+/* Carta più piccola, così carta e pulsanti stanno nello schermo */
 .pack-opening__card .card-detail {
-  padding: 14px 16px;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
-.pack-opening__card .card-detail__image {
-  margin: 8px 0 10px;
-}
-
-.pack-opening__card .card-detail__stats {
-  margin-bottom: 10px;
-}
-
-.pack-opening__card .card-detail__description {
-  margin-top: 8px;
-  font-size: 15px;
+.pack-opening__card .card-detail__info {
+  margin-top: 10px;
 }
 
 section.pack-opening:has(.pack-opening__all) {

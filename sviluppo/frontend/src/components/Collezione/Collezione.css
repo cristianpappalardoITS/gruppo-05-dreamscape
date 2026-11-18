@@ -108,6 +108,89 @@
   top: 24px;
 }
 
+/* Pagina Collezione come nel mockup: carta grande a sinistra e griglia a 4 colonne */
+.collection-page .collection-detail-column {
+  flex-basis: clamp(280px, 27vw, 380px);
+}
+
+.collection-page .collection-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 30px);
+}
+
+/* Sopra la griglia: pulsante dei filtri a sinistra, carte possedute a destra */
+.collection-toolbar {
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.collection-filter-toggle {
+  padding: 7px 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d8c6ac;
+  border-radius: 999px;
+  background: #d8c6ac;
+  color: #1d1a22;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.collection-filter-toggle:hover,
+.collection-filter-toggle:focus-visible,
+.collection-filter-toggle.is-open {
+  border-color: var(--gold-hover);
+  background: var(--gold-hover);
+}
+
+.collection-filter-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #1d1a22;
+  color: var(--gold-hover);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.collection-owned {
+  margin: 0;
+  color: var(--text-light);
+  font-family: var(--font-title);
+  font-size: clamp(18px, 1.7vw, 26px);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.collection-owned strong {
+  font-weight: 400;
+}
+
+/* Pannello dei filtri, aperto dal pulsante */
+.collection-page .collection-filters {
+  padding: 16px 18px;
+  align-items: flex-end;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.collection-filters-reset {
+  padding: 9px 14px;
+  border: 0;
+  background: none;
+  color: var(--gold-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .collection-grid-column {
   flex: 1;
   min-width: 0;
@@ -184,102 +267,41 @@
   font-weight: 600;
 }
 
-/* Dettaglio della carta */
+/* Dettaglio della carta: la carta grande e, sotto, le informazioni */
 .card-detail {
-  padding: 20px;
-  border: 2px solid var(--rarity-color, var(--input-border));
-  border-radius: 12px;
-  background: var(--card-bg);
+  width: 100%;
 }
 
 .card-detail--empty {
+  padding: 24px;
+  border: 1px dashed var(--input-border);
+  border-radius: 12px;
   color: var(--text-muted);
 }
 
-.card-detail__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.card-detail h2 {
-  margin: 12px 0 4px;
-  font-family: var(--font-title);
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.card-detail__lord {
-  margin: 0 0 8px;
-  color: var(--gold-primary);
-  font-size: 13px;
-}
-
-.card-detail__image {
-  margin: 12px 0 16px;
-  aspect-ratio: 3 / 2;
-  overflow: hidden;
-  border-radius: 8px;
-  background: var(--input-bg);
-}
-
-.card-detail__image--full-art {
-  aspect-ratio: 2 / 3;
-}
-
-.card-detail__image img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.card-detail__stats {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.card-detail__stats div {
-  flex: 1;
-  padding: 8px;
+.card-detail__info {
+  margin: 18px 0 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-}
-
-.card-detail__stats span {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.card-detail__stats strong {
-  font-size: 22px;
-}
-
-.card-detail__effect p,
-.card-detail__description,
-.card-detail__copies {
-  margin: 6px 0 0;
+  gap: 8px;
   font-size: 14px;
-  line-height: 1.45;
 }
 
-.card-detail__description {
-  margin-top: 14px;
-  color: var(--text-muted);
-  font-family: var(--font-editorial);
-  font-size: 17px;
-  font-style: italic;
+.card-detail__info div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--input-border);
 }
 
-.card-detail__copies {
-  margin-top: 16px;
+.card-detail__info dt {
   color: var(--text-muted);
+}
+
+.card-detail__info dd {
+  margin: 0;
+  text-align: right;
 }
 
 .collection-pagination {
@@ -312,5 +334,22 @@
 
   .collection-filters label {
     flex: 1 1 140px;
+  }
+
+  /* La carta grande non occupa tutto lo schermo */
+  .collection-page .collection-detail-column .card-detail {
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .collection-page .collection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Schermi medi: 3 colonne */
+@media (min-width: 801px) and (max-width: 1100px) {
+  .collection-page .collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

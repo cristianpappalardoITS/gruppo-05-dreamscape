@@ -1,4 +1,7 @@
-// Dettaglio della carta scelta nella collezione
+import Card from '../Carta/Card';
+
+// Dettaglio della carta scelta nella collezione: la carta grande e, sotto, codice, copie
+// e copie libere per gli scambi
 export default function SelectedCardDetail({ entry }) {
   if (!entry) {
     return (
@@ -12,48 +15,26 @@ export default function SelectedCardDetail({ entry }) {
   const isFullArt = card.variantType === 'FULL_ART';
 
   return (
-    <article className={`card-detail card-detail--${card.rarity.code.toLowerCase()}`} aria-labelledby="card-detail-title">
-      <div className="card-detail__header">
-        <span>{card.code}</span>
-        <span>{card.faction.name}</span>
-        <span>{card.rarity.name}</span>
-      </div>
+    <article className="card-detail" aria-labelledby="card-detail-title">
+      <h2 id="card-detail-title" className="visually-hidden">{card.name}</h2>
+      <Card card={card} size="large" />
 
-      <h2 id="card-detail-title">{card.name}</h2>
-      {card.lordTitle && <p className="card-detail__lord">{card.lordTitle}</p>}
-
-      <div className={`card-detail__image${isFullArt ? ' card-detail__image--full-art' : ''}`}>
-        {card.illustrationUrl ? (
-          <img
-            src={card.illustrationUrl}
-            alt={card.name}
-            style={{ objectPosition: `center ${card.illustrationFocusY * 100}%` }}
-          />
-        ) : (
-          <span className="grid-card__placeholder">{card.code}</span>
-        )}
-      </div>
-
-      <div className="card-detail__stats">
-        <div><span>ATT</span><strong>{card.attack}</strong></div>
-        <div><span>DIF</span><strong>{card.defense}</strong></div>
-      </div>
-
-      {card.effect && (
-        <div className="card-detail__effect">
-          <strong>{card.effect.name}</strong>
-          <p>{card.effect.text}</p>
+      <dl className="card-detail__info">
+        <div>
+          <dt>Codice</dt>
+          <dd>{card.code}{isFullArt ? ' · Full art' : ''}</dd>
         </div>
-      )}
-
-      {card.description && <p className="card-detail__description">{card.description}</p>}
-
-      {quantity !== undefined && (
-        <p className="card-detail__copies">
-          Copie: {quantity}
-          {availableForTrade !== undefined && ` · Disponibili per gli scambi: ${availableForTrade}`}
-        </p>
-      )}
+        <div>
+          <dt>Fazione e rarità</dt>
+          <dd>{card.faction.name} · {card.rarity.name}</dd>
+        </div>
+        {quantity !== undefined && (
+          <div>
+            <dt>Copie</dt>
+            <dd>{quantity}{availableForTrade !== undefined && ` · ${availableForTrade} libere per gli scambi`}</dd>
+          </div>
+        )}
+      </dl>
     </article>
   );
 }

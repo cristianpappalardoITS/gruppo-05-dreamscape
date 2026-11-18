@@ -28,3 +28,13 @@ body {
 * {
   box-sizing: border-box;
 }
+
+/* Testo che non si vede ma che i lettori di schermo leggono (es. titoli delle pagine) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

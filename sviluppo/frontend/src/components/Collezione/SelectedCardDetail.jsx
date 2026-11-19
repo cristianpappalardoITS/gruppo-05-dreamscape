@@ -1,69 +1,51 @@
-// src/components/Collezione/SelectedCardDetail.jsx
-import React from 'react';
+import React from "react";
 
 const SelectedCardDetail = ({ card }) => {
   if (!card) {
     return (
-      <div className="selected-card-container empty">
+      <div className="selected-card-detail empty">
         <p>Seleziona una carta per vedere i dettagli.</p>
       </div>
     );
   }
 
-  const getRarityColor = (rarityCode) => {
-    switch(rarityCode) {
-      case 'COMMON': return '#9c95a8';
-      case 'RARE': return '#4da6ff';
-      case 'EPIC': return '#b366ff';
-      case 'LEGENDARY': return '#dca466';
-      default: return '#333';
-    }
-  };
-
-  const loreText = card.description ? card.description : "Nessuna descrizione disponibile.";
-  const effectText = card.effect?.text ? card.effect.text : "Effetto non indicato.";
-
   return (
-    <div 
-      className="selected-card-container" 
-      style={{ borderColor: getRarityColor(card.rarity.code) }}
-    >
-      <div className="card-header-detail">
-        <span className="card-id">{card.code}</span>
-        <span className="card-faction">{card.faction.name}</span>
-        <span className="card-rarity" style={{ color: getRarityColor(card.rarity.code) }}>
-          {card.rarity.name}
+    <div className="selected-card-detail">
+      <div className="detail-image-wrapper">
+        <img src={card.imageUrl} alt={card.name} className="detail-image" />
+      </div>
+
+      <h2 className="detail-name">{card.name}</h2>
+
+      {card.rarity && (
+        <span className={`detail-rarity rarity-${card.rarity.toLowerCase()}`}>
+          {card.rarity}
         </span>
-      </div>
+      )}
 
-      <h2 className="selected-card-title">{card.name}</h2>
-      
-      <div className="selected-card-image">
-        {card.illustrationUrl ? (
-          <img src={card.illustrationUrl} alt={card.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div className="image-placeholder">X</div>
+      {card.description && (
+        <p className="detail-description">{card.description}</p>
+      )}
+
+      <div className="detail-stats">
+        {card.attack !== undefined && (
+          <div className="stat">
+            <span className="stat-label">Attacco</span>
+            <span className="stat-value">{card.attack}</span>
+          </div>
         )}
-      </div>
-      
-      <div className="selected-card-lore">
-        <p><em>"{loreText}"</em></p>
-      </div>
-
-      <div className="selected-card-ability">
-        <strong>Effetto:</strong>
-        <p>{effectText}</p>
-      </div>
-      
-      <div className="selected-card-stats">
-        <div className="stat-box">
-          <span className="stat-label">ATT</span>
-          <span className="stat-value">⚔️ {card.attack}</span>
-        </div>
-        <div className="stat-box">
-          <span className="stat-label">DIF</span>
-          <span className="stat-value">🛡️ {card.defense}</span>
-        </div>
+        {card.defense !== undefined && (
+          <div className="stat">
+            <span className="stat-label">Difesa</span>
+            <span className="stat-value">{card.defense}</span>
+          </div>
+        )}
+        {card.cost !== undefined && (
+          <div className="stat">
+            <span className="stat-label">Costo</span>
+            <span className="stat-value">{card.cost}</span>
+          </div>
+        )}
       </div>
     </div>
   );

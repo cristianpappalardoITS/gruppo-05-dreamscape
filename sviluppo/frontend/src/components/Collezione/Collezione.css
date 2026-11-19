@@ -1,348 +1,363 @@
-/* =========================================
-   LAYOUT GENERALE E HEADER
-   ========================================= */
+/* --- Layout generale --- */
 .collection-page {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #e5e5e5;
   min-height: 100vh;
-  color: #333;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  font-family: var(--font-body);
 }
 
+/* --- Header --- */
 .collection-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 15px 40px;
-  background-color: #d9d9d9;
-  border-bottom: 1px solid #ccc;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--input-border);
+  background-color: var(--card-bg);
 }
 
-.logo-area { display: flex; align-items: center; gap: 10px; }
-.logo-icon { font-size: 24px; }
-.logo-area h1 { font-size: 1.2rem; letter-spacing: 2px; margin: 0; }
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.nav-links { display: flex; gap: 30px; }
-.nav-links a { text-decoration: none; color: #555; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
-.nav-links a.active { color: #000; font-weight: bold; }
+.logo-icon {
+  font-size: 1.5rem;
+}
 
-.header-icons { display: flex; gap: 20px; font-size: 20px; }
+.logo-area h1 {
+  font-family: var(--font-title);
+  font-size: 1.4rem;
+  margin: 0;
+  letter-spacing: 2px;
+}
 
-/* =========================================
-   CONTENUTO PRINCIPALE (2 COLONNE)
-   ========================================= */
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--gold-primary);
+}
+
+.header-icons {
+  display: flex;
+  gap: 15px;
+  font-size: 1.1rem;
+}
+
+/* --- Contenuto principale --- */
 .collection-content {
-  display: flex;
-  padding: 40px;
-  gap: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 30px;
+  padding: 30px 40px;
+  align-items: start;
 }
 
-/* Colonna Sinistra (Carta Grande) */
+/* --- Colonna sinistra: dettaglio carta --- */
 .left-column {
-  flex: 0 0 350px;
   position: sticky;
-  top: 40px;
-  height: fit-content;
+  top: 20px;
 }
 
-.selected-card-container {
-  background-color: #f0f0f0;
-  border: 1px solid #333;
-  border-radius: 12px;
+.selected-card-detail {
+  background-color: var(--card-bg);
+  border-radius: 16px;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.selected-card-image {
+.selected-card-detail.empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 40px 20px;
+}
+
+.detail-image-wrapper {
   width: 100%;
-  aspect-ratio: 4/3;
-  background-color: #999;
-  border: 1px solid #333;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 1px solid var(--input-border);
+}
+
+.detail-image {
+  width: 100%;
+  display: block;
+}
+
+.detail-name {
+  font-family: var(--font-title);
+  font-size: 1.3rem;
+  margin: 0 0 10px 0;
+}
+
+.detail-rarity {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 15px;
+  background-color: var(--input-bg);
+  color: var(--gold-primary);
+  border: 1px solid var(--gold-primary);
+}
+
+.detail-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
   margin-bottom: 20px;
 }
 
-.image-placeholder {
-  font-size: 1.5rem;
-  color: #333;
-  font-weight: bold;
+.detail-stats {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid var(--input-border);
+  padding-top: 15px;
 }
 
-/* Colonna Destra (Griglia) */
-.right-column { flex: 1; }
+.stat {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  color: var(--gold-primary);
+}
+
+/* --- Colonna destra: griglia --- */
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .grid-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
 .filter-btn {
-  background-color: #ccc;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
+  background-color: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--input-border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
-  font-weight: bold;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 
-.counter { font-size: 1.2rem; color: #555; }
+.filter-btn:hover {
+  border-color: var(--gold-primary);
+  color: var(--gold-primary);
+}
 
+.counter {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* --- Griglia carte --- */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 15px;
 }
 
-/* =========================================
-   CARTE PICCOLE (GRIGLIA)
-   ========================================= */
-.grid-card {
-  background-color: #f0f0f0;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 10px;
+.card-grid-item {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  display: flex;
-  flex-direction: column;
+  border: 2px solid transparent;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
 }
 
-.grid-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+.card-grid-item:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-primary);
 }
 
-.grid-card.selected {
-  border: 2px solid #333 !important;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #333;
+.card-grid-item.selected {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 15px rgba(220, 164, 102, 0.4);
 }
 
-.grid-card-image {
+.card-image-wrapper {
+  position: relative;
   width: 100%;
-  aspect-ratio: 4/3;
-  background-color: #999;
-  border: 1px solid #333;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  aspect-ratio: 3 / 4;
+  background-color: var(--input-bg);
+  overflow: hidden;
 }
 
-.grid-card-ability {
-  background-color: #ccc;
-  padding: 5px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  text-align: center;
-  margin-bottom: 10px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.2;
-}
-
-.grid-card-stats {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #333;
-}
-
-/* =========================================
-   STILI SPECIFICI DELLE CARTE (Dettaglio)
-   ========================================= */
-.card-header-grid {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.6rem;
-  margin-bottom: 5px;
-  color: #666;
-  text-transform: uppercase;
-}
-
-.card-header-detail {
-  display: flex;
-  justify-content: space-between;
+.card-image {
   width: 100%;
-  font-size: 0.75rem;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  color: #555;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 5px;
-}
-
-.card-faction {
-  font-weight: bold;
-  color: #333;
-}
-
-.grid-card-title {
-  font-size: 0.8rem;
-  text-align: center;
-  margin: 5px 0;
-  min-height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.2;
-}
-
-.selected-card-title {
-  font-size: 1.4rem;
-  margin: 10px 0 15px 0;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.selected-card-lore {
-  font-size: 0.8rem;
-  color: #666;
-  text-align: center;
-  margin-bottom: 15px;
-  padding: 0 10px;
-  font-style: italic;
-}
-
-.selected-card-ability {
-  background-color: #e0e0e0;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-size: 0.8rem;
-  width: 100%;
-  box-sizing: border-box;
-  line-height: 1.4;
-}
-
-.selected-card-ability strong {
+  height: 100%;
+  object-fit: cover;
   display: block;
-  margin-bottom: 5px;
-  color: #333;
-  font-size: 0.9rem;
 }
 
-.selected-card-stats {
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
+.card-quantity-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: var(--gold-primary);
+  color: #121016;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
 }
 
-.stat-box {
+.card-info {
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #d9d9d9;
-  padding: 10px;
-  border-radius: 8px;
-  min-width: 80px;
+  gap: 4px;
 }
 
-.stat-label {
-  font-size: 0.7rem;
-  font-weight: bold;
-  color: #555;
-  margin-bottom: 5px;
+.card-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stat-value {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #000;
+.card-rarity {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-/* =========================================
-   STATI DI CARICAMENTO ED ERRORE
-   ========================================= */
-.loading-state, .error-state {
+.rarity-comune {
+  color: #9c95a8;
+}
+.rarity-rara {
+  color: #5aa9e6;
+}
+.rarity-epica {
+  color: #b06ce6;
+}
+.rarity-leggendaria {
+  color: var(--gold-primary);
+}
+
+/* --- Paginazione --- */
+.pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  font-size: 1.2rem;
-  color: #555;
-  background-color: #e5e5e5;
+  gap: 20px;
+  padding: 10px 0;
 }
 
-.error-state { color: #cc0000; font-weight: bold; }
+.pagination button {
+  background-color: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--input-border);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
 
-/* =========================================
-   RESPONSIVE DESIGN
-   ========================================= */
+.pagination button:hover:not(:disabled) {
+  border-color: var(--gold-primary);
+  color: var(--gold-primary);
+}
 
-/* --- TABLET (Schermi fino a 1024px) --- */
-@media (max-width: 1024px) {
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* --- Stati di caricamento / errore --- */
+.loading-state,
+.error-state {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.error-state {
+  color: #ff4d4d;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
   .collection-content {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     padding: 20px;
-    gap: 20px;
   }
 
   .left-column {
-    flex: none;
-    width: 100%;
-    position: relative;
-    top: 0;
+    position: static;
   }
 
-  .selected-card-container {
-    max-width: 500px;
-    margin: 0 auto;
-  }
-
-  .cards-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* --- SMARTPHONE (Schermi fino a 768px) --- */
-@media (max-width: 768px) {
   .collection-header {
     flex-direction: column;
     gap: 15px;
-    padding: 15px 20px;
-    text-align: center;
+    padding: 20px;
   }
 
   .nav-links {
     flex-wrap: wrap;
     justify-content: center;
     gap: 15px;
-  }
-
-  .nav-links a { font-size: 0.85rem; }
-  .header-icons { font-size: 18px; }
-
-  .cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
-
-  .selected-card-title { font-size: 1.2rem; }
-  .selected-card-ability { font-size: 0.75rem; padding: 10px; }
-  .stat-box { min-width: 60px; padding: 8px; }
-}
-
-/* --- SMARTPHONE PICCOLI (fino a 480px) --- */
-@media (max-width: 480px) {
-  .collection-content { padding: 10px; }
-
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .grid-card {
-    max-width: 250px;
-    margin: 0 auto;
   }
 }

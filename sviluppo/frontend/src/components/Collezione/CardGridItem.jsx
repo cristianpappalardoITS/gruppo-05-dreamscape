@@ -1,45 +1,36 @@
-// src/components/Collezione/CardGridItem.jsx
-import React from 'react';
+import React from "react";
 
-const CardGridItem = ({ card, isSelected, onSelect }) => {
-  const getRarityColor = (rarity) => {
-    switch(rarity) {
-      case 'Comune': return '#9c95a8';
-      case 'Rara': return '#4da6ff';
-      case 'Epica': return '#b366ff';
-      case 'Leggendaria': return '#dca466';
-      default: return '#333';
-    }
-  };
-
-  // Controllo di sicurezza: se effect è vuoto o non esiste, mostra un testo di default
-  const effectText = card.effect ? card.effect : "Effetto non indicato";
-  const shortEffect = effectText.length > 35 ? effectText.substring(0, 35) + '...' : effectText;
+const CardGridItem = ({ card, quantity, isSelected, onSelect }) => {
+  if (!card) return null;
 
   return (
-    <div 
-      className={`grid-card ${isSelected ? 'selected' : ''}`} 
+    <div
+      className={`card-grid-item ${isSelected ? "selected" : ""}`}
       onClick={() => onSelect(card)}
-      style={{ borderColor: getRarityColor(card.rarity) }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSelect(card);
+      }}
     >
-      <div className="card-header-grid">
-        <span className="card-id">{card.id}</span>
-        <span className="card-rarity" style={{ color: getRarityColor(card.rarity) }}>{card.rarity}</span>
+      <div className="card-image-wrapper">
+        <img
+          src={card.imageUrl}
+          alt={card.name}
+          className="card-image"
+          loading="lazy"
+        />
+        {quantity > 1 && (
+          <span className="card-quantity-badge">x{quantity}</span>
+        )}
       </div>
-      
-      <h4 className="grid-card-title">{card.name}</h4>
-      
-      <div className="grid-card-image">
-        <div className="image-placeholder">X</div>
-      </div>
-      
-      <div className="grid-card-ability">
-        <p>{shortEffect}</p>
-      </div>
-      
-      <div className="grid-card-stats">
-        <span>⚔️ {card.attack}</span>
-        <span>🛡️ {card.defense}</span>
+      <div className="card-info">
+        <span className="card-name">{card.name}</span>
+        {card.rarity && (
+          <span className={`card-rarity rarity-${card.rarity.toLowerCase()}`}>
+            {card.rarity}
+          </span>
+        )}
       </div>
     </div>
   );

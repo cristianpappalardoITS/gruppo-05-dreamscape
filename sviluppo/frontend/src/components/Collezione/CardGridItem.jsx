@@ -15,10 +15,11 @@ const CardGridItem = ({ card, quantity, isSelected, onSelect }) => {
     >
       <div className="card-image-wrapper">
         <img
-          src={card.imageUrl}
+          src={card.illustrationThumbUrl || card.illustrationUrl}
           alt={card.name}
           className="card-image"
           loading="lazy"
+          onError={(e) => { e.currentTarget.src = "/images/placeholder.webp"; }}
         />
         {quantity > 1 && (
           <span className="card-quantity-badge">x{quantity}</span>
@@ -27,8 +28,8 @@ const CardGridItem = ({ card, quantity, isSelected, onSelect }) => {
       <div className="card-info">
         <span className="card-name">{card.name}</span>
         {card.rarity && (
-          <span className={`card-rarity rarity-${card.rarity.toLowerCase()}`}>
-            {card.rarity}
+          <span className={`card-rarity rarity-${card.rarity.code?.toLowerCase()}`}>
+            {card.rarity.name}
           </span>
         )}
       </div>

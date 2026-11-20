@@ -1,0 +1,442 @@
+.profile-page {
+  --bg: #111522;
+  --gold: #c9955d;
+  --cream: #e8d9c4;
+  --text: #f3f4f6;
+  --muted: #d7d8dc;
+  --blue: #344c83;
+  --line: #292732;
+
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+}
+
+.profile-page h1,
+.profile-page h2,
+.profile-page h3,
+.profile-page p {
+  margin: 0;
+}
+
+.profile-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.navbar {
+  min-height: 120px;
+  padding: 0 30px 0 36px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-logo,
+.navbar-icons a {
+  display: flex;
+}
+
+.navbar-logo {
+  color: var(--gold);
+}
+
+.navbar-links {
+  display: flex;
+  gap: clamp(20px, 5vw, 90px);
+  font-family: "Cinzel", serif;
+  font-size: 20px;
+  font-variant: small-caps;
+  letter-spacing: 0.125em;
+  color: var(--muted);
+}
+
+.navbar-icons {
+  display: flex;
+  gap: 40px;
+}
+
+.navbar-icons a:first-child {
+  color: var(--text);
+}
+
+.navbar-icons a:last-child {
+  color: var(--gold);
+}
+
+.profilo {
+  max-width: 1186px;
+  margin: 0 auto;
+  padding: 65px 40px 82px;
+}
+
+.profilo h1 {
+  font-family: "Cinzel", serif;
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--gold);
+}
+
+.user {
+  margin-top: 23px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.avatar {
+  width: 98px;
+  height: 98px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.user-name {
+  font-size: 16px;
+  color: var(--cream);
+}
+
+.user-email {
+  margin-top: 8px !important;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.section-head {
+  margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.section-head h2 {
+  font-family: "Cinzel", serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: var(--gold);
+}
+
+.season {
+  font-family: "Cinzel", serif;
+  font-size: 24px;
+  color: var(--muted);
+  text-align: right;
+}
+
+.stats {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 19px;
+}
+
+.stat {
+  min-height: 135px;
+  padding: 22px 20px;
+  border: 1px solid var(--cream);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-family: "Cinzel", serif;
+  font-size: 24px;
+  color: var(--cream);
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bottom {
+  margin-top: 40px;
+  display: grid;
+  grid-template-columns: minmax(0, 675fr) minmax(300px, 379fr);
+  gap: 32px;
+}
+
+.panel {
+  min-height: 378px;
+  padding: 24px 20px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel h2 {
+  font-family: "Cinzel", serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--cream);
+}
+
+.subtitle {
+  margin-top: 8px !important;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.cards {
+  margin-top: 15px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 16px;
+}
+
+.cards .gcard {
+  width: 100%;
+  min-width: 0;
+  font-size: clamp(7px, 0.85vw, 10px);
+}
+
+.favorite-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.favorite-card-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.favorite-card-usage strong {
+  color: var(--cream);
+  font-size: 14px;
+}
+
+.credits {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.coin {
+  width: 77px;
+  height: 77px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.credits-value {
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.shop-btn {
+  min-height: 64px;
+  border: none;
+  border-radius: 12px;
+  background: var(--gold);
+  font-family: inherit;
+  font-size: 20px;
+  color: #1c1d26;
+  cursor: pointer;
+}
+
+.shop-btn:focus-visible,
+.navbar a:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 4px;
+}
+
+@media (max-width: 980px) {
+  .navbar {
+    padding: 0 24px;
+  }
+
+  .navbar-links {
+    gap: 24px;
+    font-size: 16px;
+  }
+
+  .navbar-icons {
+    gap: 20px;
+  }
+
+  .navbar-icons svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profilo {
+    padding: 48px 24px 64px;
+  }
+
+  .profilo h1 {
+    font-size: 52px;
+  }
+
+  .section-head h2 {
+    font-size: 38px;
+  }
+
+  .stat {
+    padding: 18px 14px;
+  }
+
+  .stat-label {
+    font-size: 20px;
+  }
+
+  .bottom {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .navbar {
+    min-height: 90px;
+    padding: 12px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .navbar-logo svg {
+    width: 88px;
+    height: 56px;
+  }
+
+  .navbar-icons {
+    margin-left: auto;
+  }
+
+  .navbar-links {
+    order: 1;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .profilo {
+    padding: 36px 20px 48px;
+  }
+
+  .profilo h1 {
+    font-size: 42px;
+  }
+
+  .section-head {
+    align-items: flex-start;
+  }
+
+  .section-head h2 {
+    font-size: 30px;
+  }
+
+  .season {
+    font-size: 17px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat {
+    min-height: 116px;
+  }
+
+  .stat-label {
+    font-size: 18px;
+  }
+
+  .stat-value {
+    font-size: 30px;
+  }
+
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .cards .gcard {
+    font-size: 9px;
+  }
+
+  .favorite-card-usage {
+    font-size: 12px;
+  }
+
+  .panel h2 {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 430px) {
+  .navbar-links {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .profilo {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .profilo h1 {
+    font-size: 36px;
+  }
+
+  .user {
+    gap: 18px;
+  }
+
+  .avatar {
+    width: 76px;
+    height: 76px;
+  }
+
+  .section-head {
+    flex-direction: column;
+  }
+
+  .season {
+    text-align: left;
+  }
+
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .favorite-card {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .cards .gcard {
+    font-size: 10px;
+  }
+}

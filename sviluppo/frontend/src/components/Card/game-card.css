@@ -1,0 +1,142 @@
+.gcard {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 4.5% / 3%;
+  background: #101525;
+  color: #262039;
+  font-family: "Cormorant Garamond", serif;
+  font-size: 10px;
+  font-variant-numeric: lining-nums;
+}
+
+.gcard__art,
+.gcard__frame {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gcard__art {
+  z-index: 0;
+  object-fit: cover;
+}
+
+.gcard__art--missing {
+  background:
+    radial-gradient(ellipse at 50% 35%, #6d7897, transparent 55%),
+    linear-gradient(145deg, #1d2d50, #111522 72%);
+}
+
+.gcard__frame {
+  z-index: 1;
+  inset: 0;
+  object-fit: fill;
+  pointer-events: none;
+}
+
+.gcard__name,
+.gcard__text,
+.gcard__stat {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+}
+
+.gcard__name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 0.3em;
+  color: #262039;
+  font-family: "Cinzel", serif;
+  font-size: 0.88em;
+  font-weight: 600;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.gcard__lord {
+  position: absolute;
+  top: -1.2em;
+  left: 50%;
+  color: #e8d9c4;
+  font-size: 0.55em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.gcard__text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 1.2em;
+  color: #262039;
+  font-size: 0.72em;
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.gcard__description {
+  font-style: italic;
+}
+
+.gcard__effect {
+  font-size: 0.75em;
+}
+
+.gcard__effect strong {
+  font-weight: 700;
+}
+
+.gcard__stat {
+  color: #f5f3fa;
+  font-family: "Cinzel", serif;
+  font-size: 1.2em;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px #101525;
+  transform: translate(-50%, -50%);
+}
+
+.gcard--full-art .gcard__name,
+.gcard--full-art .gcard__text {
+  border: 1px solid rgb(232 217 196 / 30%);
+  border-radius: 0.7em;
+  background: rgb(12 15 28 / 78%);
+  color: #f3f4f6;
+  backdrop-filter: blur(0.35em);
+}
+
+.gcard--full-art .gcard__name {
+  font-size: 1.15em;
+}
+
+.gcard--full-art .gcard__description {
+  font-size: 0.8em;
+}
+
+.gcard--full-art .gcard__effect {
+  font-size: 0.75em;
+}
+
+.gcard--large {
+  width: min(80vw, 320px);
+  font-size: 20px;
+}
+
+@media (max-width: 700px) {
+  .gcard--large {
+    font-size: 16px;
+  }
+}

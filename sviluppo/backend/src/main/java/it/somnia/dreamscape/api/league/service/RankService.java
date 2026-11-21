@@ -3,7 +3,11 @@ package it.somnia.dreamscape.api.league.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -74,16 +78,45 @@ public class RankService {
                 leagueService.grantNewLeagues(opponent, match.getId()));
     }
 
+    /**
+     * Restituisce gli avversari contro cui il giocatore ha già giocato oggi 3 classificate che hanno cambiato il
+     * punteggio: un'altra classificata con loro non conterebbe per il rank. Il matchmaking li sceglie per ultimi.
+     *
+     * @param userId il giocatore
+     * @param at     un momento del giorno da considerare (ora italiana), di solito adesso
+     * @return gli id degli avversari al limite; vuoto se nessuno
+     */
+    @Transactional(readOnly = true)
+    public Set<UUID> opponentsAtDailyLimit(UUID userId, Instant at) {
+        DayRange day = dayOf(at);
+        Map<UUID, Long> ratedByOpponent = matchRepository
+                .findRatedInvolving(MatchType.RANKED, userId, day.from(), day.to()).stream()
+                .map(match -> match.getChallenger().getId().equals(userId) ? match.getOpponent().getId()
+                        : match.getChallenger().getId())
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        return ratedByOpponent.entrySet().stream()
+                .filter(entry -> entry.getValue() >= RATED_MATCHES_PER_DAY_PER_OPPONENT)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
     // Conta le classificate tra i due, in tutti e due i ruoli, giocate nello stesso giorno (ora italiana) che
     // hanno già cambiato il punteggio. Questa partita non c'è: le sue variazioni sono ancora null
     private boolean hasReachedDailyLimit(Match match) {
-        ZoneId zone = gameProperties.timeZone();
-        LocalDate day = LocalDate.ofInstant(match.getPlayedAt(), zone);
-        Instant from = day.atStartOfDay(zone).toInstant();
-        Instant to = day.plusDays(1).atStartOfDay(zone).toInstant();
+        DayRange day = dayOf(match.getPlayedAt());
         long rated = matchRepository.countRatedBetween(MatchType.RANKED, match.getChallenger().getId(),
-                match.getOpponent().getId(), from, to);
+                match.getOpponent().getId(), day.from(), day.to());
         return rated >= RATED_MATCHES_PER_DAY_PER_OPPONENT;
+    }
+
+    // Il giorno (ora italiana) che contiene il momento indicato, come intervallo [from, to) in UTC
+    private DayRange dayOf(Instant at) {
+        ZoneId zone = gameProperties.timeZone();
+        LocalDate day = LocalDate.ofInstant(at, zone);
+        return new DayRange(day.atStartOfDay(zone).toInstant(), day.plusDays(1).atStartOfDay(zone).toInstant());
+    }
+
+    private record DayRange(Instant from, Instant to) {
     }
 
     private static double challengerScore(Match match) {

@@ -13,6 +13,16 @@ export default function DecksPage() {
     api('/decks').then(setDecks).catch(setError);
   }, []);
 
+  // Mazzo classificato: PUT /me/ranked-deck, poi si rilegge la lista (isRanked cambia su due mazzi)
+  const makeRanked = async (deck) => {
+    try {
+      await api('/me/ranked-deck', { method: 'PUT', body: { deckId: deck.id } });
+      setDecks(await api('/decks'));
+    } catch (err) {
+      setError(err);
+    }
+  };
+
   const deleteDeck = async (deck) => {
     if (!window.confirm(`Eliminare il mazzo "${deck.name}"? Non si può annullare.`)) return;
     try {
@@ -71,6 +81,9 @@ export default function DecksPage() {
                   )}
                 </div>
                 <div className="deck-row__actions">
+                  {deck.isValid && !deck.isRanked && (
+                    <button type="button" className="deck-ranked" onClick={() => makeRanked(deck)}>Usa per le classificate</button>
+                  )}
                   <a className="home-button home-button--outlined" href={`/mazzi/editor?id=${deck.id}`}>Modifica</a>
                   <button type="button" className="deck-delete" onClick={() => deleteDeck(deck)}>Elimina</button>
                 </div>

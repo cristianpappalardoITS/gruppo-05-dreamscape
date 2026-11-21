@@ -70,8 +70,13 @@ export default function DashboardPage() {
               </section>
             </div>
 
-            {/* L'invito a scegliere il mazzo classificato (hasRankedDeck false) arriverà con
-                PUT /me/ranked-deck, che il backend non ha ancora */}
+            {/* Senza mazzo classificato nessuno può sceglierti come avversario (hasRankedDeck) */}
+            {welcomeClaimed && !summary.hasRankedDeck && (
+              <div className="dashboard-banner">
+                <p>Scegli il tuo mazzo classificato: è quello con cui giochi quando un altro Dreamweaver ti sfida in classificata.</p>
+                <a className="home-button home-button--filled" href="/arena">Vai all'Arena</a>
+              </div>
+            )}
 
             <div className="dashboard-columns">
               <section className="dashboard-panel" aria-labelledby="missions-title">
@@ -97,6 +102,7 @@ export default function DashboardPage() {
               <section className="dashboard-panel" aria-labelledby="links-title">
                 <h2 id="links-title">Vai a</h2>
                 <nav className="dashboard-links">
+                  <a href="/arena">Arena</a>
                   <a href="/collezione">Collezione</a>
                   <a href="/mazzi">Mazzi</a>
                   <a href="/mazzi/editor">Nuovo mazzo</a>

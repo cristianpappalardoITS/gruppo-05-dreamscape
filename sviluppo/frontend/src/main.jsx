@@ -17,6 +17,7 @@ import NewTradePage from './pages/NewTradePage.jsx'
 import ChallengesPage from './pages/ChallengesPage.jsx'
 import MatchPage from './pages/MatchPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import ArenaPage from './pages/ArenaPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -34,6 +35,7 @@ const pages = {
   '/amici': { title: 'Amici', render: () => <FriendsPage /> },
   '/scambi': { title: 'Scambi', render: () => <TradesPage /> },
   '/scambi/nuovo': { title: 'Nuovo scambio', render: () => <NewTradePage /> },
+  '/arena': { title: 'Arena', render: () => <ArenaPage /> },
   '/sfide': { title: 'Sfide', render: () => <ChallengesPage /> },
 }
 

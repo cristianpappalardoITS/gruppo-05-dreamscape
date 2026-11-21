@@ -112,6 +112,22 @@
   min-height: 42px;
 }
 
+/* Rende il mazzo quello delle classificate (PUT /me/ranked-deck) */
+.deck-ranked {
+  padding: 8px 14px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gold-hover);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.deck-ranked:hover {
+  background: rgba(201, 149, 93, .12);
+}
+
 .deck-delete {
   padding: 8px 12px;
   border: 0;

@@ -15,18 +15,19 @@ const playerLinks = [
   { label: 'Collezione', href: '/collezione', paths: ['/collezione'] },
   { label: 'Mazzi', href: '/mazzi', paths: ['/mazzi'] },
   { label: 'Scambio', href: '/scambi', paths: ['/scambi'] },
-  { label: 'Arena', href: '/sfide', paths: ['/sfide', '/partite'] },
+  { label: 'Arena', href: '/arena', paths: ['/arena', '/sfide', '/partite'] },
 ];
 
 const isActive = (paths) => paths.some((path) => window.location.pathname.startsWith(path));
 
-export default function HomeHeader() {
+// compact: intestazione più bassa, per le pagine che devono stare in uno schermo (partita, apertura)
+export default function HomeHeader({ compact = false }) {
   const loggedIn = isLoggedIn();
   const shopActive = loggedIn && isActive(['/negozio']);
   const profileActive = loggedIn && isActive(['/profilo']);
 
   return (
-    <header className="home-header">
+    <header className={`home-header${compact ? ' home-header--compact' : ''}`}>
       <a className="home-header__brand" href={loggedIn ? '/dashboard' : '/'} aria-label={loggedIn ? 'Dreamscape, vai alla dashboard' : 'Dreamscape, torna alla home'}>
         <span className="home-header__logo" aria-hidden="true" />
       </a>

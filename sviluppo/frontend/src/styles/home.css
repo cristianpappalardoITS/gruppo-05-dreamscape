@@ -496,3 +496,27 @@
   .home-final-call h2 { font-size: 28px; }
   .home-footer { min-height: 280px; }
 }
+
+/* Intestazione compatta: le pagine che devono stare in uno schermo (partita, apertura del pacchetto) */
+.home-header.home-header--compact {
+  height: 72px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.home-header--compact .home-header__brand { width: 84px; height: 52px; }
+.home-header--compact .home-header__icon { width: 40px; height: 40px; }
+.home-header--compact .home-header__icon svg { width: 32px; height: 32px; }
+.home-header--compact .home-header__account svg { width: 36px; height: 36px; }
+
+@media (max-width: 800px) {
+  .home-header.home-header--compact {
+    height: auto;
+    min-height: 0;
+    row-gap: 4px;
+    padding: 6px 14px 8px;
+  }
+
+  .home-header--compact .home-header__brand { width: 64px; height: 40px; }
+  .home-header--compact .home-header__icon svg { width: 28px; height: 28px; }
+}

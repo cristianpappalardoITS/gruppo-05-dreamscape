@@ -1022,6 +1022,17 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 
 ## Cosa è cambiato in questa versione
 
+### 21 novembre 2026: Dashboard admin e configurazione (#95)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Fazioni dal backoffice | Da definire | Nome, descrizione, titolo del Lord e vantaggi (`faction_advantages`): quelli mandati sostituiscono quelli di prima, aggiornando le righe che restano. La carta Lord non si cambia |
+| Rarità dal backoffice | Da definire | Nome, `max_per_deck` e `max_copies`; codice e `sort_order` non cambiano. I mazzi salvati si ricontrollano come sempre: quelli che non rispettano più i limiti diventano non validi |
+| Modalità dal backoffice | Da definire | Nome, descrizione, `starting_life_points` e `round_limit` di BASE; le partite già giocate hanno la loro copia in `matches` |
+| Dashboard admin | Da definire | Solo i giocatori (`role = 'PLAYER'`); "oggi" da mezzanotte in ora italiana, "ultimi 7 giorni" oggi e i 6 giorni prima; attivi = `last_login_at` negli ultimi 7 giorni |
+
+Nessuna migration.
+
 ### 21 novembre 2026: rank e leghe (#106)
 
 | Cosa | Prima | Ora |

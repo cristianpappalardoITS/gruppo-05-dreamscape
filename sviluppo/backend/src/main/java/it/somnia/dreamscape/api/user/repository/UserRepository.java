@@ -1,10 +1,12 @@
 package it.somnia.dreamscape.api.user.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.model.UserRole;
@@ -29,4 +31,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // chi cerca. Containing aggiunge i % da solo e tratta % e _ scritti dall'utente come caratteri normali
     List<User> findTop20ByEnabledTrueAndRoleAndUsernameContainingIgnoreCaseAndIdNotOrderByUsernameAsc(
             UserRole role, String username, UUID excludedUserId);
+
+    // Numeri della Dashboard admin (GET /admin/stats): solo i giocatori, anche gli account cancellati per i nuovi
+    long countByRoleAndEnabledTrue(UserRole role);
+
+    long countByRoleAndCreatedAtGreaterThanEqual(UserRole role, Instant from);
+
+    long countByRoleAndEnabledTrueAndLastLoginAtGreaterThanEqual(UserRole role, Instant from);
+
+    // I Dream Credits sui saldi dei giocatori
+    @Query("SELECT COALESCE(SUM(u.credits), 0) FROM User u WHERE u.role = :role")
+    long sumCreditsByRole(UserRole role);
 }

@@ -28,4 +28,9 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
               AND m.playedAt >= :from AND m.playedAt < :to
             """)
     long countRatedBetween(MatchType matchType, UUID firstUserId, UUID secondUserId, Instant from, Instant to);
+
+    // Numeri della Dashboard admin (GET /admin/stats)
+    long countByMatchType(MatchType matchType);
+
+    long countByMatchTypeAndPlayedAtGreaterThanEqual(MatchType matchType, Instant from);
 }

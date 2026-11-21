@@ -363,6 +363,7 @@ export default function ArenaPage() {
           <section className="arena-recent" aria-labelledby="arena-recent-title">
             <div className="arena-section-head">
               <h2 id="arena-recent-title">Ultime partite</h2>
+              {recent && recent.length > 0 && <a href="/storico">Vedi tutte</a>}
             </div>
             {!recent && <p className="arena-muted">Caricamento...</p>}
             {recent && recent.length === 0 && <p className="arena-muted">Non hai ancora giocato: la prima partita ti aspetta.</p>}

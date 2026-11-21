@@ -96,6 +96,10 @@ function AccountPanel({ profile }) {
         </div>
       </dl>
       <p className="collection-message">Lo username non si cambia: è il nome che vedono i tuoi amici.</p>
+      <p className="profile-history-links">
+        <a href="/storico">Storico delle partite</a>
+        <a href="/storico?scheda=crediti">Movimenti dei Dream Credits</a>
+      </p>
       <button type="button" className="social-action social-action--quiet" onClick={handleLogout} disabled={leaving}>
         {leaving ? 'Uscita...' : 'Esci'}
       </button>

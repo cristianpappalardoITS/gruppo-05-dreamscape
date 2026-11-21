@@ -20,6 +20,7 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import ArenaPage from './pages/ArenaPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
+import HistoryPage from './pages/HistoryPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -32,6 +33,7 @@ const pages = {
   '/nuova-password': { title: 'Nuova password', render: () => <ResetPasswordPage /> },
   '/dashboard': { title: 'Dashboard', render: () => <DashboardPage /> },
   '/profilo': { title: 'Profilo', render: () => <ProfilePage /> },
+  '/storico': { title: 'Storico', render: () => <HistoryPage /> },
   '/benvenuto': { title: 'Benvenuto', render: () => <WelcomePage /> },
   '/collezione': { title: 'Collezione', render: () => <CollectionPage /> },
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },

@@ -24,7 +24,7 @@ const isActive = (paths) => paths.some((path) => window.location.pathname.starts
 export default function HomeHeader({ compact = false }) {
   const loggedIn = isLoggedIn();
   const shopActive = loggedIn && isActive(['/negozio']);
-  const profileActive = loggedIn && isActive(['/profilo']);
+  const profileActive = loggedIn && isActive(['/profilo', '/storico']);
 
   return (
     <header className={`home-header${compact ? ' home-header--compact' : ''}`}>

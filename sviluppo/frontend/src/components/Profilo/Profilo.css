@@ -72,3 +72,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Link allo storico (partite e Dream Credits) */
+.profile-history-links {
+  margin: 4px 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.profile-history-links a {
+  color: var(--gold-primary);
+  font-size: 14px;
+}

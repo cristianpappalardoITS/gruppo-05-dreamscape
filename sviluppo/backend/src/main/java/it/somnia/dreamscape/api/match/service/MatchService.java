@@ -7,6 +7,8 @@ import java.util.UUID;
 import java.util.random.RandomGenerator;
 import java.util.stream.Stream;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +17,13 @@ import it.somnia.dreamscape.api.card.model.CardEffect;
 import it.somnia.dreamscape.api.card.repository.CardEffectRepository;
 import it.somnia.dreamscape.api.card.repository.FactionAdvantageRepository;
 import it.somnia.dreamscape.api.challenge.model.Challenge;
+import it.somnia.dreamscape.api.common.dto.response.PageResponse;
 import it.somnia.dreamscape.api.deck.model.DeckCards;
 import it.somnia.dreamscape.api.deck.service.DeckCheck;
 import it.somnia.dreamscape.api.league.model.UserLeagueReward;
 import it.somnia.dreamscape.api.league.repository.UserLeagueRewardRepository;
 import it.somnia.dreamscape.api.match.dto.response.MatchResponse;
+import it.somnia.dreamscape.api.match.dto.response.MatchSummaryResponse;
 import it.somnia.dreamscape.api.match.model.GameMode;
 import it.somnia.dreamscape.api.match.model.Match;
 import it.somnia.dreamscape.api.match.model.MatchType;
@@ -28,7 +32,9 @@ import it.somnia.dreamscape.api.match.repository.MatchRepository;
 import it.somnia.dreamscape.api.match.service.MatchExceptions.EngineUnavailableException;
 import it.somnia.dreamscape.api.match.service.MatchExceptions.MatchNotFoundException;
 import it.somnia.dreamscape.api.user.dto.response.UserSummaryResponse;
+import it.somnia.dreamscape.api.user.model.CreditTransactionType;
 import it.somnia.dreamscape.api.user.model.User;
+import it.somnia.dreamscape.api.user.repository.CreditTransactionRepository;
 import it.somnia.dreamscape.engine.Side;
 import it.somnia.dreamscape.engine.SimulationRequest;
 import it.somnia.dreamscape.engine.input.CardSnapshot;
@@ -44,8 +50,8 @@ import tools.jackson.databind.ObjectMapper;
  * Gioca e rilegge le partite (decisioni 010 e 029). Il backend non conosce le regole del gioco: prepara le copie
  * dei due mazzi, le regole della modalità BASE e il seed, chiede la partita al motore e salva il risultato.
  *
- * <p>Si usa per le sfide tra amici (#94) e servirà al matchmaking (#127), che aggiunge i crediti e applica il
- * rank con {@link it.somnia.dreamscape.api.league.service.RankService}.
+ * <p>Si usa per le sfide tra amici (#94) e per il matchmaking ({@link MatchmakingService}, #127), che dopo la
+ * partita applica il rank e dà i crediti.
  */
 @Service
 @RequiredArgsConstructor
@@ -56,6 +62,7 @@ public class MatchService {
     private final FactionAdvantageRepository factionAdvantageRepository;
     private final CardEffectRepository cardEffectRepository;
     private final UserLeagueRewardRepository userLeagueRewardRepository;
+    private final CreditTransactionRepository creditTransactionRepository;
     private final BattleSimulator battleSimulator;
     private final RandomGenerator randomGenerator;
     private final ObjectMapper objectMapper;
@@ -129,8 +136,8 @@ public class MatchService {
                 UserSummaryResponse.from(match.getOpponent()),
                 match.getWinner() != null ? match.getWinner().getId() : null,
                 ratingChange,
-                // I DC per la vittoria nelle classificate arrivano con il matchmaking (#127)
-                0,
+                (int) creditTransactionRepository.sumAmountOfMatch(userId, matchId,
+                        CreditTransactionType.MATCH_REWARD),
                 leagueReached(userId, matchId),
                 match.getEndReason(),
                 match.getTotalRounds(),
@@ -142,6 +149,24 @@ public class MatchService {
                 log.path("rounds"),
                 new MatchResponse.DecksResponse(objectMapper.readTree(match.getChallengerDeckSnapshot()),
                         objectMapper.readTree(match.getOpponentDeckSnapshot())));
+    }
+
+    /**
+     * Lo storico delle partite dell'utente ({@code GET /me/matches}), dalla più recente: sfide tra amici, rapide e
+     * classificate, sia avviate da lui sia giocate come avversario scelto dal matchmaking.
+     *
+     * @param userId    l'utente collegato
+     * @param matchType solo le partite di questo tipo; null per tutte
+     * @param page      la pagina, da 0
+     * @param size      quante partite per pagina
+     * @return la pagina delle partite, viste dall'utente
+     */
+    @Transactional(readOnly = true)
+    public PageResponse<MatchSummaryResponse> listMatches(UUID userId, MatchType matchType, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<Match> matches = matchType == null ? matchRepository.findPlayedBy(userId, pageRequest)
+                : matchRepository.findPlayedBy(userId, matchType, pageRequest);
+        return PageResponse.from(matches, match -> MatchSummaryResponse.from(match, userId));
     }
 
     // La lega più alta in cui chi guarda è entrato con questa partita, con tutti i premi di lega presi con essa

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import it.somnia.dreamscape.api.user.model.User;
@@ -29,4 +30,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // chi cerca. Containing aggiunge i % da solo e tratta % e _ scritti dall'utente come caratteri normali
     List<User> findTop20ByEnabledTrueAndRoleAndUsernameContainingIgnoreCaseAndIdNotOrderByUsernameAsc(
             UserRole role, String username, UUID excludedUserId);
+
+    // Chi il matchmaking può scegliere come avversario: giocatori attivi con un mazzo classificato, senza chi cerca.
+    // Se il mazzo è ancora valido lo controlla il service
+    @EntityGraph(attributePaths = "rankedDeck")
+    List<User> findByEnabledTrueAndRoleAndRankedDeckIsNotNullAndIdNot(UserRole role, UUID excludedUserId);
 }

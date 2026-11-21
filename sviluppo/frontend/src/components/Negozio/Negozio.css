@@ -16,13 +16,13 @@
   margin: 0;
   color: var(--gold-primary);
   font-family: var(--font-title);
-  font-size: clamp(32px, 3.6vw, 56px);
+  font-size: clamp(30px, 3vw, 46px);
   font-weight: 400;
   letter-spacing: .02em;
 }
 
 .shop-intro p {
-  margin: 10px 0 0;
+  margin: 6px 0 0;
   color: #d8d2dc;
   font-family: var(--font-editorial);
   font-size: clamp(17px, 1.4vw, 21px);
@@ -49,46 +49,60 @@
   font-size: 22px;
 }
 
-/* Fascia dei crediti */
-.shop-credits {
-  margin: 28px 0 40px;
+/* Titolo a sinistra e crediti a destra, sulla stessa riga: lo spazio in alto resta poco e la
+   prima fila di pacchetti, con "Acquista", si vede senza scorrere anche su un portatile */
+.decks-content.shop-content {
+  padding-top: 28px;
+}
+
+.shop-top {
+  margin-bottom: 22px;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 28px;
+  gap: 32px;
+}
+
+/* Fascia dei crediti, in una scheda compatta */
+.shop-credits {
+  padding: 12px 18px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 300px) auto;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
 }
 
 .shop-credits__balance {
-  padding-right: 28px;
+  padding-right: 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   border-right: 1px solid var(--input-border);
 }
 
 .shop-credits__balance span:not(.dc-coin) {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .shop-credits__balance strong {
   display: block;
-  margin-top: 4px;
-  font-size: 17px;
+  margin-top: 2px;
+  font-size: 20px;
 }
 
 .shop-credits p {
   margin: 0;
-  padding-right: 28px;
-  border-right: 1px solid var(--input-border);
   color: #d8d2dc;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .shop-credits__buy {
-  min-height: 56px;
+  min-height: 44px;
   border-radius: 10px;
 }
 
@@ -98,9 +112,9 @@
 }
 
 .shop-section-title {
-  margin: 0 0 22px;
+  margin: 0 0 14px;
   font-family: var(--font-title);
-  font-size: clamp(26px, 2.6vw, 40px);
+  font-size: clamp(22px, 2vw, 30px);
   font-weight: 400;
   letter-spacing: .02em;
 }
@@ -117,7 +131,10 @@
 .shop-pack--memories { --faction-color: #d9a466; }
 
 .shop-pack {
-  padding: 18px 18px 20px;
+  /* Altezza dell'immagine del pacchetto: quella che resta dello schermo tolti intestazione,
+     titolo, crediti e testo della scheda, così "Acquista" sta sopra il bordo in basso */
+  --pack-h: clamp(200px, calc(100vh - 560px), 440px);
+  padding: 16px 18px 18px;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--faction-color, #c9c4cc);
@@ -140,11 +157,11 @@
 }
 
 /* Immagine del pacchetto (GET /packs, imageUrl): verticale 2:3 con lo sfondo trasparente,
-   grande e intera al centro di un riquadro quasi quadrato, su un alone del colore della fazione.
-   max-height: con una colonna sola (tablet) il pacchetto non diventa enorme */
+   grande e intera al centro del riquadro, su un alone del colore della fazione. L'altezza
+   dipende da quella dello schermo (--pack-h) */
 .shop-pack__image--pack {
-  aspect-ratio: 1 / 1.05;
-  max-height: 460px;
+  aspect-ratio: auto;
+  height: var(--pack-h);
   overflow: visible;
   /* Niente riquadro: solo l'alone, che sfuma nello sfondo della scheda */
   border-radius: 0;
@@ -183,7 +200,7 @@
 
 .shop-pack__body {
   flex: 1;
-  padding-top: 14px;
+  padding-top: 12px;
 }
 
 .shop-pack__body h3 {
@@ -231,11 +248,17 @@
   line-height: 1.5;
 }
 
-.shop-pack__price {
-  margin: 16px 0 12px;
+.shop-pack__footer {
+  margin-top: 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
+}
+
+.shop-pack__price {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .shop-pack__price strong {
@@ -244,6 +267,7 @@
 }
 
 .shop-pack__buy {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -291,16 +315,66 @@
   cursor: pointer;
 }
 
-@media (max-width: 900px) {
-  .shop-credits {
+@media (max-width: 1100px) {
+  .shop-top {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 
-  .shop-credits__balance,
+  .shop-credits {
+    justify-self: start;
+  }
+
+  .shop-pack {
+    --pack-h: clamp(200px, calc(100vh - 580px), 400px);
+  }
+}
+
+/* Telefono: crediti e pulsante su una riga, senza la frase; la frase sul regalo giornaliero
+   c'è già nella Dashboard */
+@media (max-width: 700px) {
+  .decks-content.shop-content {
+    padding-top: 20px;
+  }
+
+  .shop-top {
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+
+  .shop-intro p {
+    font-size: 15px;
+  }
+
+  .shop-credits {
+    width: 100%;
+    padding: 10px 14px;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+  }
+
   .shop-credits p {
-    padding: 0 0 16px;
+    display: none;
+  }
+
+  .shop-credits__balance {
+    padding-right: 0;
     border-right: 0;
-    border-bottom: 1px solid var(--input-border);
+  }
+
+  .dc-coin--large {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .shop-credits__buy {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .shop-pack {
+    --pack-h: clamp(180px, calc(100vh - 600px), 360px);
   }
 }

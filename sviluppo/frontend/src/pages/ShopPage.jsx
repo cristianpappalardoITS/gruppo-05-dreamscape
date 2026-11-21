@@ -78,25 +78,29 @@ export default function ShopPage() {
       <HomeHeader />
 
       <main className="decks-content shop-content">
-        <div className="shop-intro">
-          <h1>Il tuo negozio</h1>
-          <p>Acquista pacchetti di carte e controlla i tuoi crediti disponibili.</p>
-        </div>
-
-        {/* Crediti, come nel mockup. L'acquisto di crediti con denaro vero non c'è in questa fase */}
-        <section className="shop-credits" aria-label="I tuoi crediti">
-          <div className="shop-credits__balance">
-            <span className="dc-coin dc-coin--large" aria-hidden="true">C</span>
-            <div>
-              <span>Crediti disponibili</span>
-              <strong>{balance !== null ? credits(balance).replace(' DC', '') : '...'}</strong>
-            </div>
+        {/* Titolo e crediti sulla stessa riga: così la prima fila di pacchetti, con "Acquista",
+            si vede senza scorrere anche su un portatile */}
+        <div className="shop-top">
+          <div className="shop-intro">
+            <h1>Il tuo negozio</h1>
+            <p>Acquista pacchetti di carte e controlla i tuoi crediti disponibili.</p>
           </div>
-          <p>Usa i tuoi Dream Credits per acquistare pacchetti di carte. Ogni giorno, al primo accesso, ne ricevi 50 in regalo.</p>
-          <button type="button" className="home-button home-button--filled shop-credits__buy" disabled title="Arriverà in una fase successiva">
-            Acquista crediti · in arrivo
-          </button>
-        </section>
+
+          {/* Crediti, come nel mockup. L'acquisto di crediti con denaro vero non c'è in questa fase */}
+          <section className="shop-credits" aria-label="I tuoi crediti">
+            <div className="shop-credits__balance">
+              <span className="dc-coin dc-coin--large" aria-hidden="true">C</span>
+              <div>
+                <span>Crediti disponibili</span>
+                <strong>{balance !== null ? credits(balance).replace(' DC', '') : '...'}</strong>
+              </div>
+            </div>
+            <p>Usa i Dream Credits per i pacchetti. Ogni giorno, al primo accesso, ne ricevi 50 in regalo.</p>
+            <button type="button" className="home-button home-button--filled shop-credits__buy" disabled title="Arriverà in una fase successiva">
+              Acquista crediti · in arrivo
+            </button>
+          </section>
+        </div>
 
         <h2 className="shop-section-title">Pacchetti disponibili</h2>
 
@@ -141,32 +145,35 @@ export default function ShopPage() {
                     </details>
                   </div>
 
-                  <div className="shop-pack__price">
-                    <span className="dc-coin" aria-hidden="true">C</span>
-                    <strong>{credits(pack.priceCredits).replace(' DC', '')}</strong>
-                    <span className="visually-hidden">Dream Credits</span>
-                  </div>
+                  {/* Prezzo e acquisto sulla stessa riga */}
+                  <div className="shop-pack__footer">
+                    <div className="shop-pack__price">
+                      <span className="dc-coin" aria-hidden="true">C</span>
+                      <strong>{credits(pack.priceCredits).replace(' DC', '')}</strong>
+                      <span className="visually-hidden">Dream Credits</span>
+                    </div>
 
-                  <div className="shop-pack__buy">
-                    {isConfirming ? (
-                      <>
-                        <button type="button" className="shop-buy shop-buy--confirm" onClick={() => buy(pack)} disabled={isBuying}>
-                          {isBuying ? 'Apertura...' : 'Conferma acquisto'}
+                    <div className="shop-pack__buy">
+                      {isConfirming ? (
+                        <>
+                          <button type="button" className="shop-buy shop-buy--confirm" onClick={() => buy(pack)} disabled={isBuying}>
+                            {isBuying ? 'Apertura...' : 'Conferma acquisto'}
+                          </button>
+                          <button type="button" className="shop-cancel" onClick={() => setConfirmingPackId(null)} disabled={isBuying}>
+                            Annulla
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="shop-buy"
+                          onClick={() => setConfirmingPackId(pack.id)}
+                          disabled={tooExpensive || buyingPackId !== null}
+                        >
+                          {tooExpensive ? 'Crediti insufficienti' : 'Acquista'}
                         </button>
-                        <button type="button" className="shop-cancel" onClick={() => setConfirmingPackId(null)} disabled={isBuying}>
-                          Annulla
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        className="shop-buy"
-                        onClick={() => setConfirmingPackId(pack.id)}
-                        disabled={tooExpensive || buyingPackId !== null}
-                      >
-                        {tooExpensive ? 'Crediti insufficienti' : 'Acquista'}
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </article>
               );

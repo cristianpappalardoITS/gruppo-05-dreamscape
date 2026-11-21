@@ -106,6 +106,20 @@ export function startFields(rounds) {
   return fields;
 }
 
+// Ultima carta finita negli scarti di ogni lato a fine di ogni round (null se gli scarti sono vuoti):
+// è la carta scoperta in cima al mucchio degli scarti
+export function discardTops(rounds) {
+  const tops = [];
+  let current = { CHALLENGER: null, OPPONENT: null };
+  rounds.forEach((round) => {
+    round.events.forEach((event) => {
+      if (event.type === 'CARD_DIED') current = { ...current, [event.side]: event.cardId };
+    });
+    tops.push(current);
+  });
+  return tops;
+}
+
 // Numeri di un lato nel round, per il campo: ATT e DIF della carta che ha combattuto (anche se
 // è morta), danno subito dalla carta e variazione dei punti vita del giocatore.
 // side: 'CHALLENGER' o 'OPPONENT'; lifeBefore: punti vita a inizio round;

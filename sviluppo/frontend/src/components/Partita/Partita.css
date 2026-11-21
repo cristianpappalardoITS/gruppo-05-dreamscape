@@ -65,23 +65,521 @@
   color: var(--gold-primary);
 }
 
-/* Titolo della partita: i due giocatori, senza il risultato */
-.match-intro {
-  margin-bottom: 24px;
+/* Arena: il campo della partita come nel mockup. Sfondo dei tre mondi, l'avversario in alto
+   e chi guarda in basso: mazzo coperto, carta in gioco al centro, scarti girati di lato */
+.arena-table {
+  /* Larghezza della carta in gioco e del mazzo: si adattano anche all'altezza dello schermo */
+  --card-w: clamp(112px, min(13vw, 21vh), 188px);
+  --pile-w: calc(var(--card-w) * .72);
+  min-height: max(640px, calc(100vh - 112px));
+  padding: clamp(18px, 3vh, 36px) clamp(16px, 4vw, 64px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  /* Sfondo dell'Arena del mockup: i tre regni intorno al tavolo di gioco */
+  background:
+    linear-gradient(rgba(12, 14, 26, .3), rgba(12, 14, 26, .05) 42%, rgba(12, 14, 26, .35)),
+    url('/artwork/arena-v1.webp') center 55% / cover;
+  overflow: hidden;
+}
+
+.arena-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: clamp(12px, 3vw, 40px);
+}
+
+.arena-row--bottom {
+  align-items: end;
+}
+
+.arena-slot {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.arena-slot--discard {
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* In basso il mazzo è a destra: il giocatore va verso il centro */
+.arena-row--bottom .arena-slot--deck {
+  flex-direction: row-reverse;
+}
+
+/* Mazzo coperto: il retro delle carte con lo spessore del mazzo */
+.arena-pile {
+  position: relative;
+  width: var(--pile-w);
+  flex: none;
+  aspect-ratio: 260 / 362;
+}
+
+.arena-pile img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 7% / 5%;
+  box-shadow:
+    3px 3px 0 #0b0d18,
+    6px 6px 0 rgba(11, 13, 24, .8),
+    0 14px 30px rgba(0, 0, 0, .55);
+}
+
+.arena-pile.is-empty {
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(226, 210, 204, .4);
+  border-radius: 7% / 5%;
+  background: rgba(16, 19, 31, .6);
+}
+
+.arena-pile__empty {
+  padding: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
   text-align: center;
 }
 
-.match-intro h1 {
-  margin: 8px 0;
+.arena-pile__count,
+.arena-discard__count {
+  padding: 3px 10px;
+  border: 1px solid rgba(201, 149, 93, .6);
+  border-radius: 999px;
+  background: rgba(16, 19, 31, .9);
+  color: var(--text-light);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.arena-pile__count {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Giocatore: nome e punti vita */
+.arena-player {
+  min-width: 150px;
+  padding: 10px 14px;
+  border: 1px solid rgba(226, 210, 204, .25);
+  border-radius: 12px;
+  background: rgba(16, 19, 31, .82);
+  backdrop-filter: blur(4px);
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+
+.arena-player.is-winner {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 26px rgba(201, 149, 93, .45);
+}
+
+.arena-player__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arena-player__head strong {
+  overflow: hidden;
   font-family: var(--font-title);
-  font-size: clamp(26px, 3vw, 40px);
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arena-avatar {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  border: 1px solid var(--gold-primary);
+  border-radius: 50%;
+  color: var(--gold-hover);
+  font-family: var(--font-title);
+  font-size: 14px;
+}
+
+.arena-life {
+  margin-top: 6px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.arena-life strong {
+  font-family: var(--font-title);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.arena-life span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.arena-life em {
+  margin-left: auto;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  animation: float-up .5s ease-out both;
+}
+
+.arena-life em.is-loss { color: #f0848e; }
+.arena-life em.is-gain { color: #8fd4a4; }
+
+.arena-lifebar {
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+}
+
+.arena-lifebar span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b5545c, var(--gold-primary));
+  transition: width .5s ease;
+}
+
+/* Scarti: l'ultima carta girata di lato in un riquadro scuro */
+.arena-discard {
+  position: relative;
+  width: calc(var(--pile-w) * 1.392 + 24px);
+  height: calc(var(--pile-w) + 24px);
+  border: 1px solid rgba(226, 210, 204, .2);
+  border-radius: 12px;
+  background: rgba(16, 19, 31, .85);
+}
+
+.arena-discard__card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--pile-w);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.arena-row--bottom .arena-discard__card {
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.arena-discard__empty {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Carta in gioco: si preme per ingrandirla */
+.arena-slot--active {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arena-active {
+  position: relative;
+  width: var(--card-w);
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  cursor: zoom-in;
+  transition: transform .2s ease;
+  animation: card-enter .45s ease-out both;
+}
+
+.arena-row--top .arena-active {
+  animation-name: card-enter-top;
+}
+
+.arena-active:hover,
+.arena-discard__card:hover .card {
+  transform: translateY(-4px);
+}
+
+.arena-active:focus-visible,
+.arena-discard__card:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 4px;
+}
+
+.arena-active .card,
+.arena-discard__card .card {
+  filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .55));
+  transition: transform .2s ease, filter .3s ease;
+}
+
+.arena-active.is-eliminated .card {
+  filter: grayscale(.9) brightness(.55);
+}
+
+.arena-active--none {
+  aspect-ratio: 260 / 362;
+  padding: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(226, 210, 204, .4);
+  background: rgba(16, 19, 31, .55);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  cursor: default;
+  animation: none;
+}
+
+.arena-active__stamp {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  padding: 4px 12px;
+  border: 2px solid #f0848e;
+  border-radius: 6px;
+  background: rgba(20, 10, 14, .75);
+  color: #f6b0b6;
+  font-family: var(--font-title);
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(-12deg);
+}
+
+.arena-active__damage {
+  position: absolute;
+  top: 10%;
+  right: -12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #b5545c;
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 700;
+  animation: float-up .5s ease-out .2s both;
+}
+
+/* Attacco e difesa della carta in questo round (gli effetti li cambiano) */
+.arena-numbers {
+  display: flex;
+  gap: 8px;
+}
+
+.arena-number {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.arena-number small {
+  margin-right: 5px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.arena-number--attack {
+  background: rgba(181, 84, 92, .85);
+  color: #fff;
+}
+
+.arena-number--defense {
+  background: rgba(70, 120, 170, .85);
+  color: #fff;
+}
+
+/* Carta senza i dati completi (in arrivo o non trovata) */
+.arena-placeholder {
+  aspect-ratio: 260 / 362;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  background: linear-gradient(var(--card-bg), var(--bg-dark));
+  font-family: var(--font-title);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Centro del tavolo: tipo di partita, giocatori e round */
+.arena-center {
+  padding: 12px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(5, 6, 16, .9);
+}
+
+.arena-center h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(22px, 2.6vw, 34px);
   font-weight: 400;
   font-variant: small-caps;
 }
 
-.match-intro p {
-  margin: 0;
+.arena-center h1 span {
   color: var(--text-muted);
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-variant: normal;
+}
+
+.arena-center__round {
+  margin: 0;
+  color: var(--gold-hover);
+  font-size: 15px;
+  animation: float-up .4s ease-out both;
+}
+
+/* Carta ingrandita */
+.card-zoom {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-light);
+}
+
+.card-zoom[open] {
+  display: grid;
+  place-items: center;
+}
+
+.card-zoom::backdrop {
+  background: rgba(6, 7, 14, .8);
+  backdrop-filter: blur(3px);
+}
+
+.card-zoom__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.card-zoom__label {
+  color: var(--gold-primary);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.card-zoom__card {
+  width: min(360px, 80vw, calc((100vh - 190px) * .718));
+  animation: zoom-rise .45s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+/* La carta dell'avversario arriva girandosi */
+.card-zoom--top .card-zoom__card {
+  animation: zoom-turn .6s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+.card-zoom__numbers {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.card-zoom__close {
+  padding: 9px 26px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.card-zoom__close:hover {
+  background: rgba(201, 149, 93, .15);
+}
+
+@keyframes zoom-rise {
+  from {
+    opacity: 0;
+    transform: translateY(30%) scale(.45);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes zoom-turn {
+  from {
+    opacity: 0;
+    transform: translateY(-30%) rotate(180deg) scale(.45);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes card-enter-top {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Risultato: compare all'ultimo round */
@@ -104,6 +602,16 @@
   font-variant: small-caps;
 }
 
+.match-result p {
+  margin: 0;
+  color: #d8d2dc;
+}
+
+.match-rewards {
+  margin-top: 8px !important;
+  color: var(--gold-hover) !important;
+}
+
 @keyframes result-reveal {
   from {
     opacity: 0;
@@ -115,365 +623,13 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .match-result,
-  .arena-card,
-  .arena-card__damage,
-  .arena-life em {
-    animation: none;
-  }
+/* Comandi del replay, subito sotto il campo */
+.match-content {
+  padding-top: 24px;
 }
 
-.match-result p {
-  margin: 0;
-  color: #d8d2dc;
-}
-
-.match-rewards {
-  margin-top: 8px !important;
-  color: var(--gold-hover) !important;
-}
-
-/* Campo dello scontro */
-.arena {
-  padding: 22px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: start;
-  gap: 22px;
-  border: 1px solid var(--input-border);
-  border-radius: 18px;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(136, 200, 243, .10), transparent 55%),
-    radial-gradient(ellipse at 80% 0%, rgba(176, 122, 200, .12), transparent 55%),
-    linear-gradient(180deg, #161a2b, #0f1220);
-}
-
-.arena-center {
-  align-self: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.arena-center__vs {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--gold-primary);
-  border-radius: 50%;
-  background: #10131f;
-  color: var(--gold-hover);
-  font-family: var(--font-title);
-  font-size: 22px;
-  letter-spacing: 0;
-  box-shadow: 0 0 24px rgba(201, 149, 93, .35);
-}
-
-.arena-center__round {
-  color: var(--text-light);
-  font-family: var(--font-title);
-  font-size: 15px;
-  letter-spacing: 1px;
-}
-
-/* Giocatore */
-.arena-player {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.arena-side--right .arena-player {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-.arena-avatar {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--gold-primary);
-  border-radius: 50%;
-  background: #10131f;
-  color: var(--gold-hover);
-  font-family: var(--font-title);
-  font-size: 20px;
-}
-
-.arena-player__name {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.arena-player__name strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.arena-player__name small {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.arena-life {
-  position: relative;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.arena-life strong {
-  color: var(--text-light);
-  font-family: var(--font-title);
-  font-size: 30px;
-  line-height: 1;
-}
-
-.arena-life span {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.arena-life em {
-  position: absolute;
-  top: -16px;
-  right: 0;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 700;
-  animation: float-up 1s ease-out both;
-}
-
-.arena-side--right .arena-life em {
-  right: auto;
-  left: 0;
-}
-
-.arena-life em.is-loss { color: #f0848e; }
-.arena-life em.is-gain { color: #8fd4a4; }
-
-.arena-lifebar {
-  height: 8px;
-  margin: 10px 0 16px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, .06);
-}
-
-.arena-lifebar span {
-  height: 100%;
-  display: block;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #b5545c, #d9a466);
-  transition: width .5s ease;
-}
-
-.arena-side--right .arena-lifebar span {
-  margin-left: auto;
-}
-
-.arena-side.is-winner .arena-card {
-  box-shadow: 0 0 0 2px var(--gold-primary), 0 0 40px rgba(201, 149, 93, .45);
-}
-
-/* Carta in campo */
-.arena-card--dreams { --card-color: #88c8f3; --card-glow: rgba(136, 200, 243, .28); }
-.arena-card--nightmares { --card-color: #b07ac8; --card-glow: rgba(176, 122, 200, .3); }
-.arena-card--memories { --card-color: #d9a466; --card-glow: rgba(217, 164, 102, .28); }
-
-.arena-card {
-  max-width: 340px;
-  margin: 0 auto;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  border: 2px solid var(--card-color, var(--input-border));
-  border-radius: 14px;
-  background: linear-gradient(180deg, #232233, #171624);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .45), 0 0 26px var(--card-glow, transparent);
-  animation: card-enter .45s ease-out both;
-}
-
-.arena-card--none {
-  min-height: 200px;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  border-style: dashed;
-  box-shadow: none;
-}
-
-.arena-card__art {
-  position: relative;
-  aspect-ratio: 3 / 2;
-  overflow: hidden;
-  border-radius: 8px;
-  background: var(--input-bg);
-}
-
-.arena-card__art img,
-.arena-card__empty {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.arena-card.is-eliminated .arena-card__art img,
-.arena-card.is-eliminated .arena-card__empty {
-  filter: grayscale(1) brightness(.45);
-}
-
-.arena-card.is-eliminated {
-  border-color: #5b5866;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
-}
-
-.arena-card__stamp {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  padding: 4px 14px;
-  transform: translate(-50%, -50%) rotate(-8deg);
-  border: 2px solid #f0848e;
-  border-radius: 6px;
-  color: #f0848e;
-  font-family: var(--font-title);
-  font-size: 18px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.arena-card__damage {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(181, 84, 92, .92);
-  color: #fff;
-  font-weight: 700;
-  animation: float-up 1s ease-out both;
-}
-
-.arena-card__title {
-  margin: 10px 4px 8px;
-  text-align: center;
-}
-
-.arena-card__title h3 {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.arena-card__title small {
-  color: var(--card-color, var(--text-muted));
-  font-size: 12px;
-}
-
-.arena-card__effect {
-  min-height: 74px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(232, 217, 196, .07);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.arena-card__effect strong {
-  color: var(--gold-hover);
-}
-
-.arena-card__effect p {
-  margin: 2px 0 0;
-  color: #d8d2dc;
-}
-
-.arena-card__no-effect {
-  color: var(--text-muted) !important;
-  font-style: italic;
-}
-
-.arena-card__stats {
-  margin-top: 10px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.arena-stat {
-  min-width: 64px;
-  padding: 4px 10px;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  border-radius: 999px;
-}
-
-.arena-stat strong {
-  font-family: var(--font-title);
-  font-size: 22px;
-}
-
-.arena-stat small {
-  font-size: 11px;
-  letter-spacing: 1px;
-}
-
-.arena-stat--attack {
-  background: rgba(181, 84, 92, .22);
-  color: #f6b0b6;
-}
-
-.arena-stat--defense {
-  background: rgba(136, 200, 243, .16);
-  color: #b9dcf6;
-}
-
-@keyframes card-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(.97);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes float-up {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* Comandi del replay */
 .match-controls {
-  margin: 22px 0 10px;
+  margin: 0 0 10px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -571,30 +727,77 @@
   min-height: 48px;
 }
 
-@media (max-width: 800px) {
-  .arena {
-    padding: 14px;
-    grid-template-columns: 1fr;
+@media (prefers-reduced-motion: reduce) {
+  .match-result,
+  .arena-active,
+  .arena-active__damage,
+  .arena-life em,
+  .arena-center__round,
+  .card-zoom__card {
+    animation: none !important;
+  }
+}
+
+/* Telefono: carte più piccole, il giocatore sotto (o sopra) il suo mazzo */
+@media (max-width: 700px) {
+  .arena-table {
+    --card-w: clamp(92px, 27vw, 140px);
+    --pile-w: calc(var(--card-w) * .62);
+    min-height: 0;
+    padding: 16px 10px;
+    gap: 12px;
+  }
+
+  .arena-row {
+    gap: 8px;
+  }
+
+  .arena-slot--deck {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .arena-row--bottom .arena-slot--deck {
+    flex-direction: column-reverse;
+  }
+
+  .arena-player {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+
+  .arena-player__head strong {
+    font-size: 12px;
+  }
+
+  .arena-avatar {
+    display: none;
+  }
+
+  .arena-life strong {
+    font-size: 20px;
+  }
+
+  .arena-life em {
+    font-size: 14px;
   }
 
   .arena-center {
-    flex-direction: row;
-    justify-content: center;
+    padding: 4px 8px;
   }
 
-  .arena-center__vs {
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
+  .arena-number {
+    padding: 2px 7px;
+    font-size: 13px;
   }
 
-  .arena-side--right .arena-player {
-    flex-direction: row;
-    text-align: left;
-  }
-
-  .arena-side--right .arena-lifebar span {
-    margin-left: 0;
+  /* Il danno resta sulla carta, senza coprire il giocatore accanto */
+  .arena-active__damage {
+    top: 4%;
+    right: 4%;
+    padding: 2px 8px;
+    font-size: 14px;
   }
 
   .match-log__line {

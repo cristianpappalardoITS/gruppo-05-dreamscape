@@ -17,6 +17,8 @@ import it.somnia.dreamscape.api.card.repository.FactionAdvantageRepository;
 import it.somnia.dreamscape.api.challenge.model.Challenge;
 import it.somnia.dreamscape.api.deck.model.DeckCards;
 import it.somnia.dreamscape.api.deck.service.DeckCheck;
+import it.somnia.dreamscape.api.league.model.UserLeagueReward;
+import it.somnia.dreamscape.api.league.repository.UserLeagueRewardRepository;
 import it.somnia.dreamscape.api.match.dto.response.MatchResponse;
 import it.somnia.dreamscape.api.match.model.GameMode;
 import it.somnia.dreamscape.api.match.model.Match;
@@ -42,7 +44,8 @@ import tools.jackson.databind.ObjectMapper;
  * Gioca e rilegge le partite (decisioni 010 e 029). Il backend non conosce le regole del gioco: prepara le copie
  * dei due mazzi, le regole della modalità BASE e il seed, chiede la partita al motore e salva il risultato.
  *
- * <p>Si usa per le sfide tra amici (#94) e servirà al matchmaking (#127), che aggiunge rank e crediti.
+ * <p>Si usa per le sfide tra amici (#94) e servirà al matchmaking (#127), che aggiunge i crediti e applica il
+ * rank con {@link it.somnia.dreamscape.api.league.service.RankService}.
  */
 @Service
 @RequiredArgsConstructor
@@ -52,6 +55,7 @@ public class MatchService {
     private final GameModeRepository gameModeRepository;
     private final FactionAdvantageRepository factionAdvantageRepository;
     private final CardEffectRepository cardEffectRepository;
+    private final UserLeagueRewardRepository userLeagueRewardRepository;
     private final BattleSimulator battleSimulator;
     private final RandomGenerator randomGenerator;
     private final ObjectMapper objectMapper;
@@ -125,9 +129,9 @@ public class MatchService {
                 UserSummaryResponse.from(match.getOpponent()),
                 match.getWinner() != null ? match.getWinner().getId() : null,
                 ratingChange,
-                // Le partite rapide non danno crediti né leghe; le classificate arrivano con il matchmaking (#127)
+                // I DC per la vittoria nelle classificate arrivano con il matchmaking (#127)
                 0,
-                null,
+                leagueReached(userId, matchId),
                 match.getEndReason(),
                 match.getTotalRounds(),
                 match.getStartingLifePoints(),
@@ -138,6 +142,18 @@ public class MatchService {
                 log.path("rounds"),
                 new MatchResponse.DecksResponse(objectMapper.readTree(match.getChallengerDeckSnapshot()),
                         objectMapper.readTree(match.getOpponentDeckSnapshot())));
+    }
+
+    // La lega più alta in cui chi guarda è entrato con questa partita, con tutti i premi di lega presi con essa
+    // (più di una lega solo se il backoffice ha abbassato le soglie); null se nessuna
+    private MatchResponse.LeagueReachedResponse leagueReached(UUID userId, UUID matchId) {
+        List<UserLeagueReward> rewards = userLeagueRewardRepository
+                .findByUserIdAndMatchIdOrderByLeagueMinRatingDesc(userId, matchId);
+        if (rewards.isEmpty()) {
+            return null;
+        }
+        int rewardCredits = rewards.stream().mapToInt(UserLeagueReward::getRewardCredits).sum();
+        return new MatchResponse.LeagueReachedResponse(rewards.getFirst().getLeague().getName(), rewardCredits);
     }
 
     // Gli effetti stanno sulle carte normali: per una full art si usa quello della sua carta base

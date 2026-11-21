@@ -1182,7 +1182,7 @@ Lo username non si cambia (è il nome visibile agli amici). La cancellazione ren
     "fullArtChance": 20.0,
     "factionCode": null,
     "availableUntil": null,
-    "imageUrl": null,
+    "imageUrl": "/images/packs/dream-pack-v1.webp",
     "covers": [],
     "slots": [
       { "cardCount": 3, "rarities": [ { "code": "COMMON", "chance": 100.0 } ] },
@@ -1194,7 +1194,7 @@ Lo username non si cambia (è il nome visibile agli amici). La cancellazione ren
 ```
 
 - Arrivano solo i pacchetti **in vendita in questo momento**, dal più economico. Set iniziale e pacchetti di benvenuto non ci sono: si ricevono nella pagina Benvenuto.
-- `imageUrl` è l'immagine del pacchetto (Dream Pack il retro delle carte, i pacchetti di fazione il loro Lord). Finché le immagini non ci sono arriva `null`: si mostra un'immagine generica del pacchetto.
+- `imageUrl` è l'immagine del pacchetto (Dream Pack il retro delle carte, i pacchetti di fazione il loro Lord): un WebP verticale 2:3 con lo sfondo trasparente, da mostrare intero (`object-fit: contain`), senza ritagliarlo. I sei pacchetti del negozio ce l'hanno tutti; un pacchetto nuovo creato dal backoffice può non averla ancora e allora arriva `null`: si mostra un'immagine generica del pacchetto.
 - Oggi nessun pacchetto ha copertine da scegliere ([decisione 030](../decisioni/030-nuovi-pacchetti.md)): `covers` arriva vuoto. Se in futuro un pacchetto ne avrà più di una, il giocatore ne sceglie una e il contenuto resta lo stesso.
 - `slots` serve a mostrare "3 Comuni, 1 Rara, 1 carta speciale: Rara 70%, Epica 25%, Leggendaria 5% (di cui full art 1%)". Le rarità di uno slot arrivano dalla più comune alla più rara; `chance` è già in percentuale.
 - `fullArtChance` è la percentuale delle **Leggendarie** che escono in full art, non del pacchetto: con 5% di Leggendaria e 20 di `fullArtChance` la full art esce nell'1% dei pacchetti (5 × 20 / 100).

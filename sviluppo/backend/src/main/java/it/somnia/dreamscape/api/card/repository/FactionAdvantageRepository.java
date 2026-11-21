@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import it.somnia.dreamscape.api.card.model.Faction;
 import it.somnia.dreamscape.api.card.model.FactionAdvantage;
 
 public interface FactionAdvantageRepository extends JpaRepository<FactionAdvantage, UUID> {
@@ -13,4 +14,8 @@ public interface FactionAdvantageRepository extends JpaRepository<FactionAdvanta
     // Carica anche le due fazioni nella stessa query
     @EntityGraph(attributePaths = { "faction", "targetFaction" })
     List<FactionAdvantage> findAllByOrderByIdAsc();
+
+    // I vantaggi di una fazione, con la fazione su cui valgono (backoffice)
+    @EntityGraph(attributePaths = "targetFaction")
+    List<FactionAdvantage> findByFaction(Faction faction);
 }

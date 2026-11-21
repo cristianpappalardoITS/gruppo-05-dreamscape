@@ -1601,16 +1601,16 @@ Il risultato:
 
 | Pagina | Chiamate | Note |
 |--------|----------|------|
-| Dashboard admin | `GET /admin/stats` | Numeri di utenti, carte, pacchetti, partite |
+| Dashboard admin | `GET /admin/stats` | Numeri di giocatori, carte, pacchetti, partite e Dream Credits |
 | Carte | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}` | Campi: codice, nome, descrizione, ATT, DIF, fazione, rarità, espansione, effetto e valore (solo per gli effetti con la X, `hasValue`), illustrazione 3:2 e ritaglio, attiva. La full art si crea come versione della carta (codice `-FA`, solo illustrazione 2:3 e ritaglio; oggi solo per le Leggendarie). ATT e DIF si possono cambiare anche se la carta è già posseduta e valgono anche per la full art. Disattivare una carta rende non validi i mazzi che la usano: conviene chiedere conferma dicendo quanti mazzi tocca |
 | Caricamento illustrazioni | `POST /admin/images` (form `multipart/form-data` con il file, il codice della carta e il tipo: illustrazione, full art o copertina) → `{ "url": "/images/cards/base-013-v1.webp", "thumbUrl": "/images/cards/base-013-v1-thumb.webp" }` | Si carica il PNG originale: il backend lo conserva intatto e crea da solo le copie WebP. Una nuova immagine per la stessa carta diventa `-v2`. Le copertine hanno solo `url` |
 | Pacchetti | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}` | Tipo (negozio, set iniziale, benvenuto), prezzo, fazione (facoltativa), periodo di vendita (facoltativo), slot con rarità e probabilità (per ogni slot sommano a 100), copertine, probabilità full art, attivo |
-| Configurazione | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `/admin/missions`, `/admin/leagues` | Vantaggi e Lord delle fazioni, limiti delle rarità, punti vita e limite di round, premi delle missioni, soglie e premi delle leghe. Le carte per mazzo (20) sono in sola lettura |
+| Configurazione | `GET /admin/factions`, `PUT /admin/factions/{code}`, `GET /admin/rarities`, `PUT /admin/rarities/{code}`, `GET /admin/game-modes`, `PUT /admin/game-modes/{code}`, `GET/PUT /admin/leagues`, `/admin/missions` | Testi e vantaggi delle fazioni (la carta Lord non si cambia), limiti delle rarità, punti vita e limite di round, soglie e premi delle leghe, premi delle missioni. Le carte per mazzo (20) sono in sola lettura |
 | Messaggi | `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | Messaggi del form Contatti: letto, archiviato |
 
 Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`). Un giocatore che chiama `/admin/...` riceve `403`.
 
-**Pronti:** carte, caricamento delle immagini e pacchetti (#95), soglie e premi delle leghe (#106). **Da fare, dopo il SAL:** dashboard, il resto della configurazione e messaggi.
+**Pronti:** carte, caricamento delle immagini, pacchetti, Dashboard admin, fazioni, rarità e modalità (#95), soglie e premi delle leghe (#106). **Da fare:** premi delle missioni (con le missioni, #125) e messaggi (con il form Contatti, #162).
 
 #### Carte: `GET/POST /admin/cards`, `GET/PUT /admin/cards/{cardId}`
 
@@ -1703,6 +1703,49 @@ Errori: `409 PACK_NAME_TAKEN`, `404 PACK_NOT_FOUND`, `400 VALIDATION_ERROR` (es.
 - Le leghe già raggiunte restano tali. Se si abbassa una soglia, chi è già sopra entra nella lega, con il premio, alla sua prossima classificata.
 
 Errori: `400 VALIDATION_ERROR` con il campo sbagliato in `fieldErrors` (es. `leagues[2].minRating`: "Ogni lega deve partire da un punteggio più alto della lega prima.").
+
+#### Dashboard admin: `GET /admin/stats`
+
+```json
+{
+  "generatedAt": "2026-11-21T15:00:00Z",
+  "players": { "total": 120, "newToday": 3, "newLast7Days": 21, "activeLast7Days": 64 },
+  "cards": { "active": 99, "fullArt": 6, "disabled": 0 },
+  "packs": { "onSale": 3, "openings": 842, "openingsToday": 17 },
+  "matches": { "ranked": 310, "rankedToday": 24, "casual": 155, "casualToday": 9 },
+  "credits": {
+    "inCirculation": 61250,
+    "last7Days": {
+      "earned": 24800, "spent": 19500,
+      "byType": [
+        { "type": "DAILY_REWARD", "transactions": 310, "earned": 15500, "spent": 0 },
+        { "type": "PACK_PURCHASE", "transactions": 39, "earned": 0, "spent": 19500 }
+      ]
+    }
+  }
+}
+```
+
+- Contano solo i **giocatori**, non gli admin. `players.total` sono gli account attivi; `activeLast7Days` chi ha fatto l'accesso.
+- **Oggi** parte da mezzanotte, ora italiana. **Ultimi 7 giorni** sono oggi e i 6 giorni prima.
+- `cards.active` sono le carte normali attive, `fullArt` le full art attive, `disabled` tutte le carte disattivate. `packs.onSale` sono i pacchetti del negozio in vendita adesso; `openings` comprende acquisti, set iniziali e benvenuto.
+- `credits.inCirculation` è la somma dei saldi. In `last7Days` i crediti entrati (`earned`) e usciti (`spent`, come numero positivo), anche per tipo di movimento (gli stessi tipi della pagina Crediti); ci sono solo i tipi con almeno un movimento.
+
+#### Configurazione: fazioni, rarità e modalità
+
+| Cosa | Chiamate | Corpo del `PUT` |
+|------|----------|-----------------|
+| Fazioni | `GET /admin/factions`, `PUT /admin/factions/{code}` | `{ "name": "Dreams", "description": "…", "lordTitle": "Dreams Lord", "advantages": [ { "targetFaction": "MEMORIES", "attackBonus": 1, "defenseBonus": 0 } ] }` |
+| Rarità | `GET /admin/rarities`, `PUT /admin/rarities/{code}` | `{ "name": "Rara", "maxPerDeck": 8, "maxCopies": 2 }` (`maxPerDeck: null` = nessun limite) |
+| Modalità | `GET /admin/game-modes`, `PUT /admin/game-modes/{code}` | `{ "name": "Base", "description": "…", "startingLifePoints": 20, "roundLimit": 60 }` |
+
+- Il `PUT` risponde con l'elemento aggiornato, nello stesso formato del `GET`. Le fazioni nel `GET` hanno anche `lordCard` (`id`, `code`, `name`), che dal backoffice **non si cambia**.
+- **Vantaggi:** quelli mandati sostituiscono quelli di prima; per togliere un vantaggio non lo si manda (`"advantages": []` li toglie tutti). Ogni vantaggio ha almeno un bonus, vale contro un'altra fazione e non si ripete.
+- **Rarità:** i limiti valgono da subito. I mazzi salvati che non li rispettano più diventano non validi (`isValid: false` e `problems` nella pagina Mazzi) e non si possono giocare finché il giocatore non li sistema: conviene chiedere conferma prima di abbassare un limite.
+- **Modalità:** oggi c'è solo `BASE`. I valori nuovi valgono per le partite giocate da adesso; quelle già giocate tengono i loro. Le carte per mazzo (20) non si cambiano: si leggono da `GET /rules`.
+- Tutto quello che si cambia qui si vede subito nelle pagine pubbliche (`GET /factions`, `GET /rules`).
+
+Errori: `400 VALIDATION_ERROR` con il campo in `fieldErrors` (es. `advantages[0].targetFaction`: "Una fazione non può avere un vantaggio contro se stessa."), `404 FACTION_NOT_FOUND`, `RARITY_NOT_FOUND` o `GAME_MODE_NOT_FOUND`, `409 FACTION_NAME_TAKEN`.
 
 ---
 
@@ -1923,13 +1966,18 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /admin/packs`, `GET /admin/packs/{packId}` | admin | Tutti i pacchetti, anche spenti |
 | `POST /admin/packs`, `PUT /admin/packs/{packId}` | admin | Nuovo pacchetto; modifica di slot, copertine, prezzo e vendita |
 | `GET /admin/leagues`, `PUT /admin/leagues` | admin | Soglie e premi delle leghe |
+| `GET /admin/stats` | admin | I numeri della Dashboard admin |
+| `GET /admin/factions`, `PUT /admin/factions/{code}` | admin | Testi e vantaggi delle fazioni |
+| `GET /admin/rarities`, `PUT /admin/rarities/{code}` | admin | Limiti delle rarità nei mazzi |
+| `GET /admin/game-modes`, `PUT /admin/game-modes/{code}` | admin | Punti vita iniziali e limite di round |
 
 ### Da fare
 
 | Metodo e indirizzo | Accesso | A cosa serve | Issue | Chi | Sprint |
 |--------------------|---------|--------------|-------|-----|--------|
 | `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
-| `GET /admin/stats`, configurazione, messaggi | admin | Il resto del backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | dopo il SAL |
+| `GET/PUT /admin/missions` | admin | Premi delle missioni | #95 | Cristian | dopo la #125 |
+| `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | admin | Messaggi del form Contatti | #95 | Cristian | dopo la #162 |
 
 Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 
@@ -1997,6 +2045,8 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `CARD_CODE_TAKEN`, `CARD_NAME_TAKEN` | 409 | Backoffice: codice o nome della carta già usati |
 | `FULL_ART_EXISTS` | 409 | Backoffice: la carta ha già la sua full art |
 | `PACK_NAME_TAKEN` | 409 | Backoffice: nome del pacchetto già usato |
+| `FACTION_NAME_TAKEN` | 409 | Backoffice: nome della fazione già usato |
+| `FACTION_NOT_FOUND`, `RARITY_NOT_FOUND`, `GAME_MODE_NOT_FOUND` | 404 | Backoffice: codice di fazione, rarità o modalità che non esiste |
 | `INVALID_IMAGE` | 400 | Backoffice: il file non è un PNG o un JPEG, o ha troppi pixel |
 | `FILE_TOO_LARGE` | 413 | Backoffice: file oltre i 15 MB |
 

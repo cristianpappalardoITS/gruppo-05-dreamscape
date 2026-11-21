@@ -652,8 +652,11 @@ Per ogni partita, nella stessa transazione:
 
 ### Leghe
 
-- Dopo ogni variazione del punteggio, il service cerca le leghe con `min_rating <= rating` che il giocatore non ha in `user_league_rewards`.
+- **Punteggio** (`RankService`, #106): Elo con K = 32. Si calcola la variazione di chi ha avviato la partita, arrotondata all'intero più vicino, e l'avversario riceve l'opposto. Il pareggio vale mezzo punto. Il punteggio non scende sotto 0 (`chk_users_rating`): chi è vicino a 0 perde solo quello che ha, ed è l'unico caso in cui le due variazioni non sono opposte.
+- **Limite per avversario:** contano le classificate tra i due, in tutti e due i ruoli, giocate nello stesso giorno (ora italiana) con `*_rating_change` non `NULL`. Dalla quarta in poi la partita si gioca ma non cambia il punteggio.
+- Dopo ogni variazione del punteggio, il service cerca le leghe con `min_rating <= rating` che il giocatore non ha in `user_league_rewards`. La lega più bassa (`min_rating = 0`) è quella di partenza: non si "raggiunge" e non ha premio, quindi non ha righe.
 - Per ognuna inserisce la riga, con la partita che l'ha fatta raggiungere (`match_id`), e, se `reward_credits > 0`, scrive `credit_transactions` con `type = 'LEAGUE_REWARD'`. Se poi il giocatore scende e risale, la riga c'è già e il premio non si ripete.
+- **Backoffice** (`PUT /admin/leagues`): si mandano tutte le leghe insieme. L'ordine non cambia: la più bassa resta a 0 e senza premio, ogni soglia è più alta della precedente. `uq_leagues_min_rating` si controlla a ogni riga aggiornata, quindi il service aggiorna prima le soglie che scendono (dalla lega più bassa) e poi quelle che salgono (dalla più alta). Chi è già sopra una soglia abbassata entra nella lega alla sua prossima variazione del punteggio.
 
 ### Ricompensa giornaliera
 
@@ -1018,6 +1021,16 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 ---
 
 ## Cosa è cambiato in questa versione
+
+### 21 novembre 2026: rank e leghe (#106)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| Arrotondamento dell'Elo | Non deciso | Una variazione arrotondata per chi avvia la partita, l'opposto all'avversario; il pareggio vale mezzo punto |
+| Lega più bassa | Una lega come le altre | È quella di partenza: `min_rating` sempre 0, nessun premio e nessuna riga in `user_league_rewards` |
+| Soglie e premi dal backoffice | `GET/PUT /admin/leagues` da definire | `PUT` con tutte le leghe insieme; codici, nomi e ordine non cambiano |
+
+Nessuna migration: le tabelle `leagues` e `user_league_rewards` c'erano già (V10).
 
 ### 18 novembre 2026: sfide e partite (#94)
 

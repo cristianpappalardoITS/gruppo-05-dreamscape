@@ -1543,7 +1543,7 @@ Il risultato:
 
 - `winnerId: null` = pareggio.
 - `challenger` è chi ha avviato la partita, `opponent` l'avversario.
-- `ratingChange` è `null` nelle partite rapide, e nelle classificate oltre la terza del giorno contro lo stesso avversario. `creditsEarned` sono i DC vinti da chi guarda. `leagueReached` dice se con questa partita si entra per la prima volta in una lega (`{ "name": "Sognatore", "rewardCredits": … }`): è il momento per un'animazione.
+- `ratingChange` è `null` nelle partite rapide, e nelle classificate oltre la terza del giorno contro lo stesso avversario. `creditsEarned` sono i DC vinti da chi guarda. `leagueReached` dice se **chi guarda** è entrato per la prima volta in una lega con questa partita (`{ "name": "Sognatore", "rewardCredits": 100 }`, con `rewardCredits` i DC del premio già aggiunti al saldo): è il momento per un'animazione. È `null` se non è entrato in nessuna lega nuova; non arriva mai per Dormiente, la lega di partenza.
 - `endReason`: `LIFE_POINTS` (punti vita a 0), `DECK_EXHAUSTED` (mazzo finito), `ROUND_LIMIT` (60 round, pareggio).
 - `outcome`: `NONE_DIED`, `CHALLENGER_CARD_DIED`, `OPPONENT_CARD_DIED`, `BOTH_DIED`.
 - **Replay:** ogni round ha `events`, gli eventi **in ordine**: carta giocata, effetti, i due colpi, morti, danno al giocatore, fine della partita. Il replay li mostra uno alla volta. `afterRound` è lo stato dei due lati a fine round (carta in campo, attacco, difesa, punti vita, carte nel mazzo e negli scarti): serve per saltare a un round. L'elenco dei tipi di evento e dei loro campi è in [schema.md](../database/schema.md#formato-dei-campi-json-di-matches).
@@ -1554,7 +1554,23 @@ Il risultato:
 
 #### Classifica
 
-`GET /leagues` → le leghe con il punteggio minimo e il premio. La lega del giocatore e il suo punteggio sono in `GET /me/summary`. Una classifica con gli altri giocatori (solo username e punteggio) si aggiunge se c'è tempo.
+`GET /leagues` (utente) → le leghe dalla più bassa, con il punteggio da cui si entra e il premio:
+
+```json
+[
+  { "code": "DORMANT", "name": "Dormiente", "minRating": 0, "rewardCredits": 0 },
+  { "code": "DREAMER", "name": "Sognatore", "minRating": 1100, "rewardCredits": 100 },
+  { "code": "LUCID", "name": "Lucido", "minRating": 1300, "rewardCredits": 200 },
+  { "code": "DREAMWEAVER", "name": "Dreamweaver", "minRating": 1500, "rewardCredits": 400 }
+]
+```
+
+- La lega del giocatore e il suo punteggio sono in `GET /me/summary` (`rating` e `league`, con quanto manca alla lega successiva).
+- Si parte da **1000 punti**, in Dormiente. Il punteggio cambia **solo con le classificate**: Elo con K = 32, quindi al massimo 32 punti a partita. Con punteggi uguali chi vince prende 16 punti e chi perde ne perde 16; battere chi è più avanti dà di più. Il pareggio fa guadagnare qualcosa a chi è più indietro.
+- Contro lo stesso avversario contano per il rank **al massimo 3 classificate al giorno** (da mezzanotte, ora italiana); le altre si giocano ma hanno `ratingChange: null`.
+- Il **premio** di una lega arriva solo la **prima volta** che ci si entra: chi scende e risale non lo riprende. I premi li decide Maie: finché non ci sono valgono 0 (gli importi dell'esempio sono inventati).
+- Soglie e premi si cambiano dal backoffice: non scriveteli nelle pagine, leggeteli sempre da qui.
+- Una classifica con gli altri giocatori (solo username e punteggio) si aggiunge se c'è tempo.
 
 ### Backoffice 🛠️ (solo `role: ADMIN`)
 
@@ -1569,7 +1585,7 @@ Il risultato:
 
 Le carte e i pacchetti non si cancellano: si disattivano (`isActive: false`). Un giocatore che chiama `/admin/...` riceve `403`.
 
-**Pronti (#95):** carte, caricamento delle immagini e pacchetti. **Da fare, dopo il SAL:** dashboard, configurazione e messaggi.
+**Pronti:** carte, caricamento delle immagini e pacchetti (#95), soglie e premi delle leghe (#106). **Da fare, dopo il SAL:** dashboard, il resto della configurazione e messaggi.
 
 #### Carte: `GET/POST /admin/cards`, `GET/PUT /admin/cards/{cardId}`
 
@@ -1643,6 +1659,25 @@ Errori: `400 INVALID_IMAGE` (non è un PNG o un JPEG, o ha troppi pixel), `400 V
 - `availableFrom` e `availableUntil` (UTC) sono facoltativi: la fine viene dopo l'inizio. `fullArtChance` va da 0 a 100.
 
 Errori: `409 PACK_NAME_TAKEN`, `404 PACK_NOT_FOUND`, `400 VALIDATION_ERROR` (es. "Le probabilità dello slot 2 sommano a 95: devono fare 100.").
+
+#### Leghe: `GET/PUT /admin/leagues`
+
+`GET /admin/leagues` restituisce le leghe come `GET /leagues`. `PUT /admin/leagues` cambia soglie e premi di **tutte** le leghe insieme e risponde con le leghe aggiornate:
+
+```json
+{ "leagues": [
+  { "code": "DORMANT", "minRating": 0, "rewardCredits": 0 },
+  { "code": "DREAMER", "minRating": 1100, "rewardCredits": 100 },
+  { "code": "LUCID", "minRating": 1300, "rewardCredits": 200 },
+  { "code": "DREAMWEAVER", "minRating": 1500, "rewardCredits": 400 }
+] }
+```
+
+- Ogni lega una volta sola, in qualunque ordine. Codici, nomi e ordine delle leghe non cambiano.
+- La lega più bassa (Dormiente) parte sempre da **0** e non ha premio: è quella in cui si parte. Ogni lega parte da un punteggio più alto della precedente.
+- Le leghe già raggiunte restano tali. Se si abbassa una soglia, chi è già sopra entra nella lega, con il premio, alla sua prossima classificata.
+
+Errori: `400 VALIDATION_ERROR` con il campo sbagliato in `fieldErrors` (es. `leagues[2].minRating`: "Ogni lega deve partire da un punteggio più alto della lega prima.").
 
 ---
 
@@ -1852,11 +1887,13 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /challenges/{challengeId}/reject` | utente | Rifiuta (chi è sfidato) |
 | `POST /challenges/{challengeId}/cancel` | utente | Annulla (chi sfida) |
 | `GET /matches/{matchId}` | utente | Risultato e replay di una partita, solo per i due giocatori |
+| `GET /leagues` | utente | Le leghe con soglie e premi |
 | `GET /admin/cards`, `GET /admin/cards/{cardId}` | admin | Le carte, anche full art e disattivate |
 | `POST /admin/cards`, `PUT /admin/cards/{cardId}` | admin | Nuova carta o full art; modifica e disattivazione |
 | `POST /admin/images` | admin | Caricamento di illustrazioni e copertine, con le copie WebP |
 | `GET /admin/packs`, `GET /admin/packs/{packId}` | admin | Tutti i pacchetti, anche spenti |
 | `POST /admin/packs`, `PUT /admin/packs/{packId}` | admin | Nuovo pacchetto; modifica di slot, copertine, prezzo e vendita |
+| `GET /admin/leagues`, `PUT /admin/leagues` | admin | Soglie e premi delle leghe |
 
 ### Da fare
 
@@ -1866,7 +1903,6 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /matches/ranked` | utente | Gioca una classificata | #127 | Cristian | 6 |
 | `POST /matches/casual` | utente | Gioca una rapida | #127 | Cristian | 6 |
 | `GET /me/matches` | utente | Storico delle partite | #127 | Cristian | 6 |
-| `GET /leagues` | utente | Le leghe con soglie e premi | #106 | Cristian | 6 |
 | `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
 | `GET /admin/stats`, configurazione, messaggi | admin | Il resto del backoffice (elenco in [Backoffice](#backoffice--solo-role-admin)) | #95 | Cristian | dopo il SAL |
 

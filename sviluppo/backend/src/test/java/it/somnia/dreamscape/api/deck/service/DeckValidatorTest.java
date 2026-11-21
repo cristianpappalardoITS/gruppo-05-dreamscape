@@ -30,7 +30,8 @@ class DeckValidatorTest {
     private final Rarity legendary = rarity("LEGENDARY", "Leggendaria", 4, 2, 1);
 
     private final DeckValidator validator = new DeckValidator(
-            new GameProperties(500, 50, DECK_SIZE, ZoneId.of("Europe/Rome")));
+            new GameProperties(500, 50, DECK_SIZE, ZoneId.of("Europe/Rome"),
+                    new GameProperties.RankedWinReward(30, 3)));
 
     // Le copie possedute: per i test, di solito tutte quelle che servono
     private final Map<UUID, Integer> owned = new HashMap<>();

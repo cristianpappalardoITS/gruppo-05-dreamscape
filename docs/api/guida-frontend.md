@@ -1321,6 +1321,7 @@ Un mazzo non valido al salvataggio:
 - Si salvano **solo i mazzi validi**: niente bozze.
 - Un mazzo salvato può diventare non valido dopo uno scambio o se l'admin **disattiva** una carta che contiene: `isValid: false` e `problems` lo dicono nella lista dei mazzi (es. `"La carta Il Faro nella Nebbia non è più disponibile."`). Conviene mostrarlo bene in vista: è l'avviso al giocatore.
 - Il **mazzo classificato** (`isRanked: true` nella lista) è quello con cui si gioca quando il matchmaking ti sceglie come avversario, anche se non sei collegato. Se diventa non valido, nessuno ti sceglie finché non lo sistemi: conviene segnalarlo nella lista dei mazzi.
+- `PUT /me/ranked-deck` con `{ "deckId": "…" }` sceglie il mazzo classificato e risponde `204`. Si sceglie solo un proprio mazzo **valido**: altrimenti `400 INVALID_DECK` con `problems`, o `404 DECK_NOT_FOUND`. Con `{ "deckId": null }` lo si toglie: nessuno ti sceglie più come avversario. Senza mazzo classificato si può comunque cercare una partita.
 
 #### Amici (pagina nuova)
 
@@ -1455,8 +1456,8 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 
 | Azione | Chiamata |
 |--------|----------|
-| Cerca una partita classificata | `POST /matches/ranked` con `{ "deckId": "…" }` → il risultato della partita |
-| Cerca una partita rapida | `POST /matches/casual` con `{ "deckId": "…" }` → il risultato della partita |
+| Cerca una partita classificata | `POST /matches/ranked` con `{ "deckId": "…" }` → `201` con il risultato della partita |
+| Cerca una partita rapida | `POST /matches/casual` con `{ "deckId": "…" }` → `201` con il risultato della partita |
 | Storico | `GET /me/matches?type=RANKED&page=0&size=20` (`type` facoltativo: `RANKED`, `CASUAL`) |
 | Risultato | `GET /matches/{matchId}` |
 | Sfide tra amici ricevute / inviate | `GET /challenges?box=received`, `?box=sent` |
@@ -1464,6 +1465,9 @@ L'avversario scelto dal matchmaking **non deve essere collegato**: si gioca con 
 | Accetta e gioca | `POST /challenges/{challengeId}/accept` con `{ "deckId": "…" }` → `{ "matchId": "…" }` |
 | Rifiuta / Annulla | `POST /challenges/{challengeId}/reject`, `POST /challenges/{challengeId}/cancel` |
 
+- **Chi cerca** usa un suo mazzo valido, anche diverso dal mazzo classificato (`400 INVALID_DECK` con `problems` se non è valido, `404 DECK_NOT_FOUND` se non è suo). La partita si gioca subito e la risposta è il risultato, come `GET /matches/{matchId}`: chi cerca è sempre `challenger`.
+- **Avversario della classificata:** il punteggio più vicino, entro 100 punti, poi 200, poi 400; se nessuno è così vicino, il più vicino in assoluto. Chi è già stato affrontato 3 volte oggi (e non darebbe punti) viene scelto solo se non c'è nessun altro. **Rapida:** un avversario a caso. Si sceglie solo chi ha un mazzo classificato valido.
+- **Crediti della classificata:** 30 DC a chi l'ha cercata e vince (`creditsEarned: 30`), al massimo 3 vittorie premiate al giorno, e niente DC se l'avversario è un amico. Chi viene scelto come avversario e vince prende solo i punti del rank.
 - Se nessun avversario è disponibile, `POST /matches/...` risponde `409` con `code: "NO_OPPONENT_FOUND"`: si mostra "Nessun avversario disponibile, riprova tra poco".
 - Se il motore di gioco non risponde, `POST /matches/...` e `POST /challenges/{challengeId}/accept` rispondono `503` con `code: "ENGINE_UNAVAILABLE"`: la partita non si gioca, niente crediti né punti, la sfida resta in attesa. Si mostra "Partita non disponibile, riprova tra poco".
 - `PUT /me/ranked-deck` risponde `204`; `POST /challenges` risponde `201` con la sfida; rifiuto e annullamento rispondono `204`.
@@ -1550,7 +1554,28 @@ Il risultato:
 - **Frasi della cronaca:** il log ha solo dati, niente testi. La frase la compone la pagina: nomi delle carte e degli effetti da `decks`, valori dall'evento. Esempio: dall'evento `EFFECT` con `code: "WEAKENING"`, `value: 2`, `before: 4`, `after: 2` → "Indebolimento 2: l'attacco del Faro nella Nebbia scende da 4 a 2".
 - Un **round** è un singolo scambio di colpi; uno **scontro** (`clash`) è la serie di round tra le stesse due creature. Nella cronaca si usa "round", non "turno".
 - `decks` contiene la copia dei due mazzi com'erano al momento della partita: serve per mostrare le carte anche se poi i mazzi sono cambiati.
-- **Storico:** `/storico`, con un filtro per tipo di partita.
+- **Storico:** `/storico`, con un filtro per tipo di partita. `GET /me/matches?type=RANKED&page=0&size=20` (`type` facoltativo; `size` da 1 a 100, di base 20) restituisce una lista a pagine, dalla partita più recente, con anche le partite in cui si è stati scelti come avversario. Ogni partita è vista da chi guarda:
+
+```json
+{
+  "items": [
+    {
+      "id": "019a2c55-6d7e-7f80-9a1b-2c3d4e5f6a7b",
+      "matchType": "RANKED",
+      "opponent": { "id": "019a1f2e-8d52-7e4b-8c3f-6a7b8c9d0e12", "username": "incubo_99" },
+      "startedByMe": true,
+      "result": "LOSS",
+      "ratingChange": -16,
+      "endReason": "LIFE_POINTS",
+      "totalRounds": 24,
+      "playedAt": "2026-10-26T16:40:00Z"
+    }
+  ],
+  "page": 0, "size": 20, "totalItems": 1, "totalPages": 1
+}
+```
+
+  `opponent` è sempre l'altro giocatore; `startedByMe` è `true` se la partita l'ha cercata o lanciata chi guarda; `result` è `WIN`, `LOSS` o `DRAW`; `ratingChange` è la variazione del punteggio di chi guarda (`null` se non conta per il rank). Il replay e i crediti sono in `GET /matches/{matchId}`. Un `type` diverso da `RANKED` e `CASUAL` risponde `400 MALFORMED_REQUEST`.
 
 #### Classifica
 
@@ -1931,6 +1956,10 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `POST /challenges/{challengeId}/cancel` | utente | Annulla (chi sfida) |
 | `GET /matches/{matchId}` | utente | Risultato e replay di una partita, solo per i due giocatori |
 | `GET /leagues` | utente | Le leghe con soglie e premi |
+| `PUT /me/ranked-deck` | utente | Scegli o togli il mazzo classificato |
+| `POST /matches/ranked` | utente | Cerca e gioca una classificata |
+| `POST /matches/casual` | utente | Cerca e gioca una rapida |
+| `GET /me/matches` | utente | Storico delle partite, con il filtro per tipo |
 | `GET /admin/cards`, `GET /admin/cards/{cardId}` | admin | Le carte, anche full art e disattivate |
 | `POST /admin/cards`, `PUT /admin/cards/{cardId}` | admin | Nuova carta o full art; modifica e disattivazione |
 | `POST /admin/images` | admin | Caricamento di illustrazioni e copertine, con le copie WebP |
@@ -1946,10 +1975,6 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 
 | Metodo e indirizzo | Accesso | A cosa serve | Issue | Chi | Sprint |
 |--------------------|---------|--------------|-------|-----|--------|
-| `PUT /me/ranked-deck` | utente | Scegli il mazzo classificato | #127 | Cristian | 6 |
-| `POST /matches/ranked` | utente | Gioca una classificata | #127 | Cristian | 6 |
-| `POST /matches/casual` | utente | Gioca una rapida | #127 | Cristian | 6 |
-| `GET /me/matches` | utente | Storico delle partite | #127 | Cristian | 6 |
 | `POST /contact-messages` | pubblico | Form Contatti | #162 | Nicolas | 5 |
 | `GET/PUT /admin/missions` | admin | Premi delle missioni | #95 | Cristian | dopo la #125 |
 | `GET /admin/contact-messages`, `PUT /admin/contact-messages/{messageId}` | admin | Messaggi del form Contatti | #95 | Cristian | dopo la #162 |
@@ -2016,6 +2041,7 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `CHALLENGER_DECK_INVALID` | 409 | All'accettazione il mazzo di chi ha sfidato non è più valido (`problems` dice perché): la sfida resta in attesa |
 | `MATCH_NOT_FOUND` | 404 | Partita che non esiste o che non avete giocato |
 | `ENGINE_UNAVAILABLE` | 503 | Il motore di gioco non risponde: la partita non si gioca, la sfida resta in attesa |
+| `NO_OPPONENT_FOUND` | 409 | Matchmaking: nessun giocatore con un mazzo classificato valido |
 | `CARD_CODE_TAKEN`, `CARD_NAME_TAKEN` | 409 | Backoffice: codice o nome della carta già usati |
 | `FULL_ART_EXISTS` | 409 | Backoffice: la carta ha già la sua full art |
 | `PACK_NAME_TAKEN` | 409 | Backoffice: nome del pacchetto già usato |
@@ -2025,8 +2051,6 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | `FILE_TOO_LARGE` | 413 | Backoffice: file oltre i 15 MB |
 
 **Solo nel frontend:** `NETWORK_ERROR` (stato 0), creato da `api.js` quando il backend non risponde.
-
-**Da fare** (arriverà con il matchmaking, #127): `NO_OPPONENT_FOUND`.
 
 ---
 
@@ -2048,7 +2072,6 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
 | Strumenti del frontend e come si caricano i componenti React nelle pagine | Vite, con più pagine HTML, in JavaScript | Gaia (#72) |
-| DC a chi viene scelto dal matchmaking e vince | No: i DC della vittoria vanno solo a chi ha avviato la partita | Maie + SWD |
 | Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
 | Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
 | Immagini di Nap Pack e REM Pack | Da proporre ([decisione 030](../decisioni/030-nuovi-pacchetti.md)) | Digital |

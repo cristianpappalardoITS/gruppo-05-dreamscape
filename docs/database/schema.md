@@ -630,19 +630,21 @@ Tutte le partite usano le regole BASE e vengono simulate subito dal server, senz
 
 **Sfida a un amico** (`challenges`): sfidante e sfidato devono essere amici, e tra loro ci può essere al massimo una sfida in attesa (`uq_challenges_pending_pair`). Le sfide non scadono: chi sfida può annullare. Quando lo sfidato accetta, il service blocca la riga della sfida (accettazione, rifiuto e annullamento decidono uno alla volta), ricontrolla amicizia e mazzi, gioca la partita (vedi sotto) e imposta `status = 'COMPLETED'` e `opponent_deck_id`. Se non sono più amici la sfida passa a `CANCELLED`; se il mazzo di chi sfida non è più valido (o è stato cancellato) non si gioca e la sfida resta `PENDING`, come se il motore non rispondesse. Il blocco delle righe in `users` (punto 1 sotto) serve a rank e crediti: le sfide, sempre rapide, non lo usano.
 
-**Matchmaking** (partita rapida e classificata): chi preme "Cerca partita" sceglie un suo mazzo valido. Il service cerca un avversario tra i giocatori attivi con un mazzo classificato valido (`users.ranked_deck_id`), escluso chi cerca. L'avversario non deve essere collegato: si gioca con il suo mazzo classificato.
+**Mazzo classificato** (`PUT /me/ranked-deck`): si sceglie solo un proprio mazzo valido; `NULL` lo toglie. Se poi diventa non valido resta scelto, ma il matchmaking non sceglie il giocatore finché non lo sistema.
+
+**Matchmaking** (partita rapida e classificata, `MatchmakingService`): chi preme "Cerca partita" sceglie un suo mazzo valido. Il service cerca un avversario tra i giocatori attivi (`role = 'PLAYER'`) con un mazzo classificato (`users.ranked_deck_id`) ancora valido, escluso chi cerca. L'avversario non deve essere collegato: si gioca con il suo mazzo classificato. Se non c'è nessuno: `409 NO_OPPONENT_FOUND`.
 - Partita rapida: un avversario a caso.
-- Partita classificata: un avversario con punteggio vicino (es. ±100, poi la distanza si allarga), preferendo chi non si è già affrontato 3 volte oggi.
+- Partita classificata: prima chi non si è già affrontato 3 volte oggi (con lui la partita non darebbe punti), poi per fascia di distanza dal punteggio di chi cerca: entro 100, entro 200, entro 400; oltre, il più vicino. Dentro la stessa fascia l'ordine è a caso, così non esce sempre lo stesso avversario.
 
 Per ogni partita, nella stessa transazione:
-1. Blocca le righe dei due giocatori in `users` (`SELECT ... FOR UPDATE`, sempre in ordine di `id` per evitare stalli) e ricontrolla la validità di entrambi i mazzi. Con il matchmaking asincrono lo stesso avversario può essere scelto da più giocatori nello stesso momento: senza il blocco si perdono aggiornamenti del punteggio e si superano i limiti giornalieri.
+1. Blocca le righe dei due giocatori in `users` (`SELECT ... FOR UPDATE`, sempre in ordine di `id` per evitare stalli) e ricontrolla il mazzo classificato dell'avversario: se nel frattempo l'ha tolto o non è più valido, o se l'avversario ha cancellato l'account, risponde `409 NO_OPPONENT_FOUND`. Con il matchmaking asincrono lo stesso avversario può essere scelto da più giocatori nello stesso momento: senza il blocco si perdono aggiornamenti del punteggio e si superano i limiti giornalieri.
 2. Genera il seed e chiama il motore di gioco con i valori della modalità (punti vita, limite di round). Gli passa sempre anche gli effetti delle carte (`card_effects`).
 3. Salva il risultato in `matches`, con `match_type`, i due giocatori, la copia dei valori della modalità e dei mazzi. Il vincitore è uno dei due giocatori o nessuno (`chk_matches_winner`); i punti vita finali non scendono sotto 0 (`chk_matches_life_points`).
 4. Solo per le classificate:
    - se i due giocatori non si sono già affrontati 3 volte oggi in classificata, calcola le variazioni di punteggio (Elo, K = 32), aggiorna `users.rating` di entrambi e salva `*_rating_change`; altrimenti restano `NULL`;
-   - se chi ha avviato la partita vince, non ha già 3 vittorie premiate oggi e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`);
+   - se chi ha avviato la partita vince, non ha già 3 vittorie premiate nel giorno della partita (movimenti `MATCH_REWARD`) e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`). Chi viene scelto come avversario e vince prende solo i punti del rank. Premio e limite sono in `application.properties` (`dreamscape.game.ranked-win.*`);
    - se un punteggio entra per la prima volta in una lega, dà il premio della lega e salva la partita in `user_league_rewards.match_id` (vedi sotto).
-5. Aggiorna le missioni dei due giocatori (vedi sotto).
+5. Aggiorna le missioni dei due giocatori (vedi sotto; arriva con le missioni, #125).
 
 ### Missioni
 
@@ -1032,6 +1034,16 @@ Collegamento tra la sitemap del portale proposta da WMD (25 ottobre 2026), aggio
 | Dashboard admin | Da definire | Solo i giocatori (`role = 'PLAYER'`); "oggi" da mezzanotte in ora italiana, "ultimi 7 giorni" oggi e i 6 giorni prima; attivi = `last_login_at` negli ultimi 7 giorni |
 
 Nessuna migration.
+
+### 21 novembre 2026: matchmaking (#127)
+
+| Cosa | Prima | Ora |
+|------|-------|-----|
+| DC a chi viene scelto come avversario e vince | Proposta: no | No: solo i punti del rank |
+| Distanza di punteggio nella classificata | Proposta: ±100, poi si allarga | Entro 100, poi 200, poi 400; oltre, il più vicino. Chi è già al limite di 3 partite oggi si sceglie per ultimo |
+| Mazzo classificato | Da definire | Solo un mazzo valido; `NULL` lo toglie |
+
+Nessuna migration: `users.ranked_deck_id` e le colonne di `matches` c'erano già (V1, V6).
 
 ### 21 novembre 2026: rank e leghe (#106)
 

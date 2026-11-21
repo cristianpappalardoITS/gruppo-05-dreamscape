@@ -35,4 +35,4 @@ Con gli amici si gioca liberamente senza poter accumulare crediti. Il matchmakin
 - Pagine nuove: Gioca (classificata e rapida), Classifica; Sfide solo tra amici. Il SiteMap lo aggiorna Alessandro.
 - Da aggiornare: proposta di regolamento, slide 12, issue delle sfide e del rank.
 - Il "matchmaking asincrono" nel budget di Digital è corretto.
-- Ancora aperti: se il giocatore scelto come avversario riceve i DC quando vince (proposta: no) e la distanza massima di punteggio (proposta: ±100, poi si allarga).
+- Decisi il 21/11 con il matchmaking (#127): il giocatore scelto come avversario che vince prende solo i punti del rank, non i DC. La distanza di punteggio si allarga a passi: entro 100, poi 200, poi 400 punti; se nessuno è così vicino si prende il più vicino. Chi è già stato affrontato 3 volte oggi si sceglie solo se non c'è nessun altro.

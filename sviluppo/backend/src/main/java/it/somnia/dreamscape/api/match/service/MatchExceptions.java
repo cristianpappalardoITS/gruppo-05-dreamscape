@@ -19,6 +19,13 @@ public final class MatchExceptions {
         }
     }
 
+    // Nessun giocatore con un mazzo classificato valido da sfidare (matchmaking, #127)
+    public static class NoOpponentFoundException extends ApiException {
+        public NoOpponentFoundException() {
+            super(HttpStatus.CONFLICT, "NO_OPPONENT_FOUND", "Nessun avversario disponibile, riprova tra poco.");
+        }
+    }
+
     // La partita non esiste o l'utente non l'ha giocata: non si dice quale delle due
     public static class MatchNotFoundException extends ApiException {
         public MatchNotFoundException() {

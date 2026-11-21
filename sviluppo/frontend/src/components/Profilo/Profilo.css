@@ -1,32 +1,260 @@
-/* Profilo (usa anche i pannelli della dashboard e i campi dell'editor dei mazzi) */
+/* Profilo: testata con la fazione, i numeri del Dreamweaver, impostazioni e cancellazione
+   (i campi vengono dall'editor dei mazzi, i pulsanti dagli scambi) */
 
-.profile-content .dashboard-panel {
-  margin-bottom: 20px;
+.profile-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 3vw, 40px) 64px;
 }
 
-.profile-content .social-columns .dashboard-panel {
-  margin-bottom: 0;
-}
+/* Colore della fazione: lo usano testata, simbolo e alone */
+.profile-hero { --faction-color: var(--gold-primary); }
+.profile-hero--dreams { --faction-color: #88c8f3; }
+.profile-hero--nightmares { --faction-color: #b07ac8; }
+.profile-hero--memories { --faction-color: #d9a466; }
 
-.profile-data {
-  margin: 0 0 12px;
+/* Testata: illustrazione dei tre mondi sfumata, alone della fazione a sinistra */
+.profile-hero {
+  position: relative;
+  padding: clamp(24px, 3vw, 36px);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(18px, 3vw, 32px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--faction-color) 40%, var(--input-border));
+  border-radius: 20px;
+  background:
+    radial-gradient(ellipse 45% 90% at 8% 50%, color-mix(in srgb, var(--faction-color) 22%, transparent), transparent 70%),
+    linear-gradient(90deg, #151827 35%, rgba(21, 24, 39, .55) 75%, rgba(21, 24, 39, .2)),
+    url('/artwork/dreamscape-worlds.webp') right center / cover no-repeat,
+    #151827;
+  isolation: isolate;
 }
 
-.profile-data dt {
-  color: var(--text-muted);
+.profile-avatar {
+  width: clamp(92px, 10vw, 124px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--faction-color);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #232338, #10131f 70%);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--faction-color) 14%, transparent), 0 0 38px color-mix(in srgb, var(--faction-color) 40%, transparent);
+}
+
+.profile-avatar .faction-emblem {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+.profile-avatar span {
+  color: var(--faction-color);
+  font-family: var(--font-title);
+  font-size: clamp(40px, 4.4vw, 56px);
+}
+
+.profile-hero__eyebrow {
+  color: var(--faction-color);
   font-size: 13px;
-  letter-spacing: 1px;
+  font-weight: 600;
+  letter-spacing: .16em;
   text-transform: uppercase;
 }
 
-.profile-data dd {
-  margin: 6px 0 0;
-  color: var(--gold-hover);
-  font-size: 17px;
+.profile-hero h1 {
+  margin: 4px 0 0;
+  color: var(--text-light);
+  font-family: var(--font-title);
+  font-size: clamp(32px, 3.6vw, 52px);
+  font-weight: 400;
+  letter-spacing: .02em;
   overflow-wrap: anywhere;
+}
+
+.profile-hero p {
+  margin: 4px 0 0;
+  color: #d8d2dc;
+  font-family: var(--font-editorial);
+  font-size: clamp(16px, 1.3vw, 19px);
+}
+
+.profile-league {
+  margin-top: 14px;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--gold-primary) 60%, transparent);
+  border-radius: 999px;
+  background: rgba(16, 19, 31, .7);
+  color: var(--gold-hover);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.profile-league span {
+  color: #d8d2dc;
+}
+
+.profile-league:hover {
+  border-color: var(--gold-hover);
+}
+
+.profile-logout {
+  align-self: start;
+  padding: 9px 20px;
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  background: rgba(16, 19, 31, .75);
+  color: #d8d2dc;
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.profile-logout:hover:not(:disabled),
+.profile-logout:focus-visible {
+  border-color: var(--gold-primary);
+  color: var(--gold-hover);
+}
+
+.profile-logout:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+/* I numeri: cinque schede, ognuna è un link */
+.profile-stats {
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+}
+
+.profile-stat {
+  height: 100%;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--card-bg, #1a1a28);
+  color: var(--text-light);
+  text-decoration: none;
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.profile-stat:hover,
+.profile-stat:focus-visible {
+  border-color: var(--gold-primary);
+  transform: translateY(-2px);
+}
+
+.profile-stat__label {
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.profile-stat__value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-title);
+  font-size: clamp(24px, 2.2vw, 30px);
+  font-weight: 600;
+}
+
+.profile-stat__value .dc-coin {
+  width: 24px;
+  height: 24px;
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+
+.profile-stat__note {
+  margin-top: auto;
+  color: var(--gold-primary);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-stat:hover,
+  .profile-stat:focus-visible {
+    transform: none;
+  }
+}
+
+/* Impostazioni: email e password affiancate */
+.profile-section-title {
+  margin: 36px 0 14px;
+  font-family: var(--font-title);
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 400;
+  letter-spacing: .02em;
+}
+
+.profile-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profile-card {
+  padding: 22px 24px;
+  border: 1px solid var(--input-border);
+  border-radius: 16px;
+  background: var(--card-bg, #1a1a28);
+}
+
+.profile-card h3 {
+  margin: 0 0 14px;
+  color: var(--gold-primary);
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: .04em;
+}
+
+.profile-card__current {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--input-bg);
+}
+
+.profile-card__current span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.profile-card__current strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--gold-hover);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.profile-card__note {
+  margin: 16px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.profile-card__note--top {
+  margin: -6px 0 16px;
 }
 
 .profile-form {
@@ -52,9 +280,41 @@
   cursor: default;
 }
 
-/* Cancellazione: bordo e pulsante rossi */
+/* Cancellazione: chiusa finché non si apre, con il rosso solo dentro */
 .profile-danger {
-  border-color: rgba(181, 84, 92, .6);
+  margin-top: 28px;
+  border: 1px solid rgba(181, 84, 92, .45);
+  border-radius: 16px;
+  background: rgba(181, 84, 92, .05);
+}
+
+.profile-danger summary {
+  padding: 16px 24px;
+  color: #f0a8ae;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.profile-danger summary:hover {
+  color: #f6c3c7;
+}
+
+.profile-danger[open] summary {
+  border-bottom: 1px solid rgba(181, 84, 92, .3);
+}
+
+.profile-danger > :not(summary) {
+  margin-left: 24px;
+  margin-right: 24px;
+}
+
+.profile-danger .profile-form {
+  max-width: 420px;
+  padding-bottom: 22px;
+}
+
+.profile-danger .profile-card__note {
+  margin-bottom: 16px;
 }
 
 .profile-delete {
@@ -63,25 +323,50 @@
   color: #fff;
 }
 
-@media (max-width: 800px) {
-  .profile-data {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-content .social-columns {
-    grid-template-columns: 1fr;
+@media (max-width: 960px) {
+  .profile-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-/* Link allo storico (partite e Dream Credits) */
-.profile-history-links {
-  margin: 4px 0 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-}
+/* Telefono: testata in colonna, numeri due per riga, impostazioni una sotto l'altra */
+@media (max-width: 700px) {
+  .profile-content {
+    padding-top: 20px;
+  }
 
-.profile-history-links a {
-  color: var(--gold-primary);
-  font-size: 14px;
+  .profile-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    background:
+      radial-gradient(ellipse 70% 60% at 20% 20%, color-mix(in srgb, var(--faction-color) 22%, transparent), transparent 70%),
+      linear-gradient(180deg, rgba(21, 24, 39, .55), #151827 70%),
+      url('/artwork/dreamscape-worlds.webp') center top / cover no-repeat,
+      #151827;
+  }
+
+  .profile-hero__text {
+    grid-column: 1 / -1;
+  }
+
+  .profile-logout {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-stats li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .profile-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-card {
+    padding: 18px;
+  }
 }

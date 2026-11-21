@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api, errorsByField, logout } from '../api.js';
 import HomeHeader from '../components/home/HomeHeader';
+import FactionEmblem from '../components/home/FactionEmblem';
 import '../styles/home.css';
 import '../components/Collezione/Collezione.css';
 import '../components/Mazzi/Mazzi.css';
-import '../components/Dashboard/Dashboard.css';
 import '../components/Scambi/Scambi.css';
 import '../components/Negozio/Negozio.css';
 import '../components/Profilo/Profilo.css';
@@ -27,35 +27,52 @@ function ProfileField({ label, error, ...props }) {
   );
 }
 
-// Profilo del Dreamweaver (GET /me): dati dell'account, cambio email (PUT /me),
-// cambio password (PUT /me/password), uscita (POST /auth/logout) e cancellazione (DELETE /me)
+// Fazioni: nome e simbolo per la testata (la fazione è quella scelta nel Benvenuto)
+const factionNames = { DREAMS: 'Dreams', NIGHTMARES: 'Nightmares', MEMORIES: 'Memories' };
+
+// Migliaia sempre con il punto (toLocaleString in italiano non lo mette sotto 10.000)
+const formatNumber = (value) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+// Profilo del Dreamweaver (GET /me): testata con fazione e lega, i suoi numeri (crediti, punteggio,
+// partite, carte, amici), cambio email (PUT /me) e password (PUT /me/password), uscita
+// (POST /auth/logout) e cancellazione (DELETE /me)
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  // Dati della testata e dei numeri: se uno non arriva, la sua parte mostra "–"
+  const [summary, setSummary] = useState(null);
+  const [faction, setFaction] = useState(null);
+  const [stats, setStats] = useState({});
 
   useEffect(() => {
     api('/me').then(setProfile).catch(setLoadError);
+    api('/me/summary').then(setSummary).catch(() => {});
+    api('/me/welcome').then((welcome) => setFaction(welcome.starterFaction)).catch(() => {});
+    api('/me/matches?page=0&size=1').then((data) => setStats((current) => ({ ...current, matches: data.totalItems }))).catch(() => {});
+    api('/friends').then((friends) => setStats((current) => ({ ...current, friends: friends.length }))).catch(() => {});
+    // /me/cards è a pagine: basta il totale
+    api('/me/cards?page=0&size=1').then((data) => setStats((current) => ({ ...current, cards: data.totalItems }))).catch(() => {});
   }, []);
 
   return (
-    <div className="decks-page">
+    <div className="decks-page profile-page">
       <HomeHeader />
 
-      <main className="decks-content social-content profile-content">
-        <div className="collection-title-row">
-          <h1>Profilo</h1>
-        </div>
-
+      <main className="profile-content">
         {loadError && <p className="collection-message shop-error" role="alert">{loadError.message}</p>}
         {!loadError && !profile && <p className="collection-message">Caricamento...</p>}
 
         {profile && (
           <>
-            <AccountPanel profile={profile} />
-            <div className="social-columns">
+            <ProfileHero profile={profile} summary={summary} faction={faction} />
+            <ProfileStats summary={summary} stats={stats} />
+
+            <h2 className="profile-section-title">Impostazioni dell'account</h2>
+            <div className="profile-settings">
               <EmailForm profile={profile} onSaved={setProfile} />
               <PasswordForm />
             </div>
+
             <DeleteAccountForm />
           </>
         )}
@@ -64,9 +81,11 @@ export default function ProfilePage() {
   );
 }
 
-// Dati dell'account e pulsante per uscire
-function AccountPanel({ profile }) {
+// Testata: simbolo della fazione, username, da quando gioca, lega e punteggio, pulsante Esci
+function ProfileHero({ profile, summary, faction }) {
   const [leaving, setLeaving] = useState(false);
+  const factionCode = faction ? faction.toLowerCase() : null;
+  const since = new Date(profile.createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const handleLogout = async () => {
     setLeaving(true);
@@ -79,31 +98,60 @@ function AccountPanel({ profile }) {
   };
 
   return (
-    <section className="dashboard-panel profile-account" aria-labelledby="account-title">
-      <h2 id="account-title">Il tuo account</h2>
-      <dl className="profile-data">
-        <div>
-          <dt>Username</dt>
-          <dd>{profile.username}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{profile.email}</dd>
-        </div>
-        <div>
-          <dt>Dreamweaver dal</dt>
-          <dd>{new Date(profile.createdAt).toLocaleDateString('it-IT')}</dd>
-        </div>
-      </dl>
-      <p className="collection-message">Lo username non si cambia: è il nome che vedono i tuoi amici.</p>
-      <p className="profile-history-links">
-        <a href="/storico">Storico delle partite</a>
-        <a href="/storico?scheda=crediti">Movimenti dei Dream Credits</a>
-      </p>
-      <button type="button" className="social-action social-action--quiet" onClick={handleLogout} disabled={leaving}>
+    <section className={`profile-hero${factionCode ? ` profile-hero--${factionCode}` : ''}`} aria-labelledby="profile-title">
+      <div className="profile-avatar">
+        {factionCode
+          ? <FactionEmblem faction={factionCode} />
+          : <span aria-hidden="true">{profile.username.charAt(0).toUpperCase()}</span>}
+      </div>
+
+      <div className="profile-hero__text">
+        <span className="profile-hero__eyebrow">
+          {faction ? `Dreamweaver dei ${factionNames[faction] ?? faction}` : 'Dreamweaver'}
+        </span>
+        <h1 id="profile-title">{profile.username}</h1>
+        <p>Nel mondo dei sogni dal {since}</p>
+        {summary && (
+          <a className="profile-league" href="/arena">
+            <strong>Lega {summary.league.name}</strong>
+            <span>{formatNumber(summary.rating)} punti</span>
+          </a>
+        )}
+      </div>
+
+      <button type="button" className="profile-logout" onClick={handleLogout} disabled={leaving}>
         {leaving ? 'Uscita...' : 'Esci'}
       </button>
     </section>
+  );
+}
+
+// I numeri del Dreamweaver, ognuno porta alla sua pagina
+function ProfileStats({ summary, stats }) {
+  const show = (value) => (value === undefined || value === null ? '–' : formatNumber(value));
+  const items = [
+    { label: 'Dream Credits', value: show(summary?.credits), note: 'Movimenti', href: '/storico?scheda=crediti', coin: true },
+    { label: 'Punteggio', value: show(summary?.rating), note: summary ? `Lega ${summary.league.name}` : 'Arena', href: '/arena' },
+    { label: 'Partite giocate', value: show(stats.matches), note: 'Storico', href: '/storico' },
+    { label: 'Carte diverse', value: show(stats.cards), note: 'Collezione', href: '/collezione' },
+    { label: 'Amici', value: show(stats.friends), note: 'Amici', href: '/amici' },
+  ];
+
+  return (
+    <ul className="profile-stats" aria-label="I tuoi numeri">
+      {items.map((item) => (
+        <li key={item.label}>
+          <a href={item.href} className="profile-stat">
+            <span className="profile-stat__label">{item.label}</span>
+            <strong className="profile-stat__value">
+              {item.coin && <span className="dc-coin" aria-hidden="true">C</span>}
+              {item.value}
+            </strong>
+            <span className="profile-stat__note">{item.note}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -142,14 +190,19 @@ function EmailForm({ profile, onSaved }) {
   };
 
   return (
-    <section className="dashboard-panel" aria-labelledby="email-title">
-      <h2 id="email-title">Cambia email</h2>
+    <section className="profile-card" aria-labelledby="email-title">
+      <h3 id="email-title">Email</h3>
+      <p className="profile-card__current">
+        <span>Email attuale</span>
+        <strong>{profile.email}</strong>
+      </p>
       <form className="profile-form" onSubmit={handleSubmit}>
         <ProfileField label="Nuova email" name="email" type="email" autoComplete="email" placeholder="nome@esempio.com" maxLength={255} required error={errors.email} />
         {message && <p className="social-message" role="status">{message}</p>}
         {error && <p className="collection-message shop-error" role="alert">{errorText(error)}</p>}
         <button type="submit" className="social-action" disabled={sending}>{sending ? 'Salvataggio...' : 'Salva email'}</button>
       </form>
+      <p className="profile-card__note">Lo username non si cambia: è il nome che vedono i tuoi amici.</p>
     </section>
   );
 }
@@ -191,8 +244,9 @@ function PasswordForm() {
   };
 
   return (
-    <section className="dashboard-panel" aria-labelledby="password-title">
-      <h2 id="password-title">Cambia password</h2>
+    <section className="profile-card" aria-labelledby="password-title">
+      <h3 id="password-title">Password</h3>
+      <p className="profile-card__note profile-card__note--top">Cambiandola, gli altri dispositivi vengono scollegati.</p>
       <form className="profile-form" onSubmit={handleSubmit}>
         <ProfileField label="Password attuale" name="currentPassword" type="password" autoComplete="current-password" required error={errors.currentPassword} />
         <ProfileField label="Nuova password" name="newPassword" type="password" autoComplete="new-password" minLength={8} maxLength={100} required error={errors.newPassword} />
@@ -233,9 +287,9 @@ function DeleteAccountForm() {
   };
 
   return (
-    <section className="dashboard-panel profile-danger" aria-labelledby="delete-title">
-      <h2 id="delete-title">Cancella l'account</h2>
-      <p className="collection-message">
+    <details className="profile-danger">
+      <summary>Cancella l'account</summary>
+      <p className="profile-card__note">
         Username ed email spariscono e l'account non si può recuperare. Le partite e gli scambi già fatti restano nello storico degli altri giocatori.
       </p>
       <form className="profile-form" onSubmit={handleSubmit}>
@@ -243,6 +297,6 @@ function DeleteAccountForm() {
         {error && <p className="collection-message shop-error" role="alert">{errorText(error)}</p>}
         <button type="submit" className="social-action profile-delete" disabled={sending}>{sending ? 'Cancellazione...' : 'Cancella account'}</button>
       </form>
-    </section>
+    </details>
   );
 }

@@ -54,6 +54,9 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <InputField label="Username o email" name="login" type="text" autoComplete="username" placeholder="nome@esempio.com" maxLength={255} required />
             <PasswordField label="Password" name="password" autoComplete="current-password" placeholder="Inserisci la password" maxLength={100} required />
+            <div className="login-options login-options--end">
+              <a className="forgot-password" href="/password-dimenticata">Password dimenticata?</a>
+            </div>
             {error && (
               <p className="form-message" role="alert">
                 {error.code === 'INVALID_CREDENTIALS' ? (

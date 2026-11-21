@@ -498,7 +498,7 @@ Mandate:
 
 Ricevete **sempre** `202`, anche se l'email non è registrata: così nessuno può scoprire chi è iscritto. La pagina mostra sempre lo stesso messaggio, es. "Se l'email è registrata, ti abbiamo mandato un link".
 
-L'email contiene un link a `nuova-password.html?token=...` (indirizzo da confermare con chi fa la pagina). Il link vale **1 ora** e una volta sola. In sviluppo l'email si legge in Mailpit, `http://localhost:8025`.
+L'email contiene un link alla pagina **Nuova password** del frontend, `/nuova-password?token=...` (in sviluppo `http://localhost:5173/nuova-password?token=...`; alla consegna l'indirizzo vero si mette in `PASSWORD_RESET_URL`). Il link vale **1 ora** e una volta sola. In sviluppo l'email si legge in Mailpit, `http://localhost:8025`.
 
 #### Nuova password: `POST /auth/password-resets`
 

@@ -18,6 +18,8 @@ import ChallengesPage from './pages/ChallengesPage.jsx'
 import MatchPage from './pages/MatchPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import ArenaPage from './pages/ArenaPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -25,6 +27,9 @@ const pages = {
   '/': { title: 'Home', render: () => <HomePage /> },
   '/login': { title: 'Accedi', render: () => <LoginPage /> },
   '/register': { title: 'Registrati', render: () => <RegisterPage /> },
+  '/password-dimenticata': { title: 'Password dimenticata', render: () => <ForgotPasswordPage /> },
+  // Link dell'email per la password nuova (dreamscape.mail.password-reset-url nel backend)
+  '/nuova-password': { title: 'Nuova password', render: () => <ResetPasswordPage /> },
   '/dashboard': { title: 'Dashboard', render: () => <DashboardPage /> },
   '/profilo': { title: 'Profilo', render: () => <ProfilePage /> },
   '/benvenuto': { title: 'Benvenuto', render: () => <WelcomePage /> },

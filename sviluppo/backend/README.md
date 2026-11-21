@@ -67,7 +67,7 @@ Serve Docker acceso: Testcontainers avvia un PostgreSQL nuovo per i test, con le
 | `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Primo admin, creato all'avvio se non esiste. Se ne manca uno, nessun admin | `admin` |
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Server SMTP per le email alla consegna. Senza `SPRING_MAIL_HOST` il link di recupero si scrive solo nel log | `smtp.example.com` |
 | `MAIL_FROM` | Mittente delle email | `noreply@dreamscape.local` |
-| `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password.html?token=` |
+| `PASSWORD_RESET_URL` | Pagina "Nuova password" del frontend; il token si aggiunge in fondo | `https://…/nuova-password?token=` (in sviluppo `http://localhost:5173/nuova-password?token=`) |
 | `ENGINE_URL` | Indirizzo del motore di gioco (engine-service) | `http://localhost:8081` |
 | `ENGINE_API_KEY` | Chiave condivisa con il motore, mandata in `X-Engine-Key`; deve essere uguale a quella del motore. Vuota = le partite rispondono `503 ENGINE_UNAVAILABLE`. Nel profilo `dev` c'è una chiave di prova | (generata con `openssl rand -base64 32`) |
 | `IMAGES_DIR` | Cartella delle immagini caricate dal backoffice (copie WebP), servite su `/images/...` (vedi [Immagini](#immagini)). In sviluppo `./data/images`, fuori da git | `/srv/dreamscape/images` |

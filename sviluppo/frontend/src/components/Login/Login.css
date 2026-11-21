@@ -607,3 +607,41 @@
     margin-bottom: 10px;
   }
 }
+
+/* --- Password dimenticata e nuova password --- */
+.login-options--end {
+  justify-content: flex-end;
+}
+
+/* Messaggio di conferma (stesso posto dei messaggi di errore, ma con il colore oro) */
+.form-message--ok {
+  color: var(--gold-hover, #e0b17d);
+  font-size: 0.85rem;
+}
+
+/* Link con l'aspetto del pulsante principale */
+.auth-link-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.auth-text-button {
+  display: block;
+  margin: 14px auto 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-text-button:hover,
+.auth-text-button:focus-visible {
+  color: var(--gold-primary);
+}

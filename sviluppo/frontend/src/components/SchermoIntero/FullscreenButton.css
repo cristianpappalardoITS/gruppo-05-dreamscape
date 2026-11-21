@@ -1,0 +1,36 @@
+/* Pulsante dello schermo intero: tondo, scuro, sopra il campo */
+.fullscreen-button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(226, 210, 204, .35);
+  border-radius: 50%;
+  background: rgba(16, 19, 31, .78);
+  color: var(--text-light);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+.fullscreen-button:hover,
+.fullscreen-button:focus-visible {
+  border-color: var(--gold-primary);
+  color: var(--gold-hover);
+  transform: scale(1.06);
+}
+
+.fullscreen-button:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+}
+
+.fullscreen-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

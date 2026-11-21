@@ -361,3 +361,120 @@ section.pack-opening:has(.pack-opening__all) {
   min-height: 48px;
   cursor: pointer;
 }
+
+/* Apertura di un pacchetto comprato (/negozio/apertura/...): la pagina è alta quanto lo schermo e non
+   scorre. Intestazione compatta (72 px), con lo schermo intero sparisce. Valgono solo qui: il Benvenuto
+   usa lo stesso componente con la sua pagina */
+.opening-page {
+  --stage-h: calc(100dvh - 72px);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.opening-page.is-fullscreen {
+  --stage-h: 100dvh;
+}
+
+.opening-page.is-fullscreen .home-header {
+  display: none;
+}
+
+.opening-stage {
+  /* La carta prende l'altezza che resta tolti titolo, barra, etichette, dettagli e pulsanti (300 px) */
+  --open-card-w: clamp(170px, min(86vw, calc((var(--stage-h) - 300px) / 1.39)), 340px);
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: clamp(12px, 2.4vh, 28px) 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 50%, rgba(80, 60, 140, .35), transparent 70%),
+    linear-gradient(rgba(12, 14, 26, .82), rgba(12, 14, 26, .9)),
+    url('/artwork/arena-v1.webp') center 55% / cover;
+}
+
+.opening-corner {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 4;
+}
+
+.opening-stage .pack-opening {
+  width: min(var(--open-card-w) + 80px, 100%);
+  max-width: none;
+  margin: 0;
+}
+
+.opening-stage .pack-opening__card .card-detail {
+  max-width: var(--open-card-w);
+}
+
+.opening-stage .pack-opening__progress {
+  margin: 8px 0 12px;
+}
+
+.opening-stage .pack-opening__labels {
+  margin-top: 10px;
+}
+
+.opening-stage .pack-opening__actions {
+  margin-top: 12px;
+}
+
+/* Fine del pacchetto: tutte le carte su una o due righe, grandi quanto lo spazio permette */
+.opening-stage section.pack-opening:has(.pack-opening__all) {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.opening-stage .welcome-intro {
+  margin-bottom: clamp(12px, 2.4vh, 28px);
+}
+
+.opening-stage .welcome-intro h1 {
+  margin: 4px 0;
+}
+
+.opening-stage .pack-opening__all {
+  max-width: none;
+  grid-template-columns: repeat(var(--columns, 5), min(calc((100% - (var(--columns, 5) - 1) * 16px) / var(--columns, 5)), calc((var(--stage-h) - 250px) / var(--rows, 1) / 1.42)));
+  justify-content: center;
+}
+
+.opening-stage .welcome-confirm {
+  margin-top: clamp(14px, 2.6vh, 28px);
+}
+
+/* Telefono: alla fine tre carte per riga, e lì si può scorrere */
+@media (max-width: 700px) {
+  .opening-page {
+    --stage-h: calc(100dvh - 84px);
+  }
+
+  /* Il contenuto parte sotto il pulsante dello schermo intero: la carta cede quei 40 px */
+  .opening-stage {
+    --open-card-w: clamp(150px, min(86vw, calc((var(--stage-h) - 350px) / 1.39)), 340px);
+    padding-top: 54px;
+  }
+
+  .opening-corner {
+    top: 8px;
+    right: 10px;
+  }
+
+  .opening-stage:has(.pack-opening__all) {
+    justify-content: flex-start;
+    overflow-y: auto;
+  }
+
+  .opening-stage .pack-opening__all {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

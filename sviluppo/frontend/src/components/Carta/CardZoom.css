@@ -1,0 +1,173 @@
+/* Carta ingrandita (CardZoom): si apre premendo una carta in partita, alla fine dell'apertura di un
+   pacchetto e nella collezione. Si gira per vedere il retro */
+
+.card-zoom {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-light);
+}
+
+.card-zoom[open] {
+  display: grid;
+  place-items: center;
+}
+
+.card-zoom::backdrop {
+  background: rgba(6, 7, 14, .8);
+  backdrop-filter: blur(3px);
+}
+
+.card-zoom__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.card-zoom__label {
+  color: var(--gold-primary);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.card-zoom__card {
+  width: min(360px, 80vw, calc((100vh - 190px) * .718));
+  animation: zoom-rise .45s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+/* La carta dell'avversario arriva girandosi */
+.card-zoom--top .card-zoom__card {
+  animation: zoom-turn .6s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+.card-zoom__numbers {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.card-zoom__close {
+  padding: 9px 26px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.card-zoom__close:hover {
+  background: rgba(201, 149, 93, .15);
+}
+
+@keyframes zoom-rise {
+  from {
+    opacity: 0;
+    transform: translateY(30%) scale(.45);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes zoom-turn {
+  from {
+    opacity: 0;
+    transform: translateY(-30%) rotate(180deg) scale(.45);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+
+/* Giro della carta: fronte e retro uno sull'altro, il retro ruotato di mezzo giro */
+.card-flip {
+  width: 100%;
+  padding: 0;
+  display: block;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  perspective: 1600px;
+}
+
+.card-flip:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.card-flip__inner {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform .7s cubic-bezier(.2, .8, .3, 1);
+}
+
+.card-flip.is-flipped .card-flip__inner {
+  transform: rotateY(180deg);
+}
+
+.card-flip__face {
+  grid-area: 1 / 1;
+  display: block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Il retro ha la stessa sagoma della carta: l'immagine (2:3) si adatta a tutta la superficie,
+   così non restano fasce nere ai lati e la cornice è centrata come quella del fronte */
+.card-flip__back {
+  aspect-ratio: 260 / 362;
+  overflow: hidden;
+  border-radius: 4.5% / 3.2%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .55);
+  transform: rotateY(180deg);
+}
+
+.card-flip__back img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: fill;
+}
+
+.card-zoom__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.card-zoom__turn {
+  padding: 9px 22px;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  background: var(--gold-primary);
+  color: #17151c;
+  font-family: var(--font-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card-zoom__turn:hover {
+  background: var(--gold-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-zoom__card {
+    animation: none !important;
+  }
+
+  .card-flip__inner {
+    transition: none;
+  }
+}

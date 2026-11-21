@@ -4,6 +4,33 @@
   min-height: 100vh;
 }
 
+/* Partita: la pagina è alta quanto lo schermo e non scorre. Intestazione compatta (72 px) sopra,
+   il campo prende il resto; con lo schermo intero l'intestazione sparisce */
+.match-page:not(.match-page--message) {
+  --stage-h: calc(100dvh - 72px);
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.match-page.is-fullscreen {
+  --stage-h: 100dvh;
+}
+
+.match-page.is-fullscreen .home-header {
+  display: none;
+}
+
+.match-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Sfide */
 .challenge-new {
   margin-bottom: 20px;
@@ -68,14 +95,17 @@
 /* Arena: il campo della partita come nel mockup. Sfondo dei tre mondi, l'avversario in alto
    e chi guarda in basso: mazzo coperto, carta in gioco al centro, scarti girati di lato */
 .arena-table {
-  /* Larghezza della carta in gioco e del mazzo: si adattano anche all'altezza dello schermo */
-  --card-w: clamp(112px, min(13vw, 21vh), 188px);
+  /* Larghezza della carta in gioco e del mazzo: due righe di carte (alte 1,39 volte la larghezza,
+     più ATT e DIF) e il centro del tavolo (circa 300 px) devono stare nell'altezza del campo */
+  --card-w: clamp(76px, min(13vw, calc((var(--stage-h, 100dvh) - 330px) / 2.78)), 200px);
   --pile-w: calc(var(--card-w) * .72);
-  min-height: max(640px, calc(100vh - 112px));
-  padding: clamp(18px, 3vh, 36px) clamp(16px, 4vw, 64px);
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: clamp(10px, 2.2vh, 28px) clamp(16px, 4vw, 64px);
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 16px;
+  gap: clamp(6px, 1.2vh, 14px);
   /* Sfondo dell'Arena del mockup: i tre regni intorno al tavolo di gioco */
   background:
     linear-gradient(rgba(12, 14, 26, .3), rgba(12, 14, 26, .05) 42%, rgba(12, 14, 26, .35)),
@@ -113,6 +143,8 @@
 }
 
 /* Mazzo coperto: il retro delle carte con lo spessore del mazzo */
+/* Mazzo coperto: stessa sagoma delle carte in campo, il retro adattato a tutta la superficie.
+   Lo spessore del mazzo sono due bordi che salgono, centrati sopra la carta in cima */
 .arena-pile {
   position: relative;
   width: var(--pile-w);
@@ -121,14 +153,15 @@
 }
 
 .arena-pile img {
+  position: relative;
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
-  border-radius: 7% / 5%;
+  object-fit: fill;
+  border-radius: 6% / 4.3%;
   box-shadow:
-    3px 3px 0 #0b0d18,
-    6px 6px 0 rgba(11, 13, 24, .8),
+    0 -3px 0 #2c2547,
+    0 -6px 0 #1c1830,
     0 14px 30px rgba(0, 0, 0, .55);
 }
 
@@ -423,14 +456,15 @@
   text-align: center;
 }
 
-/* Centro del tavolo: tipo di partita, giocatori e round */
+/* Centro del tavolo: tipo di partita, giocatori, round (o risultato) e comandi */
 .arena-center {
-  padding: 12px 32px;
+  min-height: 0;
+  padding: 4px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   text-align: center;
   text-shadow: 0 2px 12px rgba(5, 6, 16, .9);
 }
@@ -438,9 +472,70 @@
 .arena-center h1 {
   margin: 0;
   font-family: var(--font-title);
-  font-size: clamp(22px, 2.6vw, 34px);
+  font-size: clamp(20px, min(2.4vw, 3.6vh), 32px);
   font-weight: 400;
   font-variant: small-caps;
+  line-height: 1.1;
+}
+
+/* A partita finita il risultato prende il posto del titolo e della barra dei round:
+   il titolo resta per i lettori di schermo */
+.arena-center.is-finished .dashboard-eyebrow,
+.arena-center.is-finished h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.arena-center.is-finished .match-slider {
+  display: none;
+}
+
+/* In alto a destra sul campo: cronaca e schermo intero */
+.arena-corner {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-log-toggle {
+  height: 42px;
+  padding: 0 14px 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(226, 210, 204, .35);
+  border-radius: 999px;
+  background: rgba(16, 19, 31, .78);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.match-log-toggle svg,
+.match-controls svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.match-log-toggle:hover,
+.match-log-toggle.is-active {
+  border-color: var(--gold-primary);
+  color: var(--gold-hover);
 }
 
 .arena-center h1 span {
@@ -455,95 +550,6 @@
   color: var(--gold-hover);
   font-size: 15px;
   animation: float-up .4s ease-out both;
-}
-
-/* Carta ingrandita */
-.card-zoom {
-  width: 100vw;
-  max-width: none;
-  height: 100vh;
-  max-height: none;
-  margin: 0;
-  padding: 16px;
-  border: 0;
-  background: transparent;
-  color: var(--text-light);
-}
-
-.card-zoom[open] {
-  display: grid;
-  place-items: center;
-}
-
-.card-zoom::backdrop {
-  background: rgba(6, 7, 14, .8);
-  backdrop-filter: blur(3px);
-}
-
-.card-zoom__body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-.card-zoom__label {
-  color: var(--gold-primary);
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.card-zoom__card {
-  width: min(360px, 80vw, calc((100vh - 190px) * .718));
-  animation: zoom-rise .45s cubic-bezier(.2, .8, .3, 1) both;
-}
-
-/* La carta dell'avversario arriva girandosi */
-.card-zoom--top .card-zoom__card {
-  animation: zoom-turn .6s cubic-bezier(.2, .8, .3, 1) both;
-}
-
-.card-zoom__numbers {
-  margin: 0;
-  color: var(--text-light);
-  font-size: 14px;
-}
-
-.card-zoom__close {
-  padding: 9px 26px;
-  border: 1px solid var(--gold-primary);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-light);
-  font-family: var(--font-body);
-  cursor: pointer;
-}
-
-.card-zoom__close:hover {
-  background: rgba(201, 149, 93, .15);
-}
-
-@keyframes zoom-rise {
-  from {
-    opacity: 0;
-    transform: translateY(30%) scale(.45);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes zoom-turn {
-  from {
-    opacity: 0;
-    transform: translateY(-30%) rotate(180deg) scale(.45);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 @keyframes card-enter {
@@ -582,34 +588,72 @@
   }
 }
 
-/* Risultato: compare all'ultimo round */
+/* Risultato: al centro del tavolo, all'ultimo round */
 .match-result {
-  margin: 0 auto 24px;
-  max-width: 720px;
-  padding: 24px;
-  border: 1px solid var(--gold-primary);
-  border-radius: 14px;
-  background: radial-gradient(circle at 50% 0%, rgba(201, 149, 93, .18), transparent 70%), var(--card-bg);
-  text-align: center;
+  max-width: 560px;
+  padding: 10px 22px 12px;
+  border: 1px solid var(--result-color, var(--gold-primary));
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--result-color, #c9955d) 22%, transparent), transparent 70%), rgba(16, 19, 31, .86);
+  backdrop-filter: blur(4px);
+  text-shadow: none;
   animation: result-reveal .6s ease-out both;
 }
 
+.match-result--win { --result-color: #e3ae72; }
+.match-result--loss { --result-color: #f0848e; }
+.match-result--draw { --result-color: #9693a2; }
+
 .match-result h2 {
-  margin: 8px 0;
+  margin: 0 0 2px;
+  color: var(--result-color);
   font-family: var(--font-title);
-  font-size: clamp(32px, 4vw, 52px);
+  font-size: clamp(26px, min(3vw, 4.4vh), 44px);
   font-weight: 400;
   font-variant: small-caps;
+  line-height: 1.1;
 }
 
 .match-result p {
   margin: 0;
   color: #d8d2dc;
+  font-size: 13px;
 }
 
-.match-rewards {
-  margin-top: 8px !important;
-  color: var(--gold-hover) !important;
+.match-result .match-rewards {
+  margin-top: 4px;
+  color: var(--gold-hover);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.match-result__actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.match-result__actions a,
+.match-result__actions button {
+  min-height: 36px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--gold-primary);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light);
+  font-family: var(--font-body);
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.match-result__actions .match-result__primary {
+  background: var(--gold-primary);
+  color: #17151c;
+  font-weight: 600;
 }
 
 @keyframes result-reveal {
@@ -623,76 +667,130 @@
   }
 }
 
-/* Comandi del replay, subito sotto il campo */
-.match-content {
-  padding-top: 24px;
-}
-
+/* Comandi della riproduzione, al centro del tavolo */
 .match-controls {
-  margin: 0 0 10px;
+  margin-top: 2px;
+  padding: 4px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
+  gap: 4px;
+  border: 1px solid rgba(226, 210, 204, .22);
+  border-radius: 999px;
+  background: rgba(16, 19, 31, .78);
+  backdrop-filter: blur(4px);
 }
 
 .match-controls button {
-  min-width: 104px;
-  padding: 10px 20px;
-  border: 1px solid var(--input-border);
-  border-radius: 999px;
-  background: var(--card-bg);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-light);
-  font-family: var(--font-body);
   cursor: pointer;
-  transition: border-color .15s ease;
+  transition: background .15s ease, color .15s ease;
 }
 
 .match-controls button:not(:disabled):hover {
-  border-color: var(--gold-primary);
-}
-
-.match-controls__play {
-  border-color: var(--gold-primary) !important;
-  background: var(--gold-primary) !important;
-  color: var(--bg-dark) !important;
-  font-weight: 600;
+  background: rgba(201, 149, 93, .16);
+  color: var(--gold-hover);
 }
 
 .match-controls button:disabled {
-  opacity: .4;
+  opacity: .35;
   cursor: default;
 }
 
-.match-slider {
-  max-width: 560px;
-  margin: 0 auto 22px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-muted);
-  font-size: 14px;
+.match-controls .match-controls__play {
+  width: 46px;
+  background: var(--gold-primary);
+  color: #17151c;
 }
 
-.match-slider input {
-  width: 100%;
+.match-controls .match-controls__play:hover {
+  background: var(--gold-hover) !important;
+  color: #17151c !important;
+}
+
+.match-controls .match-controls__play svg {
+  fill: currentColor;
+}
+
+.match-slider {
+  width: min(320px, 60%);
   accent-color: var(--gold-primary);
 }
 
-/* Cronaca */
-.match-log ol {
+/* Cronaca: pannello che entra da destra sopra il campo */
+.match-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  width: min(420px, 92vw);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(226, 210, 204, .2);
+  background: rgba(16, 19, 31, .96);
+  box-shadow: -20px 0 40px rgba(0, 0, 0, .45);
+  transform: translateX(105%);
+  visibility: hidden;
+  transition: transform .3s ease, visibility 0s linear .3s;
+}
+
+.match-drawer.is-open {
+  transform: none;
+  visibility: visible;
+  transition: transform .3s ease;
+}
+
+.match-drawer__head {
+  padding: 16px 18px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--input-border);
+}
+
+.match-drawer__head h2 {
   margin: 0;
-  padding: 0;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.match-drawer__head button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-light);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.match-drawer__head button:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.match-log {
+  flex: 1;
+  margin: 0;
+  padding: 6px 18px;
+  overflow-y: auto;
   list-style: none;
 }
 
 .match-log__line {
   padding: 8px 0;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 2px;
   border-top: 1px solid var(--input-border);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -701,9 +799,8 @@
 }
 
 .match-log__line span {
-  flex: 0 0 120px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -718,13 +815,16 @@
   font-weight: 600;
 }
 
-.match-links {
-  margin-top: 28px;
-  justify-content: center;
+.match-drawer__links {
+  padding: 12px 18px 16px;
+  display: flex;
+  gap: 16px;
+  border-top: 1px solid var(--input-border);
 }
 
-.match-links .home-button {
-  min-height: 48px;
+.match-drawer__links a {
+  color: var(--gold-primary);
+  font-size: 14px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -732,20 +832,60 @@
   .arena-active,
   .arena-active__damage,
   .arena-life em,
-  .arena-center__round,
-  .card-zoom__card {
+  .arena-center__round {
     animation: none !important;
+  }
+
+  .match-drawer {
+    transition: none;
+  }
+}
+
+/* Schermi bassi (portatili piccoli): giocatore più compatto */
+@media (max-height: 720px) and (min-width: 701px) {
+  .arena-player {
+    min-width: 130px;
+    padding: 6px 10px;
+  }
+
+  .arena-life strong {
+    font-size: 22px;
+  }
+
+  .arena-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
   }
 }
 
 /* Telefono: carte più piccole, il giocatore sotto (o sopra) il suo mazzo */
 @media (max-width: 700px) {
+  .match-page:not(.match-page--message) {
+    --stage-h: calc(100dvh - 84px);
+  }
+
   .arena-table {
-    --card-w: clamp(92px, 27vw, 140px);
+    --card-w: clamp(70px, min(27vw, calc((var(--stage-h, 100dvh) - 320px) / 2.78)), 140px);
     --pile-w: calc(var(--card-w) * .62);
-    min-height: 0;
-    padding: 16px 10px;
-    gap: 12px;
+    padding: 10px 8px;
+    gap: 6px;
+  }
+
+  .arena-corner {
+    top: 8px;
+    right: 8px;
+  }
+
+  .match-log-toggle span {
+    display: none;
+  }
+
+  .match-log-toggle {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    justify-content: center;
   }
 
   .arena-row {
@@ -784,7 +924,29 @@
   }
 
   .arena-center {
-    padding: 4px 8px;
+    padding: 2px 4px;
+    gap: 4px;
+  }
+
+  .arena-center .dashboard-eyebrow {
+    display: none;
+  }
+
+  .arena-center h1 {
+    font-size: 17px;
+  }
+
+  .match-result {
+    padding: 8px 12px;
+  }
+
+  .match-result p {
+    font-size: 12px;
+  }
+
+  .match-controls button {
+    width: 34px;
+    height: 34px;
   }
 
   .arena-number {
@@ -798,14 +960,5 @@
     right: 4%;
     padding: 2px 8px;
     font-size: 14px;
-  }
-
-  .match-log__line {
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .match-log__line span {
-    flex-basis: auto;
   }
 }

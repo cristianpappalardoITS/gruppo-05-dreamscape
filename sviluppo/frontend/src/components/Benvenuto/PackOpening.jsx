@@ -1,14 +1,18 @@
 import { useRef, useState } from 'react';
 import CardGridItem from '../Collezione/CardGridItem';
 import SelectedCardDetail from '../Collezione/SelectedCardDetail';
+import CardZoom from '../Carta/CardZoom';
 
 // Distanza minima in pixel perché uno swipe verso sinistra passi alla carta successiva
 const SWIPE_DISTANCE = 50;
 
 // Apertura classica di un pacchetto: le carte escono una alla volta, nell'ordine di uscita.
-// "Mostra tutte" salta alla fine; alla fine si vedono tutte le carte del pacchetto insieme.
+// "Mostra tutte" salta alla fine; alla fine si vedono tutte le carte del pacchetto insieme e, premendone
+// una, si ingrandisce (e si può girare).
 export default function PackOpening({ opening, nextLabel, onDone }) {
   const [index, setIndex] = useState(0);
+  // Carta ingrandita alla fine del pacchetto (premendo una delle carte)
+  const [zoomCard, setZoomCard] = useState(null);
   // Punto in cui il dito ha toccato lo schermo (un ref: deve essere pronto subito, senza aspettare un render)
   const touchStartX = useRef(null);
   const total = opening.cards.length;
@@ -22,6 +26,10 @@ export default function PackOpening({ opening, nextLabel, onDone }) {
   };
 
   if (isFinished) {
+    // Righe e colonne della griglia finale: una riga fino a 6 carte, poi due. Le usa l'apertura
+    // a misura di schermo (Benvenuto.css, .opening-stage) per calcolare quanto grandi possono essere
+    const rows = total <= 6 ? 1 : 2;
+    const columns = Math.ceil(total / rows);
     return (
       <section className="pack-opening" aria-labelledby="pack-opening-title">
         <div className="welcome-intro">
@@ -29,16 +37,17 @@ export default function PackOpening({ opening, nextLabel, onDone }) {
           <h1 id="pack-opening-title">{opening.packName}</h1>
           <p>Queste carte sono già nella tua collezione.</p>
         </div>
-        <div className="pack-opening__all">
+        <div className="pack-opening__all" style={{ '--columns': columns, '--rows': rows }}>
           {opening.cards.map(({ card }, position) => (
             <div className="reveal-card" style={{ '--reveal-delay': `${position * 80}ms` }} key={`${card.id}-${position}`}>
-              <CardGridItem entry={{ card }} isSelected={false} onSelect={() => {}} />
+              <CardGridItem entry={{ card }} isSelected={false} onSelect={() => setZoomCard(card)} label={`${card.name}: ingrandisci`} />
             </div>
           ))}
         </div>
         <div className="welcome-confirm">
           <button type="button" className="home-button home-button--filled" onClick={onDone}>{nextLabel}</button>
         </div>
+        {zoomCard && <CardZoom card={zoomCard} label={opening.packName} onClose={() => setZoomCard(null)} />}
       </section>
     );
   }

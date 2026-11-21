@@ -115,7 +115,9 @@ export default function ShopPage() {
 
               return (
                 <article key={pack.id} className={`shop-pack${pack.factionCode ? ` shop-pack--${pack.factionCode.toLowerCase()}` : ''}`}>
-                  <div className="shop-pack__image">
+                  {/* L'immagine del pacchetto (verticale, sfondo trasparente) si vede intera;
+                      l'illustrazione del Lord, di riserva, riempie il riquadro */}
+                  <div className={`shop-pack__image${pack.imageUrl ? ' shop-pack__image--pack' : ''}`}>
                     <img
                       src={image}
                       alt=""

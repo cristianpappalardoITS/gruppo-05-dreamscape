@@ -139,6 +139,36 @@
   object-fit: cover;
 }
 
+/* Immagine del pacchetto (GET /packs, imageUrl): verticale 2:3 con lo sfondo trasparente,
+   grande e intera al centro di un riquadro quasi quadrato, su un alone del colore della fazione.
+   max-height: con una colonna sola (tablet) il pacchetto non diventa enorme */
+.shop-pack__image--pack {
+  aspect-ratio: 1 / 1.05;
+  max-height: 460px;
+  overflow: visible;
+  /* Niente riquadro: solo l'alone, che sfuma nello sfondo della scheda */
+  border-radius: 0;
+  background: radial-gradient(ellipse 50% 45% at 50% 55%, color-mix(in srgb, var(--faction-color, #c9955d) 32%, transparent), transparent 75%);
+}
+
+.shop-pack__image--pack img:not(.faction-emblem) {
+  padding: 14px 0 10px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, .6));
+  transition: transform .3s ease, filter .3s ease;
+}
+
+.shop-pack:hover .shop-pack__image--pack img:not(.faction-emblem) {
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, .65)) drop-shadow(0 0 18px color-mix(in srgb, var(--faction-color, #c9955d) 45%, transparent));
+  transform: translateY(-8px) scale(1.04) rotate(-2deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-pack:hover .shop-pack__image--pack img:not(.faction-emblem) {
+    transform: none;
+  }
+}
+
 .shop-pack__image .faction-emblem {
   position: absolute;
   right: 10px;

@@ -404,6 +404,8 @@ section.pack-opening:has(.pack-opening__all) {
   top: 12px;
   right: 14px;
   z-index: 4;
+  display: flex;
+  gap: 8px;
 }
 
 .opening-stage .pack-opening {
@@ -477,4 +479,167 @@ section.pack-opening:has(.pack-opening__all) {
   .opening-stage .pack-opening__all {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* Fine dell'apertura: "Apri un altro" (nel negozio) accanto al pulsante per andare avanti */
+.pack-opening__end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+}
+
+.buy-again {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-items: center;
+  gap: 6px 12px;
+}
+
+.buy-again > .home-button:only-of-type {
+  grid-column: 1 / -1;
+}
+
+.buy-again__balance,
+.buy-again__error {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.buy-again__error {
+  color: #f0c4c8;
+}
+
+.buy-again__cancel {
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.buy-again__bulk {
+  min-width: 64px;
+  padding: 12px 18px;
+}
+
+/* Pacchetto ancora chiuso: si apre con un clic, come la leva di una slot */
+.sealed-pack {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vh, 18px);
+  text-align: center;
+}
+
+.sealed-pack h1 {
+  margin: 0;
+  color: var(--gold-primary);
+  font-family: var(--font-title);
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 400;
+}
+
+.sealed-pack__pack {
+  height: clamp(220px, calc(var(--stage-h, 100dvh) - 260px), 520px);
+  padding: 0;
+  border: 0;
+  background: radial-gradient(ellipse 50% 45% at 50% 55%, rgba(201, 149, 93, .28), transparent 72%);
+  cursor: pointer;
+}
+
+.sealed-pack__pack img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .6));
+  animation: sealed-pack-float 2.8s ease-in-out infinite;
+  transition: transform .2s ease;
+}
+
+.sealed-pack__pack:hover img,
+.sealed-pack__pack:focus-visible img {
+  transform: scale(1.04) rotate(-2deg);
+}
+
+@keyframes sealed-pack-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sealed-pack__pack img {
+    animation: none;
+  }
+}
+
+.sealed-pack__skip {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Pulsante del suono, accanto a quello dello schermo intero */
+.sound-toggle {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  background: rgba(16, 19, 31, .75);
+  color: #d8d2dc;
+  cursor: pointer;
+}
+
+.sound-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sound-toggle:hover,
+.sound-toggle:focus-visible {
+  border-color: var(--gold-primary);
+  color: var(--gold-hover);
+}
+
+/* Riepilogo di più pacchetti comprati insieme */
+.series-counts {
+  margin: 18px 0 22px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  list-style: none;
+}
+
+.series-counts__item {
+  padding: 6px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  color: #d8d2dc;
+  font-size: 14px;
+}
+
+.series-counts__item strong {
+  margin-right: 4px;
+  color: var(--text-light);
+}
+
+.series-counts__item--legendary { border-color: #e0b357; }
+.series-counts__item--epic { border-color: #b07ac8; }
+.series-counts__item--rare { border-color: #88c8f3; }
+.series-counts__item--fullart { border-color: #f1eeee; }
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
 }

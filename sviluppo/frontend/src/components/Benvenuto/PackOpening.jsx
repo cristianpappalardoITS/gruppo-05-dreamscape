@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CardGridItem from '../Collezione/CardGridItem';
 import SelectedCardDetail from '../Collezione/SelectedCardDetail';
 import CardZoom from '../Carta/CardZoom';
@@ -8,8 +8,9 @@ const SWIPE_DISTANCE = 50;
 
 // Apertura classica di un pacchetto: le carte escono una alla volta, nell'ordine di uscita.
 // "Mostra tutte" salta alla fine; alla fine si vedono tutte le carte del pacchetto insieme e, premendone
-// una, si ingrandisce (e si può girare).
-export default function PackOpening({ opening, nextLabel, onDone }) {
+// una, si ingrandisce (e si può girare). extraActions: altri pulsanti accanto a quello per andare avanti
+// (nel negozio: ricomprare lo stesso pacchetto). onReveal: chiamata a ogni carta che esce (il suono)
+export default function PackOpening({ opening, nextLabel, onDone, extraActions = null, onReveal = null }) {
   const [index, setIndex] = useState(0);
   // Carta ingrandita alla fine del pacchetto (premendo una delle carte)
   const [zoomCard, setZoomCard] = useState(null);
@@ -19,6 +20,11 @@ export default function PackOpening({ opening, nextLabel, onDone }) {
   const isFinished = index >= total;
 
   const next = () => setIndex((current) => Math.min(current + 1, total));
+
+  // Ogni carta che esce (non con "Mostra tutte", che salta alla fine)
+  useEffect(() => {
+    if (onReveal && index < total) onReveal(opening.cards[index].card);
+  }, [index, total, onReveal, opening]);
 
   const handleTouchEnd = (event) => {
     if (touchStartX.current !== null && touchStartX.current - event.changedTouches[0].clientX > SWIPE_DISTANCE) next();
@@ -45,7 +51,10 @@ export default function PackOpening({ opening, nextLabel, onDone }) {
           ))}
         </div>
         <div className="welcome-confirm">
-          <button type="button" className="home-button home-button--filled" onClick={onDone}>{nextLabel}</button>
+          <div className="pack-opening__end-actions">
+            {extraActions}
+            <button type="button" className={`home-button ${extraActions ? 'home-button--outlined' : 'home-button--filled'}`} onClick={onDone}>{nextLabel}</button>
+          </div>
         </div>
         {zoomCard && <CardZoom card={zoomCard} label={opening.packName} onClose={() => setZoomCard(null)} />}
       </section>

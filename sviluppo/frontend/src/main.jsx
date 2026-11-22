@@ -21,6 +21,7 @@ import ArenaPage from './pages/ArenaPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import HistoryPage from './pages/HistoryPage.jsx'
+import PackSeriesPage from './pages/PackSeriesPage.jsx'
 import './styles/design-tokens.css'
 
 // Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
@@ -39,6 +40,7 @@ const pages = {
   '/mazzi': { title: 'Mazzi', render: () => <DecksPage /> },
   '/mazzi/editor': { title: 'Editor del mazzo', render: () => <DeckEditorPage /> },
   '/negozio': { title: 'Negozio', render: () => <ShopPage /> },
+  '/negozio/riepilogo': { title: 'Pacchetti aperti', render: () => <PackSeriesPage /> },
   '/amici': { title: 'Amici', render: () => <FriendsPage /> },
   '/scambi': { title: 'Scambi', render: () => <TradesPage /> },
   '/scambi/nuovo': { title: 'Nuovo scambio', render: () => <NewTradePage /> },

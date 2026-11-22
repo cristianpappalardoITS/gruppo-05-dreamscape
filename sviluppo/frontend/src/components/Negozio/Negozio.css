@@ -427,3 +427,10 @@
     --pack-h: clamp(180px, calc(100vh - 600px), 360px);
   }
 }
+
+/* "x 10": dieci pacchetti insieme, accanto ad Acquista */
+.shop-buy--bulk {
+  flex: 0 0 auto;
+  padding: 0 14px;
+  font-weight: 600;
+}

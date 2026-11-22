@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import HomeHeader from '../components/home/HomeHeader';
 import FactionEmblem from '../components/home/FactionEmblem';
+import { BULK_COUNT, buyPacks, openingUrl } from '../components/Negozio/buyPacks.js';
 import '../styles/home.css';
 import '../components/Collezione/Collezione.css';
 import '../components/Negozio/Negozio.css';
@@ -39,8 +40,11 @@ export default function ShopPage() {
   const [packs, setPacks] = useState(null);
   const [balance, setBalance] = useState(null);
   const [lordImages, setLordImages] = useState({});
-  const [confirmingPackId, setConfirmingPackId] = useState(null);
+  // Acquisto da confermare: { packId, count } (count 1 o BULK_COUNT)
+  const [confirming, setConfirming] = useState(null);
   const [buyingPackId, setBuyingPackId] = useState(null);
+  // Con più pacchetti: quanti ne sono già stati aperti
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
 
   const loadPacks = () => api('/packs').then(setPacks).catch(setError);
@@ -58,19 +62,22 @@ export default function ShopPage() {
       .catch(() => {});
   }, []);
 
-  const buy = async (pack) => {
+  // Uno o più pacchetti uguali, uno dopo l'altro; poi la pagina dell'apertura (o della serie).
+  // Se un acquisto non riesce a metà si aprono comunque quelli già comprati
+  const buy = async (pack, count) => {
     setBuyingPackId(pack.id);
+    setProgress(0);
     setError(null);
-    try {
-      const opening = await api(`/packs/${pack.id}/open`, { method: 'POST' });
-      window.location.assign(`/negozio/apertura/${opening.openingId}`);
-    } catch (err) {
-      setError(err);
-      setBuyingPackId(null);
-      setConfirmingPackId(null);
-      // Pacchetto non più in vendita: si ricarica l'elenco
-      if (err.code === 'PACK_NOT_ON_SALE') loadPacks();
+    const { openingIds, error: buyError } = await buyPacks(pack, count, setProgress);
+    if (openingIds.length > 0) {
+      window.location.assign(openingUrl(openingIds));
+      return;
     }
+    setError(buyError);
+    setBuyingPackId(null);
+    setConfirming(null);
+    // Pacchetto non più in vendita: si ricarica l'elenco
+    if (buyError?.code === 'PACK_NOT_ON_SALE') loadPacks();
   };
 
   return (
@@ -113,7 +120,8 @@ export default function ShopPage() {
               const lord = pack.factionCode ? lordImages[pack.factionCode] : null;
               const image = pack.imageUrl ?? lord?.illustrationThumbUrl ?? '/artwork/dreamscape-worlds.webp';
               const tooExpensive = balance !== null && balance < pack.priceCredits;
-              const isConfirming = confirmingPackId === pack.id;
+              const bulkTooExpensive = balance !== null && balance < pack.priceCredits * BULK_COUNT;
+              const confirmCount = confirming?.packId === pack.id ? confirming.count : 0;
               const isBuying = buyingPackId === pack.id;
               const cardCount = pack.slots.reduce((sum, slot) => sum + slot.cardCount, 0);
 
@@ -154,24 +162,41 @@ export default function ShopPage() {
                     </div>
 
                     <div className="shop-pack__buy">
-                      {isConfirming ? (
+                      {confirmCount > 0 ? (
                         <>
-                          <button type="button" className="shop-buy shop-buy--confirm" onClick={() => buy(pack)} disabled={isBuying}>
-                            {isBuying ? 'Apertura...' : 'Conferma acquisto'}
+                          <button type="button" className="shop-buy shop-buy--confirm" onClick={() => buy(pack, confirmCount)} disabled={isBuying}>
+                            {isBuying
+                              ? (confirmCount > 1 ? `Apertura ${Math.min(progress + 1, confirmCount)} di ${confirmCount}...` : 'Apertura...')
+                              : (confirmCount > 1 ? `Conferma ${confirmCount} · ${credits(pack.priceCredits * confirmCount)}` : 'Conferma acquisto')}
                           </button>
-                          <button type="button" className="shop-cancel" onClick={() => setConfirmingPackId(null)} disabled={isBuying}>
+                          <button type="button" className="shop-cancel" onClick={() => setConfirming(null)} disabled={isBuying}>
                             Annulla
                           </button>
                         </>
                       ) : (
-                        <button
-                          type="button"
-                          className="shop-buy"
-                          onClick={() => setConfirmingPackId(pack.id)}
-                          disabled={tooExpensive || buyingPackId !== null}
-                        >
-                          {tooExpensive ? 'Crediti insufficienti' : 'Acquista'}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className="shop-buy"
+                            onClick={() => setConfirming({ packId: pack.id, count: 1 })}
+                            disabled={tooExpensive || buyingPackId !== null}
+                          >
+                            {tooExpensive ? 'Crediti insufficienti' : 'Acquista'}
+                          </button>
+                          {/* Dieci pacchetti uguali insieme: si aprono uno dopo l'altro, poi il riepilogo */}
+                          {!tooExpensive && (
+                            <button
+                              type="button"
+                              className="shop-buy shop-buy--bulk"
+                              onClick={() => setConfirming({ packId: pack.id, count: BULK_COUNT })}
+                              disabled={bulkTooExpensive || buyingPackId !== null}
+                              aria-label={`Acquista ${BULK_COUNT} ${pack.name}`}
+                              title={bulkTooExpensive ? 'Crediti insufficienti' : `${BULK_COUNT} pacchetti · ${credits(pack.priceCredits * BULK_COUNT)}`}
+                            >
+                              × {BULK_COUNT}
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

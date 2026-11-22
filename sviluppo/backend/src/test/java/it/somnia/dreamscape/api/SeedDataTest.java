@@ -154,6 +154,22 @@ class SeedDataTest {
     }
 
     @Test
+    void shopPacks_everyImageUrlHasItsWebpFile() {
+        // Given: le immagini dei sei pacchetti del negozio di V104, in src/main/resources/images/packs/
+
+        // When
+        List<String> urls = jdbcTemplate.queryForList(
+                "SELECT image_url FROM packs WHERE pack_type = 'SHOP' AND is_active AND image_url IS NOT NULL",
+                String.class);
+
+        // Then: un'immagine per pacchetto, tutte nel backend
+        assertEquals(6, urls.size());
+        for (String url : urls) {
+            assertTrue(new ClassPathResource(url.substring(1)).exists(), "Manca il file di " + url);
+        }
+    }
+
+    @Test
     void testData_eachFactionHasEnoughCardsForTheStarterSet() {
         // Given: il set iniziale vuole 14 Comuni e 6 Rare di una fazione, al massimo 2 copie per carta
 

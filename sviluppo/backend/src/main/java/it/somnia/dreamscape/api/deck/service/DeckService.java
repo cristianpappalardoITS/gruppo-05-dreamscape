@@ -36,7 +36,8 @@ import lombok.RequiredArgsConstructor;
  *
  * <p>Si salvano solo mazzi validi (decisione 017): le regole sono in {@link DeckValidator}. Alla lettura lo stesso
  * controllo dice se un mazzo salvato è ancora valido e perché no ({@code isValid}, {@code problems}).
- * Il mazzo classificato si sceglie con la #127: qui si legge solo ({@code isRanked}).
+ * Il mazzo classificato ({@code isRanked}) è quello con cui si gioca quando il matchmaking ti sceglie come
+ * avversario (#127).
  */
 @Service
 @RequiredArgsConstructor
@@ -160,6 +161,31 @@ public class DeckService {
         userService.getActiveUser(userId);
         Deck deck = deckRepository.findByIdAndUser_Id(deckId, userId).orElseThrow(DeckNotFoundException::new);
         deckRepository.deleteDeckById(deck.getId());
+    }
+
+    /**
+     * Sceglie o toglie il mazzo classificato ({@code PUT /me/ranked-deck}).
+     *
+     * <p>Si sceglie solo un mazzo valido. Se poi diventa non valido (scambio, carta disattivata) resta il mazzo
+     * classificato, ma il matchmaking non sceglie il giocatore come avversario finché non lo sistema.
+     *
+     * @param userId l'utente collegato
+     * @param deckId un mazzo dell'utente; null per togliere il mazzo classificato
+     * @throws DeckNotFoundException se il mazzo non esiste o è di un altro utente
+     * @throws InvalidDeckException  se il mazzo non è valido, con tutti i problemi
+     */
+    @Transactional
+    public void setRankedDeck(UUID userId, UUID deckId) {
+        User user = userService.getActiveUser(userId);
+        if (deckId == null) {
+            user.setRankedDeck(null);
+            return;
+        }
+        DeckCheck deck = checkOwnDeck(userId, deckId);
+        if (!deck.isValid()) {
+            throw new InvalidDeckException(deck.problems());
+        }
+        user.setRankedDeck(deck.deck());
     }
 
     /**

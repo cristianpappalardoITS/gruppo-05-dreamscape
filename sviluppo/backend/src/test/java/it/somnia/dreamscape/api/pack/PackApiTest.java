@@ -68,7 +68,6 @@ class PackApiTest {
                 .andExpect(jsonPath("$[1].fullArtChance").value(20.0))
                 .andExpect(jsonPath("$[1].factionCode").doesNotExist())
                 .andExpect(jsonPath("$[1].availableUntil").doesNotExist())
-                .andExpect(jsonPath("$[1].imageUrl").doesNotExist())
                 .andExpect(jsonPath("$[2].name").value("Faceless Pack"))
                 .andExpect(jsonPath("$[3].name").value("Lucid Pack"))
                 .andExpect(jsonPath("$[4].name").value("Still Time Pack"))
@@ -77,16 +76,29 @@ class PackApiTest {
     }
 
     @Test
-    void listPacks_packWithImage_returnsImageUrl() throws Exception {
-        // Given: l'immagine del Dream Pack, il retro delle carte (decisione 030)
-        jdbcTemplate.update("UPDATE packs SET image_url = '/images/packs/dream-pack-v1.webp' WHERE name = ?",
-                TEST_PACK);
+    void listPacks_shopPacks_returnTheirImages() throws Exception {
+        // Given: le immagini dei sei pacchetti di V104 (decisione 030: il Dream Pack ha il retro delle carte)
+
+        // When / Then
+        mockMvc.perform(get("/api/v1/packs").header(HttpHeaders.AUTHORIZATION, bearer))
+                .andExpect(jsonPath("$[0].imageUrl").value("/images/packs/nap-pack-v1.webp"))
+                .andExpect(jsonPath("$[1].imageUrl").value("/images/packs/dream-pack-v1.webp"))
+                .andExpect(jsonPath("$[2].imageUrl").value("/images/packs/faceless-pack-v1.webp"))
+                .andExpect(jsonPath("$[3].imageUrl").value("/images/packs/lucid-pack-v1.webp"))
+                .andExpect(jsonPath("$[4].imageUrl").value("/images/packs/still-time-pack-v1.webp"))
+                .andExpect(jsonPath("$[5].imageUrl").value("/images/packs/rem-pack-v1.webp"));
+    }
+
+    @Test
+    void listPacks_packWithoutImage_omitsImageUrl() throws Exception {
+        // Given: un pacchetto senza immagine (es. uno nuovo creato dal backoffice senza caricarla)
+        jdbcTemplate.update("UPDATE packs SET image_url = NULL WHERE name = ?", TEST_PACK);
 
         // When / Then
         mockMvc.perform(get("/api/v1/packs").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(jsonPath("$[1].name").value(TEST_PACK))
-                .andExpect(jsonPath("$[1].imageUrl").value("/images/packs/dream-pack-v1.webp"))
-                .andExpect(jsonPath("$[0].imageUrl").doesNotExist());
+                .andExpect(jsonPath("$[1].imageUrl").doesNotExist())
+                .andExpect(jsonPath("$[0].imageUrl").value("/images/packs/nap-pack-v1.webp"));
     }
 
     @Test

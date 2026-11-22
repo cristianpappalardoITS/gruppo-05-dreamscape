@@ -130,6 +130,15 @@ public class Match {
         this.roundLog = roundLog;
     }
 
+    // Le variazioni del punteggio di rank, scritte dopo la partita (RankService): solo per le classificate
+    public void recordRatingChanges(int challengerChange, int opponentChange) {
+        if (matchType != MatchType.RANKED) {
+            throw new IllegalStateException("Le partite rapide non cambiano il rank (chk_matches_rating)");
+        }
+        this.challengerRatingChange = challengerChange;
+        this.opponentRatingChange = opponentChange;
+    }
+
     public boolean involves(UUID userId) {
         return challenger.getId().equals(userId) || opponent.getId().equals(userId);
     }

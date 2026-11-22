@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import it.somnia.dreamscape.api.challenge.service.ChallengeService;
 import it.somnia.dreamscape.api.friend.service.FriendService;
+import it.somnia.dreamscape.api.league.model.League;
+import it.somnia.dreamscape.api.league.repository.LeagueRepository;
 import it.somnia.dreamscape.api.pack.dto.response.OpenedCardResponse;
 import it.somnia.dreamscape.api.trade.service.TradeService;
 import it.somnia.dreamscape.api.pack.repository.PackOpeningRepository;
@@ -16,8 +18,6 @@ import it.somnia.dreamscape.api.pack.service.PackOpener;
 import it.somnia.dreamscape.api.user.dto.response.DashboardLeagueResponse;
 import it.somnia.dreamscape.api.user.dto.response.DashboardResponse;
 import it.somnia.dreamscape.api.user.model.User;
-import it.somnia.dreamscape.api.user.repository.LeagueView;
-import it.somnia.dreamscape.api.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 public class DashboardService {
 
     private final UserService userService;
-    private final UserRepository userRepository;
+    private final LeagueRepository leagueRepository;
     private final PackOpeningRepository packOpeningRepository;
     private final OpenedCardMapper openedCardMapper;
     private final FriendService friendService;
@@ -64,8 +64,8 @@ public class DashboardService {
 
     // La lega c'è sempre: la più bassa parte da 0 punti e il punteggio non scende sotto 0
     private DashboardLeagueResponse leagueOf(int rating) {
-        LeagueView league = userRepository.findLeagueForRating(rating).orElseThrow();
-        return userRepository.findNextLeague(rating)
+        League league = leagueRepository.findFirstByMinRatingLessThanEqualOrderByMinRatingDesc(rating).orElseThrow();
+        return leagueRepository.findFirstByMinRatingGreaterThanOrderByMinRatingAsc(rating)
                 .map(next -> new DashboardLeagueResponse(league.getCode(), league.getName(),
                         next.getName(), next.getMinRating()))
                 .orElseGet(() -> new DashboardLeagueResponse(league.getCode(), league.getName(), null, null));

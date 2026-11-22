@@ -1,0 +1,4 @@
+# Nel contesto di Docker solo i sorgenti: le dipendenze le installa npm ci nel container
+node_modules
+dist
+**/.DS_Store

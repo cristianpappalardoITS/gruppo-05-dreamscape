@@ -1,0 +1,88 @@
+# Tutto Dreamscape nei container con un solo comando (#100), dalla cartella sviluppo/:
+#   docker compose up --build
+# Poi il gioco è su http://localhost:8000 e le email (recupero password) su http://localhost:8025.
+# Per fermare tutto: docker compose down (i dati restano nel volume; con -v si cancellano).
+#
+# Il backend parte con il profilo dev: catalogo vero, pacchetti e anche gli utenti di prova
+# (anna_test, bruno_test...). Le chiavi qui sotto sono di prova: alla consegna arrivano da .env.
+#
+# Questo file non sostituisce sviluppo/backend/compose.yaml, che serve a ./gradlew bootRun
+# (database, Mailpit e motore per il backend acceso sul Mac). Tutti e due aprono Mailpit sulla
+# 8025: per accenderli insieme si cambia porta, es. MAILPIT_PORT=8026 docker compose up --build.
+# Anche la porta del sito si cambia con FRONTEND_PORT.
+name: dreamscape
+
+services:
+  # Database, con i dati in un volume: restano anche dopo docker compose down
+  postgres:
+    image: 'postgres:18'
+    environment:
+      POSTGRES_DB: '${POSTGRES_DB:-dreamscape}'
+      POSTGRES_USER: '${POSTGRES_USER:-dreamscape}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-dreamscape-solo-per-prova}'
+    volumes:
+      - 'postgres-data:/var/lib/postgresql'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Raccoglie le email del backend: si leggono su http://localhost:8025
+  mailpit:
+    image: 'axllent/mailpit:v1.31'
+    ports:
+      - '127.0.0.1:${MAILPIT_PORT:-8025}:8025'
+
+  # Motore di gioco (decisione 029): lo chiama solo il backend, dentro la rete dei container
+  engine:
+    build: './engine'
+    environment:
+      ENGINE_API_KEY: '${ENGINE_API_KEY:-chiave-di-sviluppo-del-motore}'
+
+  # Backend: si costruisce da questa cartella perché usa anche il codice del motore
+  backend:
+    build:
+      context: '.'
+      dockerfile: 'backend/Dockerfile'
+    depends_on:
+      postgres:
+        condition: 'service_healthy'
+      mailpit:
+        condition: 'service_started'
+      engine:
+        condition: 'service_started'
+    environment:
+      SPRING_PROFILES_ACTIVE: 'dev'
+      # I dati di prova del profilo dev hanno numeri alti (V900-V950): senza questa opzione Flyway
+      # rifiuterebbe le migration nuove con un numero più basso arrivate dopo un aggiornamento del codice
+      SPRING_FLYWAY_OUT_OF_ORDER: 'true'
+      DB_URL: 'jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dreamscape}'
+      DB_USERNAME: '${POSTGRES_USER:-dreamscape}'
+      DB_PASSWORD: '${POSTGRES_PASSWORD:-dreamscape-solo-per-prova}'
+      # Stessa chiave finta di application-dev.properties (vuota il backend non parte)
+      JWT_SECRET: '${JWT_SECRET:-chiave-di-sviluppo-dreamscape-non-usare-in-produzione}'
+      ENGINE_URL: 'http://engine:8081'
+      ENGINE_API_KEY: '${ENGINE_API_KEY:-chiave-di-sviluppo-del-motore}'
+      SPRING_MAIL_HOST: 'mailpit'
+      SPRING_MAIL_PORT: '1025'
+      # Il link della mail porta alla pagina del frontend servita da nginx
+      PASSWORD_RESET_URL: 'http://localhost:${FRONTEND_PORT:-8000}/nuova-password?token='
+      GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID:-}'
+      ADMIN_USERNAME: '${ADMIN_USERNAME:-}'
+      ADMIN_EMAIL: '${ADMIN_EMAIL:-}'
+      ADMIN_PASSWORD: '${ADMIN_PASSWORD:-}'
+    volumes:
+      - 'backend-data:/app/data'
+
+  # Frontend: nginx serve il sito e passa /api e /images al backend
+  frontend:
+    build: './frontend'
+    depends_on:
+      - 'backend'
+    ports:
+      - '127.0.0.1:${FRONTEND_PORT:-8000}:80'
+
+volumes:
+  postgres-data:
+  backend-data:

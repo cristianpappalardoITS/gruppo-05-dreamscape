@@ -1,0 +1,10 @@
+# Vale per sviluppo/backend/Dockerfile, il cui contesto è la cartella sviluppo/:
+# nel contesto entrano solo il backend e il motore, senza file compilati, dati locali e segreti
+frontend
+**/build
+**/.gradle
+**/.idea
+**/*.iml
+**/.DS_Store
+backend/.env
+backend/data

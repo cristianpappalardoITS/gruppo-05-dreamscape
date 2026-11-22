@@ -50,6 +50,18 @@ L'avanzamento giorno per giorno è sulla board del progetto (GitHub Projects).
 
 ## Avvio rapido
 
+### Tutto nei container, con un solo comando
+
+Serve solo Docker Desktop (acceso).
+
+```bash
+cd sviluppo
+docker compose up --build
+```
+Database, motore, backend e frontend partono insieme. Il gioco è su `http://localhost:8000` (utenti di prova come sotto, es. `anna_test`), le email del recupero password su `http://localhost:8025`, le API su `http://localhost:8000/swagger-ui.html`. Si ferma con `docker compose down`; i dati restano in un volume (`docker compose down -v` li cancella). Le porte si cambiano con `FRONTEND_PORT` e `MAILPIT_PORT`.
+
+### Per sviluppare
+
 Servono Git, Java 25, Docker Desktop (acceso) e Node.js. I passi completi, con i controlli, sono nel capitolo 1 della [guida per il frontend](docs/api/guida-frontend.md).
 
 ```bash

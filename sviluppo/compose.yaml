@@ -1,6 +1,9 @@
 # Tutto Dreamscape nei container con un solo comando (#100), dalla cartella sviluppo/:
 #   docker compose up --build
 # Poi il gioco è su http://localhost:8000 e le email (recupero password) su http://localhost:8025.
+# Dagli altri dispositivi della stessa rete il gioco è su http://<indirizzo del computer>:8000
+# (su Mac: ipconfig getifaddr en0). Per avere anche il link della mail giusto:
+#   SITE_URL=http://<indirizzo del computer>:8000 docker compose up --build
 # Per fermare tutto: docker compose down (i dati restano nel volume; con -v si cancellano).
 #
 # Il backend parte con il profilo dev: catalogo vero, pacchetti e anche gli utenti di prova
@@ -66,8 +69,13 @@ services:
       ENGINE_API_KEY: '${ENGINE_API_KEY:-chiave-di-sviluppo-del-motore}'
       SPRING_MAIL_HOST: 'mailpit'
       SPRING_MAIL_PORT: '1025'
-      # Il link della mail porta alla pagina del frontend servita da nginx
-      PASSWORD_RESET_URL: 'http://localhost:${FRONTEND_PORT:-8000}/nuova-password?token='
+      # Il link della mail porta alla pagina del frontend servita da nginx. SITE_URL è l'indirizzo
+      # da cui si apre il gioco (es. http://10.0.0.5:8000 per gli altri dispositivi della rete)
+      PASSWORD_RESET_URL: '${SITE_URL:-http://localhost:${FRONTEND_PORT:-8000}}/nuova-password?token='
+      # Qui il sito è su http, non https: il cookie del refresh token non può essere "solo HTTPS",
+      # altrimenti da un altro dispositivo (indirizzo che non è localhost) ricaricando la pagina si
+      # esce dall'account. Con https davanti (alla consegna) si rimette true
+      DREAMSCAPE_SECURITY_REFRESHCOOKIESECURE: '${REFRESH_COOKIE_SECURE:-false}'
       GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID:-}'
       ADMIN_USERNAME: '${ADMIN_USERNAME:-}'
       ADMIN_EMAIL: '${ADMIN_EMAIL:-}'
@@ -75,13 +83,14 @@ services:
     volumes:
       - 'backend-data:/app/data'
 
-  # Frontend: nginx serve il sito e passa /api e /images al backend
+  # Frontend: nginx serve il sito e passa /api e /images al backend. È aperto anche agli altri
+  # dispositivi della stessa rete (telefono, altri PC): http://<indirizzo del computer>:8000
   frontend:
     build: './frontend'
     depends_on:
       - 'backend'
     ports:
-      - '127.0.0.1:${FRONTEND_PORT:-8000}:80'
+      - '${FRONTEND_PORT:-8000}:80'
 
 volumes:
   postgres-data:

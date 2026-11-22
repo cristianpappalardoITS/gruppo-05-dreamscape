@@ -169,6 +169,9 @@ export default function MatchPage({ matchId }) {
   // Le carte complete (illustrazione ed effetto), da GET /cards/{cardId}
   const [cardsById, setCardsById] = useState({});
   const [roundIndex, setRoundIndex] = useState(0);
+  // Diventa vero quando si arriva all'ultimo round: solo da lì si vede la barra dei round.
+  // Prima la barra (e il totale dei round) toglierebbe la sorpresa su quanto dura la partita
+  const [seenEnd, setSeenEnd] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   // Carta ingrandita: { cardId, from: 'top' | 'bottom', label, numbers }
@@ -202,8 +205,10 @@ export default function MatchPage({ matchId }) {
   useEffect(() => {
     if (!playing) return undefined;
     const timer = setTimeout(() => {
-      if (roundIndex < lastIndex) setRoundIndex(roundIndex + 1);
-      else setPlaying(false);
+      if (roundIndex < lastIndex) {
+        setRoundIndex(roundIndex + 1);
+        if (roundIndex + 1 === lastIndex) setSeenEnd(true);
+      } else setPlaying(false);
     }, PLAY_DELAY_MS);
     return () => clearTimeout(timer);
   }, [playing, roundIndex, lastIndex]);
@@ -211,6 +216,7 @@ export default function MatchPage({ matchId }) {
   const goTo = (index) => {
     setPlaying(false);
     setRoundIndex(Math.min(Math.max(index, 0), lastIndex));
+    if (index >= lastIndex) setSeenEnd(true);
   };
 
   const togglePlay = () => {
@@ -342,12 +348,12 @@ export default function MatchPage({ matchId }) {
                   )}
                   <div className="match-result__actions">
                     <a className="match-result__primary" href="/arena">Gioca ancora</a>
-                    <button type="button" onClick={() => { setRoundIndex(0); setPlaying(true); }}>Rivedi</button>
+                    <button type="button" onClick={() => { setSeenEnd(true); setRoundIndex(0); setPlaying(true); }}>Rivedi</button>
                     <a href="/dashboard">Home</a>
                   </div>
                 </div>
               ) : (
-                <p className="arena-center__round" key={roundIndex}>Round {round.round} di {rounds.length} · scontro {round.clash}</p>
+                <p className="arena-center__round" key={roundIndex}>Round {round.round} · scontro {round.clash}</p>
               )}
 
               <div className="match-controls" role="group" aria-label="Riproduzione della partita">
@@ -367,14 +373,18 @@ export default function MatchPage({ matchId }) {
                   <ControlIcon name="end" />
                 </button>
               </div>
+              {/* Fino all'ultimo round la barra resta al suo posto ma invisibile: così la pagina non salta */}
               <input
-                className="match-slider"
+                className={`match-slider${seenEnd || isFinished ? '' : ' is-hidden'}`}
                 type="range"
                 min={0}
                 max={lastIndex}
                 value={roundIndex}
                 onChange={(event) => goTo(Number(event.target.value))}
                 aria-label={`Round ${round.round} di ${rounds.length}`}
+                aria-hidden={!(seenEnd || isFinished)}
+                tabIndex={seenEnd || isFinished ? 0 : -1}
+                disabled={!(seenEnd || isFinished)}
               />
             </div>
 

@@ -962,3 +962,8 @@
     font-size: 14px;
   }
 }
+
+/* Barra dei round nascosta finché non si arriva alla fine (non svela quanti round ci sono) */
+.match-slider.is-hidden {
+  visibility: hidden;
+}

@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import it.somnia.dreamscape.api.admin.dto.request.AdminFactionRequest;
 import it.somnia.dreamscape.api.admin.dto.request.AdminGameModeRequest;
 import it.somnia.dreamscape.api.admin.dto.request.AdminRarityRequest;
+import it.somnia.dreamscape.api.admin.dto.response.AdminCardSetResponse;
+import it.somnia.dreamscape.api.admin.dto.response.AdminEffectResponse;
 import it.somnia.dreamscape.api.admin.dto.response.AdminFactionResponse;
 import it.somnia.dreamscape.api.admin.dto.response.AdminGameModeResponse;
 import it.somnia.dreamscape.api.admin.service.AdminExceptions.ConfigNotFoundException;
@@ -20,6 +22,8 @@ import it.somnia.dreamscape.api.card.dto.response.RarityRuleResponse;
 import it.somnia.dreamscape.api.card.model.Faction;
 import it.somnia.dreamscape.api.card.model.FactionAdvantage;
 import it.somnia.dreamscape.api.card.model.Rarity;
+import it.somnia.dreamscape.api.card.repository.CardSetRepository;
+import it.somnia.dreamscape.api.card.repository.EffectRepository;
 import it.somnia.dreamscape.api.card.repository.FactionAdvantageRepository;
 import it.somnia.dreamscape.api.card.repository.FactionRepository;
 import it.somnia.dreamscape.api.card.repository.RarityRepository;
@@ -43,6 +47,32 @@ public class AdminConfigService {
     private final FactionAdvantageRepository factionAdvantageRepository;
     private final RarityRepository rarityRepository;
     private final GameModeRepository gameModeRepository;
+    private final EffectRepository effectRepository;
+    private final CardSetRepository cardSetRepository;
+
+    /**
+     * Restituisce gli effetti accesi, che si possono assegnare alle carte, in ordine di nome: servono al form
+     * delle carte del backoffice.
+     *
+     * @return gli effetti
+     */
+    @Transactional(readOnly = true)
+    public List<AdminEffectResponse> listEffects() {
+        return effectRepository.findByActiveTrueOrderByNameAsc().stream().map(AdminEffectResponse::from).toList();
+    }
+
+    /**
+     * Restituisce le espansioni delle carte, in ordine di codice.
+     *
+     * @return le espansioni
+     */
+    @Transactional(readOnly = true)
+    public List<AdminCardSetResponse> listCardSets() {
+        return cardSetRepository.findAll().stream()
+                .sorted((first, second) -> first.getCode().compareTo(second.getCode()))
+                .map(AdminCardSetResponse::from)
+                .toList();
+    }
 
     /**
      * Restituisce le fazioni con i loro vantaggi, in ordine di codice.

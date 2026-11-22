@@ -1744,6 +1744,7 @@ Errori: `400 VALIDATION_ERROR` con il campo sbagliato in `fieldErrors` (es. `lea
 - **Rarità:** i limiti valgono da subito. I mazzi salvati che non li rispettano più diventano non validi (`isValid: false` e `problems` nella pagina Mazzi) e non si possono giocare finché il giocatore non li sistema: conviene chiedere conferma prima di abbassare un limite.
 - **Modalità:** oggi c'è solo `BASE`. I valori nuovi valgono per le partite giocate da adesso; quelle già giocate tengono i loro. Le carte per mazzo (20) non si cambiano: si leggono da `GET /rules`.
 - Tutto quello che si cambia qui si vede subito nelle pagine pubbliche (`GET /factions`, `GET /rules`).
+- Per il form delle carte: `GET /admin/effects` (gli effetti accesi, con `code`, `name`, `description`, `triggerEvent` e `hasValue`: se è `true` la carta ha il valore X) e `GET /admin/card-sets` (le espansioni, con `code`, `name`, `isActive`).
 
 Errori: `400 VALIDATION_ERROR` con il campo in `fieldErrors` (es. `advantages[0].targetFaction`: "Una fazione non può avere un vantaggio contro se stessa."), `404 FACTION_NOT_FOUND`, `RARITY_NOT_FOUND` o `GAME_MODE_NOT_FOUND`, `409 FACTION_NAME_TAKEN`.
 
@@ -1970,6 +1971,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /admin/factions`, `PUT /admin/factions/{code}` | admin | Testi e vantaggi delle fazioni |
 | `GET /admin/rarities`, `PUT /admin/rarities/{code}` | admin | Limiti delle rarità nei mazzi |
 | `GET /admin/game-modes`, `PUT /admin/game-modes/{code}` | admin | Punti vita iniziali e limite di round |
+| `GET /admin/effects`, `GET /admin/card-sets` | admin | Effetti assegnabili e espansioni, per il form delle carte |
 
 ### Da fare
 

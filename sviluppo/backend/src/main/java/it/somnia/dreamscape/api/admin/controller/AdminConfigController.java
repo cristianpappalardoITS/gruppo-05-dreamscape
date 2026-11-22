@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import it.somnia.dreamscape.api.admin.dto.request.AdminFactionRequest;
 import it.somnia.dreamscape.api.admin.dto.request.AdminGameModeRequest;
 import it.somnia.dreamscape.api.admin.dto.request.AdminRarityRequest;
+import it.somnia.dreamscape.api.admin.dto.response.AdminCardSetResponse;
+import it.somnia.dreamscape.api.admin.dto.response.AdminEffectResponse;
 import it.somnia.dreamscape.api.admin.dto.response.AdminFactionResponse;
 import it.somnia.dreamscape.api.admin.dto.response.AdminGameModeResponse;
 import it.somnia.dreamscape.api.admin.service.AdminConfigService;
@@ -32,6 +34,21 @@ import lombok.RequiredArgsConstructor;
 public class AdminConfigController {
 
     private final AdminConfigService adminConfigService;
+
+    @Operation(summary = "Gli effetti", description = "Gli effetti accesi, che si possono assegnare alle carte, "
+            + "in ordine di nome. hasValue true: la carta deve avere il valore X (effectValue).")
+    @ApiResponse(responseCode = "200", description = "Gli effetti")
+    @GetMapping("/effects")
+    public List<AdminEffectResponse> listEffects() {
+        return adminConfigService.listEffects();
+    }
+
+    @Operation(summary = "Le espansioni", description = "In ordine di codice: il cardSetCode delle carte.")
+    @ApiResponse(responseCode = "200", description = "Le espansioni")
+    @GetMapping("/card-sets")
+    public List<AdminCardSetResponse> listCardSets() {
+        return adminConfigService.listCardSets();
+    }
 
     @Operation(summary = "Le fazioni", description = "In ordine di codice, con la carta Lord e i vantaggi.")
     @ApiResponse(responseCode = "200", description = "Le fazioni")

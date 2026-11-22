@@ -46,6 +46,17 @@ class AdminConfigApiTest extends AdminApiTestSupport {
     }
 
     @Test
+    void listEffectsAndCardSets_admin_returnTheChoicesOfTheCardForm() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/effects").header(HttpHeaders.AUTHORIZATION, admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].code", hasItem("REST")))
+                .andExpect(jsonPath("$[?(@.code == 'REST')].hasValue", hasItem(true)));
+        mockMvc.perform(get("/api/v1/admin/card-sets").header(HttpHeaders.AUTHORIZATION, admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].code", hasItem("BASE")));
+    }
+
+    @Test
     void listFactions_admin_returnsTheThreeFactionsWithTheirAdvantages() throws Exception {
         mockMvc.perform(get("/api/v1/admin/factions").header(HttpHeaders.AUTHORIZATION, admin))
                 .andExpect(status().isOk())

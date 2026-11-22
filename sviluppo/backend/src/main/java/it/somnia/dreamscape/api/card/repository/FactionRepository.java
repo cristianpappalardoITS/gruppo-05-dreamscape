@@ -17,4 +17,6 @@ public interface FactionRepository extends JpaRepository<Faction, UUID> {
 
     // La fazione che ha questa carta come Lord (uq_factions_lord_card: al massimo una)
     Optional<Faction> findByLordCard(Card lordCard);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
 }

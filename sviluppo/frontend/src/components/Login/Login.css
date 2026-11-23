@@ -383,11 +383,14 @@
     color: #aaa7ad;
   }
 
+  /* Il logo sta tra il 23% e il 67% dell'altezza (dove iniziano le scritte). La larghezza dipende anche
+     dall'altezza della finestra (35vh): con le finestre basse e larghe il logo, alto 1,16 volte la sua
+     larghezza, altrimenti coprirebbe le scritte sotto */
   .artwork-symbol {
     position: absolute;
     top: 23%;
     left: var(--artwork-inset);
-    width: clamp(145px, 22vw, 310px);
+    width: min(clamp(145px, 22vw, 310px), 35vh);
     color: var(--text-light);
   }
 

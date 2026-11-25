@@ -28,6 +28,7 @@ import it.somnia.dreamscape.api.match.model.Match;
 import it.somnia.dreamscape.api.match.model.MatchType;
 import it.somnia.dreamscape.api.match.service.MatchExceptions.EngineUnavailableException;
 import it.somnia.dreamscape.api.match.service.MatchExceptions.NoOpponentFoundException;
+import it.somnia.dreamscape.api.mission.service.MissionService;
 import it.somnia.dreamscape.api.user.model.CreditTransactionType;
 import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.model.UserRole;
@@ -46,7 +47,7 @@ import lombok.RequiredArgsConstructor;
  * scegliendo per ultimi quelli già affrontati 3 volte oggi, che non darebbero punti. Cambia il rank di tutti e due;
  * chi la avvia e vince prende 30 DC, al massimo 3 vittorie premiate al giorno e niente DC se l'avversario è un
  * amico. Chi viene scelto come avversario e vince prende solo i punti del rank. Rapida: avversario a caso, niente
- * rank né crediti.
+ * rank né crediti. Dopo ogni partita avanzano le missioni di chi l'ha avviata (#125), non dell'avversario.
  *
  * <p>Prima di giocare blocca le righe dei due giocatori, in ordine di id: lo stesso avversario può essere scelto da
  * più giocatori nello stesso momento, e senza il blocco si perderebbero aggiornamenti del punteggio e si
@@ -66,6 +67,7 @@ public class MatchmakingService {
     private final FriendService friendService;
     private final MatchService matchService;
     private final RankService rankService;
+    private final MissionService missionService;
     private final CreditService creditService;
     private final CreditTransactionRepository creditTransactionRepository;
     private final GameProperties gameProperties;
@@ -127,6 +129,7 @@ public class MatchmakingService {
             rankService.applyRankedMatch(match);
             rewardWin(match);
         }
+        missionService.recordMatch(match);
         return matchService.getMatch(userId, match.getId());
     }
 

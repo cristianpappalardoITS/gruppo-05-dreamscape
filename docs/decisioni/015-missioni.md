@@ -1,9 +1,9 @@
 # 015 · Missione giornaliera e obiettivo settimanale
 
 - **Data:** 2026-11-02 (struttura e settimana: 2026-11-03)
-- **Stato:** approvata; resta da decidere quali partite contano
+- **Stato:** approvata; partite che contano: applicata la proposta il 25/11 (#125), da confermare con Maie e Nicolas
 - **Referenti:** tutti; Maie e Nicolas per il contenuto
-- **Task:** domanda 12 del 2/11; issue da aprire (una SWD, una WMD)
+- **Task:** domanda 12 del 2/11; #125 (SWD) e #126 (WMD)
 
 ## Contesto
 Al cliente abbiamo mostrato 100 DC per la missione giornaliera e 250 per l'obiettivo settimanale, ma nessuna issue li prevedeva.
@@ -24,3 +24,9 @@ Le ricompense promesse al cliente ci sono, con poco lavoro. Le tabelle lasciano 
 ## Conseguenze
 - Migration `V9__create_missions.sql`; tipo `MISSION_REWARD`.
 - Da decidere con Maie e Nicolas: se le partite rapide contano (proposta: la giornaliera conta ogni partita, la settimanale solo le vittorie classificate).
+
+## Aggiornamento del 25/11 (#125)
+- **Partite che contano:** applicata la proposta. La missione giornaliera conta ogni partita (rapida, classificata, sfida tra amici); l'obiettivo settimanale solo le vittorie classificate (`missions.match_type = 'RANKED'`, migration `V105__set_weekly_mission_ranked.sql`). Così i 250 DC non si prendono con sfide tra amici vinte d'accordo. Se Maie e Nicolas decidono diversamente basta una migration che cambia `match_type`.
+- **Chi avanza:** solo chi ha scelto di giocare. Nel matchmaking chi avvia la partita, non l'avversario scelto, che può non essere collegato (come i 30 DC della vittoria, [decisione 010](010-tipi-di-partita-e-rank.md)); in una sfida tra amici tutti e due.
+- **Premio:** arriva subito, nella stessa transazione della partita, con il movimento `MISSION_REWARD` collegato alla partita (`match_id`). Non entra in `creditsEarned` del risultato della partita.
+- Le missioni si leggono in `GET /me/summary` (`missions`), come nella guida per il frontend.

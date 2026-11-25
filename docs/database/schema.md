@@ -644,13 +644,14 @@ Per ogni partita, nella stessa transazione:
    - se i due giocatori non si sono già affrontati 3 volte oggi in classificata, calcola le variazioni di punteggio (Elo, K = 32), aggiorna `users.rating` di entrambi e salva `*_rating_change`; altrimenti restano `NULL`;
    - se chi ha avviato la partita vince, non ha già 3 vittorie premiate nel giorno della partita (movimenti `MATCH_REWARD`) e l'avversario **non è un amico**, gli dà 30 DC (`MATCH_REWARD`, con `match_id`). Chi viene scelto come avversario e vince prende solo i punti del rank. Premio e limite sono in `application.properties` (`dreamscape.game.ranked-win.*`);
    - se un punteggio entra per la prima volta in una lega, dà il premio della lega e salva la partita in `user_league_rewards.match_id` (vedi sotto).
-5. Aggiorna le missioni dei due giocatori (vedi sotto; arriva con le missioni, #125).
+5. Aggiorna le missioni di chi ha scelto di giocare (vedi sotto).
 
 ### Missioni
 
 - Il periodo si calcola in ora italiana: `DAILY` = il giorno, `WEEKLY` = la settimana che inizia il lunedì. `period_start` è il primo giorno del periodo.
+- Contano solo i giocatori che hanno scelto di giocare: chi avvia una partita del matchmaking (non l'avversario scelto, che può non essere collegato) e tutti e due i giocatori di una sfida tra amici.
 - Dopo ogni partita, per ogni missione attiva il service crea o aggiorna la riga di `user_missions` del periodo e aumenta `progress` (`PLAY_MATCHES`: ogni partita; `WIN_MATCHES`: ogni vittoria). Se la missione ha `match_type`, contano solo le partite di quel tipo; se è `NULL` contano tutte.
-- Quando `progress` arriva a `goal_count` e `completed_at` è vuoto, salva `completed_at`, scrive `credit_transactions` con `type = 'MISSION_REWARD'` e ne salva l'id in `credit_transaction_id`. Il vincolo `UNIQUE` impedisce una seconda riga nello stesso periodo.
+- Quando `progress` arriva a `goal_count` e `completed_at` è vuoto, salva `completed_at`, scrive `credit_transactions` con `type = 'MISSION_REWARD'` e ne salva l'id in `credit_transaction_id`. Il vincolo `UNIQUE` impedisce una seconda riga nello stesso periodo. La riga si crea con `INSERT ... ON CONFLICT DO NOTHING` e poi si legge con `SELECT ... FOR UPDATE`, così due partite insieme non danno il premio due volte.
 
 ### Leghe
 
@@ -960,7 +961,7 @@ Quello che resta da decidere prima delle migration. Le decisioni già prese, con
 | Punti vita e limite di round | 20 punti vita confermati dal cliente, da verificare con le simulazioni del motore (#87) | 20 punti vita e 60 round finché non si decide | Marco + Maie |
 | Leghe | Punteggio minimo di ogni lega e premio in DC | Le quattro leghe sono già in `V10` con le soglie proposte (Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500) e premio 0: soglie e premi si cambiano dal backoffice | Maie |
 | Crediti a chi viene scelto dal matchmaking | Se vince il giocatore scelto come avversario (anche non collegato), riceve i 30 DC? | No: i DC della vittoria vanno solo a chi ha avviato la partita; il rank cambia per tutti e due | Maie + SWD |
-| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici. Lo schema è già pronto (`missions.match_type`): basta cambiare il dato | Maie + Nicolas |
+| Partite che contano per le missioni | Se le partite rapide contano per "gioca una partita" e "vinci 5 partite" | La missione giornaliera conta ogni partita; l'obiettivo settimanale solo le vittorie classificate, così non si fa con gli amici. Lo schema è già pronto (`missions.match_type`): basta cambiare il dato. Applicata con `V105` (#125), da confermare | Maie + Nicolas |
 | Distanza del matchmaking | Quanto può essere lontano il punteggio dell'avversario in una classificata | ±100, poi si allarga di 100 alla volta fino a ±400, poi chiunque | SWD |
 | Skin e animazioni | Deciso: Backlog. Da dire al cliente | Le skin saranno versioni delle carte, come la full art (`cards.variant_type`, [decisione 025](../decisioni/025-versioni-delle-carte.md)); le animazioni non toccano il database | Sara + Gaia |
 
@@ -1078,7 +1079,7 @@ Nessuna migration: cambiano solo le regole del service.
 | Vincitore della partita | Qualunque utente | Uno dei due giocatori o nessuno (`chk_matches_winner`) |
 | Punti vita finali | Anche negativi | Mai sotto 0 (`chk_matches_life_points`) |
 | `users.username` | `VARCHAR(30)` | `VARCHAR(40)`: ci sta lo username dell'account anonimizzato (`deleted-` + id); alla registrazione il limite resta 30 |
-| Missioni | Contavano sempre tutte le partite | `missions.match_type`: `NULL` = tutte, `CASUAL` o `RANKED`; per ora `NULL` per tutte e due |
+| Missioni | Contavano sempre tutte le partite | `missions.match_type`: `NULL` = tutte, `CASUAL` o `RANKED`; `NULL` per la giornaliera, `RANKED` per la settimanale (`V105`, #125) |
 | Leghe | Tabella vuota | Le quattro leghe in `V10` con le soglie proposte e premio 0; `user_league_rewards.match_id` per mostrare la lega raggiunta nel risultato della partita |
 | Partite | Nessuna indicazione sulla concorrenza | Righe dei due giocatori bloccate prima di calcolare punteggio e limiti giornalieri |
 | Full art | Copia rara della stessa carta (`user_cards.full_art_quantity`, `deck_cards.is_full_art`, `trade_items.is_full_art`, `pack_opening_cards.is_full_art`, colonne `full_art_*` in `cards`) | Carta a parte con il suo id: `cards.base_card_id` e `variant_type = 'FULL_ART'`, senza statistiche proprie; tolte tutte le colonne `full_art_*` e `is_full_art` tranne `packs.full_art_chance` ([decisione 025](../decisioni/025-versioni-delle-carte.md)) |

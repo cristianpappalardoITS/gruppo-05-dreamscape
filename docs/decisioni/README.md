@@ -48,7 +48,7 @@ Se una decisione cambia, non si riscrive il file vecchio: si crea un file nuovo 
 | Numero esatto di carte: 99 o 102 | Nicolas, Maie | [016](016-catalogo-fase-1.md) |
 | Soglie e premi delle leghe | Maie | [011](011-premi-di-lega.md) |
 | DC a chi viene scelto dal matchmaking e vince | Maie, SWD | [010](010-tipi-di-partita-e-rank.md) |
-| Partite che contano per le missioni | Maie, Nicolas | [015](015-missioni.md) |
+| Partite che contano per le missioni (applicata la proposta il 25/11, da confermare) | Maie, Nicolas | [015](015-missioni.md) |
 | Bilanciamento degli effetti: valori di X, effetti da aggiungere o togliere | Nicolas, Maie | [028](028-catalogo-degli-effetti.md) |
 | Regole del round lasciate aperte dal regolamento (punti a–f) | Nicolas, Maie | [029](029-motore-di-gioco.md) |
 | Casi degli effetti lasciati aperti dal catalogo (Culla, Non Sequitur, Immunità) | Nicolas, Maie | [031](031-effetti-nel-motore.md) |

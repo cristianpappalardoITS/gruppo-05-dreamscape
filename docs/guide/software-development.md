@@ -76,7 +76,7 @@ Gli stessi numeri sono negli esempi di [schema.md](../database/schema.md#esempio
 | Vittoria | 30 DC, massimo 3 al giorno, solo nelle partite classificate e non contro un amico | `credit_transactions` (`MATCH_REWARD`) |
 | Rank | Elo con K = 32, si parte da 1000. Stesso avversario: rank e DC al massimo 3 volte al giorno | `users.rating`, `matches.*_rating_change` |
 | Leghe | Dormiente, Sognatore, Lucido, Dreamweaver. Premio la prima volta che si entra; soglie e premi li propone Maie | `leagues`, `user_league_rewards` (`LEAGUE_REWARD`) |
-| Missione giornaliera, obiettivo settimanale | 100 DC, 250 DC. Versione semplice, fissa, nello Sprint 6. La settimana inizia il lunedì a mezzanotte, ora italiana | `missions`, `user_missions` (`MISSION_REWARD`); issue da aprire (una SWD, una WMD) |
+| Missione giornaliera, obiettivo settimanale | 100 DC, 250 DC. Versione semplice, fissa, nello Sprint 6. La settimana inizia il lunedì a mezzanotte, ora italiana | `missions`, `user_missions` (`MISSION_REWARD`); #125 (SWD) e #126 (WMD) |
 | Mazzo | 20 carte, max 2 copie (1 per le Leggendarie), Leggendarie 2, Epiche 4, Rare 8. Si salvano solo i mazzi validi | `GameRules`, `rarities` |
 | Partita | 20 punti vita (confermati dal cliente, da verificare con #87), max 60 round, poi pareggio | `game_modes`, copiati in `matches` |
 | Vantaggio di fazione | Dreams → Memories → Nightmares → Dreams, **+1 ATT** | `faction_advantages` |

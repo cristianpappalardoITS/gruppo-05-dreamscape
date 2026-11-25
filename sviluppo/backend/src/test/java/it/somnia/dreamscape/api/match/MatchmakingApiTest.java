@@ -210,8 +210,9 @@ class MatchmakingApiTest {
         // Given: carla ha il punteggio di anna, bruno 600 punti in più; anna ha già giocato 3 classificate con carla
         setRankedDeck(carla, carlaDeck).andExpect(status().isNoContent());
         setRankedDeck(bruno, brunoDeck).andExpect(status().isNoContent());
-        jdbcTemplate.update("UPDATE users SET rating = 1600 WHERE username = 'bruno_test'");
+        // Prima si salva bruno com'è in memoria: dopo l'UPDATE lo riscriverebbe con il punteggio di prima
         forgetLoadedData();
+        jdbcTemplate.update("UPDATE users SET rating = 1600 WHERE username = 'bruno_test'");
         for (int i = 0; i < 3; i++) {
             JsonNode match = json(playRanked(anna, annaDeck).andExpect(status().isCreated()));
             assertThat(match.path("opponent").path("username").asString()).isEqualTo("carla_test");
@@ -375,9 +376,15 @@ class MatchmakingApiTest {
         return jdbcTemplate.queryForObject("SELECT rating FROM users WHERE username = ?", Integer.class, username);
     }
 
+    // I crediti senza i premi delle missioni (#125): la prima partita del giorno completa anche la missione
+    // giornaliera di chi la avvia, che ha i suoi test
     private int credits(String username) {
         forgetLoadedData();
-        return jdbcTemplate.queryForObject("SELECT credits FROM users WHERE username = ?", Integer.class, username);
+        return jdbcTemplate.queryForObject("""
+                SELECT u.credits - COALESCE((SELECT SUM(t.amount) FROM credit_transactions t
+                                             WHERE t.user_id = u.id AND t.type = 'MISSION_REWARD'), 0)
+                FROM users u WHERE u.username = ?
+                """, Integer.class, username);
     }
 
     // I dati cambiati con JdbcTemplate o da un'altra richiesta: Hibernate deve rileggerli dal database

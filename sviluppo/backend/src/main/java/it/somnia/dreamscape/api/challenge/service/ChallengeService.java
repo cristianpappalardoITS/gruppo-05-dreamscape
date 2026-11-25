@@ -38,6 +38,7 @@ import it.somnia.dreamscape.api.match.model.MatchType;
 import it.somnia.dreamscape.api.match.repository.GameModeRepository;
 import it.somnia.dreamscape.api.match.service.MatchExceptions.EngineUnavailableException;
 import it.somnia.dreamscape.api.match.service.MatchService;
+import it.somnia.dreamscape.api.mission.service.MissionService;
 import it.somnia.dreamscape.api.user.dto.response.UserSummaryResponse;
 import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.repository.UserRepository;
@@ -48,6 +49,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Le sfide tra amici ({@code /challenges}, decisioni 010 e 026): sono sempre partite rapide, senza rank né
  * crediti. Tra due amici c'è al massimo una sfida in attesa; le sfide non scadono e chi sfida può annullarle.
+ * La partita fa avanzare le missioni di tutti e due (#125).
  *
  * <p>All'accettazione si ricontrollano l'amicizia e i due mazzi, poi la partita si gioca subito. Se il mazzo di chi
  * ha sfidato non è più valido la sfida resta in attesa: lo vedono tutti e due nelle liste, con i problemi.
@@ -66,6 +68,7 @@ public class ChallengeService {
     private final FriendService friendService;
     private final DeckService deckService;
     private final MatchService matchService;
+    private final MissionService missionService;
     private final Clock clock;
 
     /**
@@ -174,6 +177,7 @@ public class ChallengeService {
         Match match = matchService.play(MatchType.CASUAL, challenger, challengerDeck, opponent, opponentDeck,
                 challenge);
         challenge.complete(opponentDeck.deck(), Instant.now(clock));
+        missionService.recordMatch(match);
         return new AcceptChallengeResponse(match.getId());
     }
 

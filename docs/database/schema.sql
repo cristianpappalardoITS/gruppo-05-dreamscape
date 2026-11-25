@@ -820,6 +820,7 @@ CREATE TABLE user_missions (
 INSERT INTO missions (code, name, description, period, goal_type, goal_count, reward_credits) VALUES
     ('DAILY_PLAY', 'Missione giornaliera', 'Gioca una partita.', 'DAILY', 'PLAY_MATCHES', 1, 100),
     ('WEEKLY_WIN', 'Obiettivo settimanale', 'Vinci 5 partite.', 'WEEKLY', 'WIN_MATCHES', 5, 250);
+-- Con V105__set_weekly_mission_ranked.sql (#125) l'obiettivo settimanale conta solo le classificate.
 
 
 -- ============================================================================

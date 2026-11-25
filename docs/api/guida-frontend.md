@@ -1127,7 +1127,9 @@ Il set iniziale ha 20 carte della fazione scelta (14 Comuni e 6 Rare), estratte 
 - `latestCards` sono le carte dell'ultima apertura (comprata o regalata), nell'ordine di uscita, con la stessa forma di `GET /pack-openings/{openingId}`. Lista vuota se il giocatore non ha mai aperto pacchetti.
 - `league` è la lega del punteggio attuale; nella lega più alta `nextLeagueName` e `nextLeagueMinRating` sono `null`.
 - `pendingFriendRequests`, `pendingTrades` e `pendingChallenges` servono per il contatore nel menu: non ci sono altre notifiche.
-- `pendingFriendRequests` sono le richieste di amicizia ricevute in attesa, `pendingTrades` gli scambi ricevuti in attesa di una risposta, `pendingChallenges` le sfide ricevute in attesa più quelle lanciate con un mazzo da sistemare. Per ora `missions` è una lista vuota: si riempie quando sono pronte le missioni (#125). La forma della risposta non cambia, quindi la pagina si può già fare tutta.
+- `pendingFriendRequests` sono le richieste di amicizia ricevute in attesa, `pendingTrades` gli scambi ricevuti in attesa di una risposta, `pendingChallenges` le sfide ricevute in attesa più quelle lanciate con un mazzo da sistemare.
+- `missions` sono le missioni attive, prima la giornaliera e poi la settimanale, con l'avanzamento del periodo in corso (`progress` da 0 a `goalCount`). La missione giornaliera conta ogni partita, l'obiettivo settimanale solo le vittorie classificate. Avanzano solo per chi ha scelto di giocare: chi avvia una partita rapida o classificata e tutti e due i giocatori di una sfida tra amici, non chi viene scelto come avversario dal matchmaking.
+- Quando `progress` arriva a `goalCount` il premio arriva subito, una volta per periodo (movimento `MISSION_REWARD`), e `isCompleted` diventa `true`. Per il messaggio "missione completata" basta rileggere il riepilogo dopo la partita: `creditsEarned` del risultato della partita non comprende i premi delle missioni.
 - `resetsAt` è in UTC: la missione giornaliera si azzera a mezzanotte, ora italiana, l'obiettivo settimanale il lunedì a mezzanotte.
 - Se `hasRankedDeck` è `false`, conviene un invito a scegliere il mazzo classificato: senza, il giocatore non può essere scelto come avversario.
 
@@ -1878,7 +1880,7 @@ Accesso: **pubblico** = senza accesso; **utente** = serve il token; **admin** = 
 | `GET /packs` | utente | Pacchetti in vendita nel negozio |
 | `POST /packs/{packId}/open` | utente | Compra e apre un pacchetto |
 | `GET /pack-openings/{openingId}` | utente | Rilegge un'apertura |
-| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, ultime carte, richieste di amicizia, scambi e sfide in attesa (le missioni arrivano con #125) |
+| `GET /me/summary` | utente | Dashboard: crediti, punteggio, lega, missioni, ultime carte, richieste di amicizia, scambi e sfide in attesa |
 | `GET /cards` | pubblico | Catalogo, con filtri e pagine (anche `?featured=true` per la Home) |
 | `GET /cards/{cardId}` | pubblico | Una carta |
 | `GET /factions` | pubblico | Le tre fazioni con il loro Lord |
@@ -2022,7 +2024,7 @@ Sprint 5: 16-22/11, prima del SAL del 23/11. Sprint 6: 23-29/11.
 | Decisione | Proposta | Chi |
 |-----------|----------|-----|
 | Strumenti del frontend e come si caricano i componenti React nelle pagine | Vite, con più pagine HTML, in JavaScript | Gaia (#72) |
-| Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate | Maie + Nicolas |
+| Partite che contano per le missioni | Missione giornaliera: ogni partita; obiettivo settimanale: solo vittorie classificate. È già così nel backend (`V105`), da confermare | Maie + Nicolas |
 | Soglie e premi delle leghe | Dormiente 0, Sognatore 1100, Lucido 1300, Dreamweaver 1500 | Maie |
 | Immagini di Nap Pack e REM Pack | Da proporre ([decisione 030](../decisioni/030-nuovi-pacchetti.md)) | Digital |
 | Collezione con le carte mancanti in ombra (album) | Sì: invoglia a completare la collezione | WMD + DGS |

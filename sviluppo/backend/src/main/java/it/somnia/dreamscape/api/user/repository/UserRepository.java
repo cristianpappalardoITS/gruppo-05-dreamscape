@@ -1,11 +1,13 @@
 package it.somnia.dreamscape.api.user.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import it.somnia.dreamscape.api.user.model.User;
 import it.somnia.dreamscape.api.user.model.UserRole;
@@ -35,4 +37,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Se il mazzo è ancora valido lo controlla il service
     @EntityGraph(attributePaths = "rankedDeck")
     List<User> findByEnabledTrueAndRoleAndRankedDeckIsNotNullAndIdNot(UserRole role, UUID excludedUserId);
+
+    // Numeri della Dashboard admin (GET /admin/stats): solo i giocatori, anche gli account cancellati per i nuovi
+    long countByRoleAndEnabledTrue(UserRole role);
+
+    long countByRoleAndCreatedAtGreaterThanEqual(UserRole role, Instant from);
+
+    long countByRoleAndEnabledTrueAndLastLoginAtGreaterThanEqual(UserRole role, Instant from);
+
+    // I Dream Credits sui saldi dei giocatori
+    @Query("SELECT COALESCE(SUM(u.credits), 0) FROM User u WHERE u.role = :role")
+    long sumCreditsByRole(UserRole role);
 }

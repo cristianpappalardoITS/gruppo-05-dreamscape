@@ -35,7 +35,19 @@ Apri `http://localhost:5173/`. In sviluppo Vite passa al backend tutto quello ch
 | `/partite/{matchId}` | Risultato della partita e cronaca round per round, con riproduzione (serve l'accesso) | `GET /matches/{matchId}`, `GET /me`, `GET /cards/{cardId}` |
 | `/mazzi/editor` | Nuovo mazzo, o modifica con `?id=` (serve l'accesso): contatori in diretta con i numeri del regolamento | `GET /rules`, `GET /me/cards`, `GET /decks/{deckId}`, `POST /decks`, `PUT /decks/{deckId}` |
 
-I percorsi che non esistono ancora (per esempio `/admin`) mostrano la home. Dopo l'accesso il giocatore va alla Dashboard, l'admin a `/admin`.
+### Backoffice (solo `role: ADMIN`)
+
+Le pagine usano `AdminLayout` (`components/Admin/`): menu del backoffice e controllo del ruolo con `GET /me`; un giocatore torna alla Dashboard. Nella demo con Docker (`sviluppo/compose.yaml`) c'è l'admin di prova `admin` / `una-password-lunga`.
+
+| Percorso | Pagina | Dati |
+|----------|--------|------|
+| `/admin` | Dashboard admin: giocatori, carte, pacchetti, partite e Dream Credits | `GET /admin/stats` |
+| `/admin/carte` | Tutte le carte con filtri; nuova carta, nuova full art, modifica, illustrazione e ritaglio, disattivazione (con conferma se è nei mazzi) | `GET/POST /admin/cards`, `PUT /admin/cards/{cardId}`, `POST /admin/images`, `GET /admin/effects`, `GET /admin/card-sets`, `GET /admin/rarities`, `GET /factions` |
+| `/admin/pacchetti` | Tutti i pacchetti; nuovo e modifica con slot e probabilità, copertine, immagine e periodo di vendita | `GET/POST /admin/packs`, `PUT /admin/packs/{packId}`, `POST /admin/images` |
+| `/admin/configurazione` | Fazioni e vantaggi, limiti delle rarità, punti vita e round, soglie e premi delle leghe | `GET/PUT /admin/factions`, `/admin/rarities`, `/admin/game-modes`, `GET/PUT /admin/leagues`, `GET /rules` |
+| `/admin/messaggi` | Per ora solo l'avviso: i messaggi arrivano con il form Contatti (#162) | — |
+
+I percorsi che non esistono mostrano la home. Dopo l'accesso il giocatore va alla Dashboard, l'admin a `/admin`.
 
 In sviluppo usate Chrome o Firefox: Safari non salva il cookie del refresh token su `http://localhost` e a ogni cambio pagina si perde l'accesso (guida per il frontend, 4.2).
 
@@ -47,6 +59,7 @@ public/
 src/
   components/
     branding/               Simboli riutilizzati del marchio
+    Admin/                  Cornice, campi, schede di carte e pacchetti e stili del backoffice
     Benvenuto/              Apertura dei pacchetti e stili della pagina Benvenuto
     Collezione/             Carta nella griglia e dettaglio della carta
     Dashboard/              Stili della dashboard

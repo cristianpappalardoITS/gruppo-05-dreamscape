@@ -22,9 +22,14 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import HistoryPage from './pages/HistoryPage.jsx'
 import PackSeriesPage from './pages/PackSeriesPage.jsx'
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx'
+import AdminCardsPage from './pages/AdminCardsPage.jsx'
+import AdminPacksPage from './pages/AdminPacksPage.jsx'
+import AdminConfigPage from './pages/AdminConfigPage.jsx'
+import AdminMessagesPage from './pages/AdminMessagesPage.jsx'
 import './styles/design-tokens.css'
 
-// Pagine per percorso: quelle che non esistono ancora (es. /admin) mostrano la home
+// Pagine per percorso: quelle che non esistono mostrano la home
 const pages = {
   '/': { title: 'Home', render: () => <HomePage /> },
   '/login': { title: 'Accedi', render: () => <LoginPage /> },
@@ -46,6 +51,12 @@ const pages = {
   '/scambi/nuovo': { title: 'Nuovo scambio', render: () => <NewTradePage /> },
   '/arena': { title: 'Arena', render: () => <ArenaPage /> },
   '/sfide': { title: 'Sfide', render: () => <ChallengesPage /> },
+  // Backoffice, solo per role ADMIN (lo controlla AdminLayout)
+  '/admin': { title: 'Dashboard admin', render: () => <AdminDashboardPage /> },
+  '/admin/carte': { title: 'Backoffice: carte', render: () => <AdminCardsPage /> },
+  '/admin/pacchetti': { title: 'Backoffice: pacchetti', render: () => <AdminPacksPage /> },
+  '/admin/configurazione': { title: 'Backoffice: configurazione', render: () => <AdminConfigPage /> },
+  '/admin/messaggi': { title: 'Backoffice: messaggi', render: () => <AdminMessagesPage /> },
 }
 
 const pathname = window.location.pathname.replace(/\/$/, '') || '/'

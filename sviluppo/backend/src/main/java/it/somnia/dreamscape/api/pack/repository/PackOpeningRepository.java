@@ -1,5 +1,6 @@
 package it.somnia.dreamscape.api.pack.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,4 +20,7 @@ public interface PackOpeningRepository extends JpaRepository<PackOpening, UUID> 
 
     // L'ultima apertura dell'utente, comprata o regalata: gli id UUID v7 crescono nel tempo
     Optional<PackOpening> findFirstByUserIdOrderByIdDesc(UUID userId);
+
+    // Aperture da un momento in poi (Dashboard admin)
+    long countByOpenedAtGreaterThanEqual(Instant from);
 }

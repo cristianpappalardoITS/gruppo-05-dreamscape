@@ -28,14 +28,17 @@ const NETWORK_ERROR = {
   message: 'Il server non risponde. Riprova tra poco.',
 };
 
+// Il corpo è JSON, oppure un FormData per i file (caricamento delle immagini del backoffice):
+// con FormData il Content-Type lo mette il browser, con il separatore delle parti
 function send(path, method, body) {
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   return fetch(API_BASE + path, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined || isForm ? body : JSON.stringify(body),
     credentials: 'same-origin', // manda il cookie del refresh token
   });
 }
@@ -62,6 +65,7 @@ export function refresh() {
 //   await api('/packs')
 //   await api(`/packs/${packId}/open`, { method: 'POST' })
 //   await api('/me', { method: 'PUT', body: { email } })
+//   await api('/admin/images', { method: 'POST', body: formData })   (FormData con il file)
 // Restituisce i dati della risposta, oppure null se la risposta è vuota (202, 204).
 // Se qualcosa va storto lancia un ApiError.
 export async function api(path, { method = 'GET', body } = {}) {

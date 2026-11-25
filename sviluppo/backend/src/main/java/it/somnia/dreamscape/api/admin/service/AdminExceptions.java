@@ -59,4 +59,18 @@ public final class AdminExceptions {
                     List.of(new FieldErrorResponse("name", "Esiste già un pacchetto con questo nome.")));
         }
     }
+
+    public static class FactionNameTakenException extends ApiException {
+        public FactionNameTakenException() {
+            super(HttpStatus.CONFLICT, "FACTION_NAME_TAKEN", "Esiste già una fazione con questo nome.",
+                    List.of(new FieldErrorResponse("name", "Esiste già una fazione con questo nome.")));
+        }
+    }
+
+    // Fazione, rarità o modalità con un codice che non esiste (configurazione del gioco)
+    public static class ConfigNotFoundException extends ApiException {
+        public ConfigNotFoundException(String code, String message) {
+            super(HttpStatus.NOT_FOUND, code, message);
+        }
+    }
 }

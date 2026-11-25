@@ -41,4 +41,11 @@ public class FactionAdvantage {
 
     @Column(name = "defense_bonus", nullable = false)
     private int defenseBonus;
+
+    public FactionAdvantage(Faction faction, Faction targetFaction, int attackBonus, int defenseBonus) {
+        this.faction = faction;
+        this.targetFaction = targetFaction;
+        this.attackBonus = attackBonus;
+        this.defenseBonus = defenseBonus;
+    }
 }

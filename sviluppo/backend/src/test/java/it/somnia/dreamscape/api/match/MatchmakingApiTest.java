@@ -172,15 +172,19 @@ class MatchmakingApiTest {
 
     @Test
     void playRanked_friendAsOpponent_winGivesRankButNoCredits() throws Exception {
-        // Given: solo bruno, amico di anna, ha un mazzo classificato
-        setRankedDeck(bruno, brunoDeck).andExpect(status().isNoContent());
+        // Given: carla diventa amica di anna ed è l'unica con un mazzo classificato. Memories è la fazione su cui
+        // Dreams ha il vantaggio: con bruno (Nightmares) anna può perdere decine di partite di fila
+        setRankedDeck(carla, carlaDeck).andExpect(status().isNoContent());
+        forgetLoadedData();
+        jdbcTemplate.update("INSERT INTO friendships (requester_id, addressee_id, status, accepted_at) "
+                + "VALUES (?, ?, 'ACCEPTED', now())", userId("anna_test"), userId("carla_test"));
         int annaCredits = credits("anna_test");
 
         // When: si gioca finché anna non vince
         JsonNode win = playRankedUntilWin(anna, annaDeck, "anna_test");
 
         // Then
-        assertThat(win.path("opponent").path("username").asString()).isEqualTo("bruno_test");
+        assertThat(win.path("opponent").path("username").asString()).isEqualTo("carla_test");
         assertThat(win.path("creditsEarned").asInt()).isZero();
         assertThat(credits("anna_test")).isEqualTo(annaCredits);
     }
@@ -189,6 +193,7 @@ class MatchmakingApiTest {
     void playRanked_alreadyThreeRewardedWinsToday_noMoreCredits() throws Exception {
         // Given: tre vittorie già premiate oggi
         setRankedDeck(carla, carlaDeck).andExpect(status().isNoContent());
+        forgetLoadedData();
         for (int i = 0; i < 3; i++) {
             jdbcTemplate.update("UPDATE users SET credits = credits + 30 WHERE username = 'anna_test'");
             jdbcTemplate.update("INSERT INTO credit_transactions (user_id, type, amount, balance_after) "
@@ -210,6 +215,8 @@ class MatchmakingApiTest {
         // Given: carla ha il punteggio di anna, bruno 600 punti in più; anna ha già giocato 3 classificate con carla
         setRankedDeck(carla, carlaDeck).andExpect(status().isNoContent());
         setRankedDeck(bruno, brunoDeck).andExpect(status().isNoContent());
+        // Prima si scrivono i mazzi classificati: altrimenti Hibernate riscrive la riga di bruno con il punteggio vecchio
+        forgetLoadedData();
         jdbcTemplate.update("UPDATE users SET rating = 1600 WHERE username = 'bruno_test'");
         forgetLoadedData();
         for (int i = 0; i < 3; i++) {

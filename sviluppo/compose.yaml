@@ -7,7 +7,8 @@
 # Per fermare tutto: docker compose down (i dati restano nel volume; con -v si cancellano).
 #
 # Il backend parte con il profilo dev: catalogo vero, pacchetti e anche gli utenti di prova
-# (anna_test, bruno_test...). Le chiavi qui sotto sono di prova: alla consegna arrivano da .env.
+# (anna_test, bruno_test...) e l'admin di prova admin / una-password-lunga per il backoffice.
+# Le chiavi qui sotto sono di prova: alla consegna arrivano da .env.
 #
 # Questo file non sostituisce sviluppo/backend/compose.yaml, che serve a ./gradlew bootRun
 # (database, Mailpit e motore per il backend acceso sul Mac). Tutti e due aprono Mailpit sulla
@@ -77,9 +78,10 @@ services:
       # esce dall'account. Con https davanti (alla consegna) si rimette true
       DREAMSCAPE_SECURITY_REFRESHCOOKIESECURE: '${REFRESH_COOKIE_SECURE:-false}'
       GOOGLE_CLIENT_ID: '${GOOGLE_CLIENT_ID:-}'
-      ADMIN_USERNAME: '${ADMIN_USERNAME:-}'
-      ADMIN_EMAIL: '${ADMIN_EMAIL:-}'
-      ADMIN_PASSWORD: '${ADMIN_PASSWORD:-}'
+      # Admin di prova per il backoffice (/admin): come le altre chiavi qui, alla consegna arriva da .env
+      ADMIN_USERNAME: '${ADMIN_USERNAME:-admin}'
+      ADMIN_EMAIL: '${ADMIN_EMAIL:-admin@dreamscape.local}'
+      ADMIN_PASSWORD: '${ADMIN_PASSWORD:-una-password-lunga}'
     volumes:
       - 'backend-data:/app/data'
 

@@ -37,4 +37,11 @@ public interface CardRepository extends JpaRepository<Card, UUID>, JpaSpecificat
 
     // Una versione precisa, es. la full art che esce dal pacchetto al posto della carta normale
     Optional<Card> findByBaseCardAndVariantType(Card baseCard, CardVariantType variantType);
+
+    // Numeri della Dashboard admin (GET /admin/stats)
+    long countByBaseCardIsNullAndActiveTrue();
+
+    long countByVariantTypeAndActiveTrue(CardVariantType variantType);
+
+    long countByActiveFalse();
 }

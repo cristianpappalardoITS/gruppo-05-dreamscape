@@ -60,4 +60,9 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
             ORDER BY m.playedAt DESC, m.id DESC
             """)
     Page<Match> findPlayedBy(UUID userId, MatchType matchType, Pageable pageable);
+
+    // Numeri della Dashboard admin (GET /admin/stats)
+    long countByMatchType(MatchType matchType);
+
+    long countByMatchTypeAndPlayedAtGreaterThanEqual(MatchType matchType, Instant from);
 }

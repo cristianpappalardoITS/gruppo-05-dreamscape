@@ -30,7 +30,8 @@ class OpenApiDocsTest {
 
     private static final Set<String> TAGS = Set.of("Accesso", "Profilo", "Benvenuto", "Catalogo", "Negozio",
             "Collezione", "Mazzi", "Amici", "Scambi", "Sfide", "Partite", "Leghe", "Backoffice: carte",
-            "Backoffice: immagini", "Backoffice: pacchetti", "Backoffice: leghe");
+            "Backoffice: immagini", "Backoffice: pacchetti", "Backoffice: leghe", "Backoffice: statistiche",
+            "Backoffice: configurazione");
     private static final Set<String> METHODS = Set.of("get", "post", "put", "patch", "delete");
     private static final String ERROR_REF = "#/components/schemas/ErrorResponse";
 

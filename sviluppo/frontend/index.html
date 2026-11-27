@@ -1,13 +1,198 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, width=device-width">
+  <link rel="stylesheet" href="./css/main.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container site-header-inner">
+      <a class="logo-link" href="/" aria-label="Dreamscape, torna alla home">
+        <img class="logo" src="./assets/images/logo/dreamscape-logo-header.svg" alt="Logo di Dreamscape">
+      </a>
+
+      <nav class="navbar" aria-label="Navigazione principale">
+        <button class="hamburger-menu" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="main-menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+
+        <ul id="main-menu" class="menu-list">
+          <li><a class="menu-link" href="#" aria-current="page">Home</a></li>
+          <li><a class="menu-link" href="./pages/game.html">Gioco</a></li>
+          <li><a class="menu-link" href="./pages/rules.html">Regolamento</a></li>
+          <li><a class="menu-link" href="./pages/glossary.html">Glossario</a></li>
+          <li><a class="menu-link" href="./pages/about-us.html">Chi siamo</a></li>
+          <li><a class="menu-link" href="./pages/faq.html">FAQ</a></li>
+          <li>
+            <a class="menu-link account-link" href="/play/">
+              <img class="account-icon" src="./assets/images/icons/account.svg" alt="">
+              <span class="account-label">Accedi</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-image" src="./assets/images/backgrounds/hero.webp" alt="Le tre fazioni di Dreamscape: Nightmares, Memories e Dreams">
+
+      <div class="container hero-content">
+        <h1 id="hero-title" class="hero-title">Dreams &amp; Nightmares</h1>
+        <p class="hero-tagline">Ogni sogno nasconde qualcosa.</p>
+        <p class="body-text">Quando chiudi gli occhi, la giornata ti segue. Un desiderio prende il volo, una paura trova un volto, un ricordo apre una porta.</p>
+        <p class="body-text">Oltre quella porta c’è Dreamscape, un gioco di carte collezionabili online in cui ciò che ti porti nel sonno diventa una creatura.</p>
+        <p class="body-text">Colleziona le carte di Dreams, Nightmares e Memories. Scegline 20 per il tuo mazzo e scopri come se la cavano insieme contro un altro Dreamweaver.</p>
+
+        <div class="button-group">
+          <a class="button button-primary" href="/play/">Entra nell’arena</a>
+          <a class="button button-secondary" href="./pages/game.html">Scopri il gioco</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section challenge" aria-labelledby="challenge-title">
+      <div class="container">
+        <h2 id="challenge-title" class="section-title">La sfida comincia dal mazzo</h2>
+
+        <ol class="step-list">
+          <li class="step">
+            <span class="step-number" aria-hidden="true">1</span>
+            <div class="step-body">
+              <h3 class="step-title">Scegli la tua prima fazione.</h3>
+              <p class="body-text">Alla registrazione ricevi 500 Dream Credits. Nella pagina Benvenuto scegli la fazione del tuo set iniziale e apri due pacchetti di benvenuto.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number" aria-hidden="true">2</span>
+            <div class="step-body">
+              <h3 class="step-title">Componi il tuo mazzo.</h3>
+              <p class="body-text">Scegli 20 creature dalla tua collezione. Valuta attacco, difesa, effetti e vantaggi di fazione.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step-number" aria-hidden="true">3</span>
+            <div class="step-body">
+              <h3 class="step-title">Mettilo alla prova.</h3>
+              <p class="body-text">Cerca una partita rapida, gioca in classificata o invita un amico. Il gioco mescola i mazzi e simula lo scontro in automatico.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section factions" aria-labelledby="factions-title">
+      <div class="container">
+        <h2 id="factions-title" class="section-title">Tre fazioni oltre la soglia</h2>
+
+        <ul class="faction-list">
+          <li class="faction faction-memories">
+            <div class="faction-header">
+              <img class="faction-icon" src="./assets/images/icons/memories.svg" alt="">
+              <h3 class="faction-name">Memories</h3>
+            </div>
+          </li>
+          <li class="faction faction-dreams">
+            <div class="faction-header">
+              <img class="faction-icon" src="./assets/images/icons/dreams.svg" alt="">
+              <h3 class="faction-name">Dreams</h3>
+            </div>
+          </li>
+          <li class="faction faction-nightmares">
+            <div class="faction-header">
+              <img class="faction-icon" src="./assets/images/icons/nightmares.svg" alt="">
+              <h3 class="faction-name">Nightmares</h3>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section rules" aria-labelledby="rules-title">
+      <div class="container">
+        <h2 id="rules-title" class="section-title">Regolamento di Gioco</h2>
+
+        <ul class="rules-list">
+          <li class="rule-tile">
+            <img class="rule-icon" src="./assets/images/icons/deck.svg" alt="">
+            <strong class="rule-text">Mazzo da 20 carte</strong>
+          </li>
+          <li class="rule-tile">
+            <img class="rule-icon" src="./assets/images/icons/life.svg" alt="">
+            <strong class="rule-text">20 punti vita</strong>
+          </li>
+          <li class="rule-tile">
+            <img class="rule-icon" src="./assets/images/icons/auto-match.svg" alt="">
+            <strong class="rule-text">Partita automatica</strong>
+          </li>
+          <li class="rule-tile">
+            <img class="rule-icon" src="./assets/images/icons/faction-bonus.svg" alt="">
+            <strong class="rule-text">Vantaggi di fazione</strong>
+          </li>
+        </ul>
+
+        <a class="button button-secondary" href="./pages/rules.html">Leggi il regolamento</a>
+      </div>
+    </section>
+
+    <section class="arena-cta" aria-labelledby="arena-cta-title">
+      <div class="container">
+        <div class="arena-cta-card">
+          <h2 id="arena-cta-title" class="section-title">Pronto a sfidare l’inconscio?</h2>
+          <div class="button-group">
+            <a class="button button-primary" href="/play/">Entra nell’Arena</a>
+            <a class="button button-secondary" href="./pages/about-us.html">Esplora il mondo di Dreamscape</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer-inner">
+      <a class="logo-link" href="/" aria-label="Dreamscape, torna alla home">
+        <img class="logo" src="./assets/images/logo/dreamscape-logo-footer.svg" alt="Logo di Dreamscape">
+      </a>
+
+      <p class="closing-tagline">Every dream has a dark side. Quale parte della tua mente scenderà in campo?</p>
+
+      <ul class="social-list">
+        <li>
+            <a class="social-link" href="#" aria-label="Instagram di Dreamscape">
+            <i class="fa-brands fa-instagram social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+        <li>
+            <a class="social-link" href="#" aria-label="Facebook di Dreamscape">
+            <i class="fa-brands fa-facebook-f social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+        <li>
+            <a class="social-link" href="#" aria-label="YouTube di Dreamscape">
+            <i class="fa-brands fa-youtube social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+      </ul>
+
+      <address class="contact">
+        Email: <a href="mailto:support@dreamscape-tcg.it">support@dreamscape-tcg.it</a>
+      </address>
+
+      <small class="copyright">© 2026 Dreamscape TCG. Tutti i diritti riservati.</small>
+    </div>
+  </footer>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
 </html>

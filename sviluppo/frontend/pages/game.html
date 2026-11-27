@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, width=device-width">
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,700;1,400&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container site-header-inner">
+      <a class="logo-link" href="/" aria-label="Dreamscape, torna alla home">
+        <img class="logo" src="../assets/images/logo/dreamscape-logo-header.svg" alt="Logo di Dreamscape">
+      </a>
+
+      <nav class="navbar" aria-label="Navigazione principale">
+        <button class="hamburger-menu" type="button" aria-label="Apri il menu" aria-expanded="false" aria-controls="main-menu">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+
+        <ul id="main-menu" class="menu-list">
+          <li><a class="menu-link" href="../index.html">Home</a></li>
+          <li><a class="menu-link" href="#" aria-current="page">Gioco</a></li>
+          <li><a class="menu-link" href="../pages/rules.html">Regolamento</a></li>
+          <li><a class="menu-link" href="../pages/glossary.html">Glossario</a></li>
+          <li><a class="menu-link" href="../pages/about-us.html">Chi siamo</a></li>
+          <li><a class="menu-link" href="../pages/faq.html">FAQ</a></li>
+          <li>
+            <a class="menu-link account-link" href="#">
+              <img class="account-icon" src="../assets/images/icons/account.svg" alt="">
+              <span class="account-label">Accedi</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+<main>
+
+  <section class="game-intro" aria-labelledby="game-title">
+    <div class="game-container game-intro-inner">
+      <div class="game-intro-text">
+        <h1 id="game-title" class="game-title">Il gioco</h1>
+        <h2 class="game-subtitle">Come si gioca</h2>
+        <p class="game-text">In Dreamscape collezioni creature digitali e costruisci mazzi da 20 carte. Ogni creatura appartiene a una fazione e ha due valori, <strong>attacco (ATT)</strong> e <strong>difesa (DIF)</strong>. Può avere anche un effetto che si attiva nel momento indicato sulla carta.</p>
+        <p class="game-text">La strategia sta nella scelta delle creature. All’inizio della partita il gioco mescola i mazzi, poi pesca e risolve gli scontri automaticamente. Puoi provare un mazzo in una partita rapida, sfidare un amico o giocare in classificata per il tuo punteggio.</p>
+      </div>
+
+      <article class="game-card">
+        <img class="game-card-art" src="../assets/images/characters/il-sogno-lucido.webp" alt="Una dreamweaver seduta tra le stelle">
+        <img class="game-card-frame" src="../assets/images/frame/dreams-frame-rare.webp" alt="">
+
+        <h3 class="game-card-name">Il Sogno Lucido</h3>
+
+        <p class="game-card-flavor">Sai di sognare, e il sogno ti obbedisce.</p>
+        <p class="game-card-effect"><strong>Mente lucida:</strong> il vantaggio di fazione avversario non si applica contro di lei.</p>
+
+        <p class="game-card-stat game-card-attack"><span class="visually-hidden">Attacco </span>5</p>
+        <p class="game-card-stat game-card-defense"><span class="visually-hidden">Difesa </span>7</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="game-threshold" aria-labelledby="threshold-title">
+    <div class="game-container">
+      <h2 id="threshold-title" class="game-subtitle">Oltre la soglia</h2>
+      <p class="game-text">Ti è mai capitato di accorgerti che stavi sognando? I <strong>Dreamweaver</strong> imparano a riconoscere quell’istante. È lì che trovano la <strong>Soglia</strong>, un luogo tra veglia e sonno fatto di porte socchiuse e luce che filtra dalle finestre. Da qui partono le loro sfide.</p>
+      <p class="game-text">Nel Dreamscape restano le cose che le persone si portano a letto. Il pensiero di un messaggio rimasto senza risposta, il sollievo di tornare a casa, il ricordo di una stanza d’infanzia. Ogni traccia può depositarsi come un <strong>Frammento</strong>. Quando diventa abbastanza intenso, il Frammento prende forma e nasce una creatura.</p>
+      <p class="game-text">Le regioni del Dreamscape cambiano confini ogni notte. I Dreamweaver raccolgono le creature che vi incontrano e le legano nei loro mazzi. Ogni sfida sposta un poco la <strong>Trama</strong>, l’equilibrio fra desideri, paure e ricordi. Se la Trama cede, la paura tiene svegli, il desiderio allontana dalla realtà e il passato diventa un luogo da cui è difficile uscire.</p>
+    </div>
+  </section>
+
+  <section class="game-factions" aria-labelledby="factions-title">
+    <div class="game-container">
+      <h2 id="factions-title" class="game-factions-title">Le tre fazioni</h2>
+
+      <ul class="faction-detail-list">
+        <li class="faction-detail faction-detail-dreams">
+          <img class="faction-detail-icon" src="../assets/images/icons/dreams.svg" alt="">
+          <div class="faction-detail-body">
+            <h3 class="faction-detail-title">Dreams · Le Alture Chiare</h3>
+            <p class="game-text">I giardini galleggiano sopra le nuvole e, tra le città sospese, i fari indicano ancora la via di casa. Qui prendono forma desideri e possibilità. A rappresentare Dreams è Il Sogno Lucido, il Lord della fazione.</p>
+          </div>
+        </li>
+
+        <li class="faction-detail faction-detail-nightmares">
+          <img class="faction-detail-icon" src="../assets/images/icons/nightmares.svg" alt="">
+          <div class="faction-detail-body">
+            <h3 class="faction-detail-title">Nightmares · Il Sottosonno</h3>
+            <p class="game-text">Le stanze perdono le porte, le scale scendono nel buio e il pavimento può sparire sotto i piedi. Qui prendono corpo paure familiari, come perdere il controllo o ritrovarsi davanti a qualcosa che si teme di riconoscere. Il Lord di Nightmares è L’Uomo Senza Volto.</p>
+          </div>
+        </li>
+
+        <li class="faction-detail faction-detail-memories">
+          <img class="faction-detail-icon" src="../assets/images/icons/memories.svg" alt="">
+          <div class="faction-detail-body">
+            <h3 class="faction-detail-title">Memories · L’Archivio Ambrato</h3>
+            <p class="game-text">Negli orologi fermi è sempre la stessa ora. Tra fotografie e aule vuote, un dettaglio basta a riportare in superficie qualcosa che sembrava perduto. A custodire questi luoghi è La Custode del Tempo Fermo, la Lord di Memories.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+  <footer class="site-footer">
+    <div class="container site-footer-inner">
+      <a class="logo-link" href="/" aria-label="Dreamscape, torna alla home">
+        <img class="logo" src="../assets/images/logo/dreamscape-logo-footer.svg" alt="Logo di Dreamscape">
+      </a>
+
+      <p class="closing-tagline">Every dream has a dark side. Quale parte della tua mente scenderà in campo?</p>
+
+      <ul class="social-list">
+        <li>
+            <a class="social-link" href="#" aria-label="Instagram di Dreamscape">
+            <i class="fa-brands fa-instagram social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+        <li>
+            <a class="social-link" href="#" aria-label="Facebook di Dreamscape">
+            <i class="fa-brands fa-facebook-f social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+        <li>
+            <a class="social-link" href="#" aria-label="YouTube di Dreamscape">
+            <i class="fa-brands fa-youtube social-icon" aria-hidden="true"></i>
+            </a>
+        </li>
+      </ul>
+
+      <address class="contact">
+        Email: <a href="mailto:support@dreamscape-tcg.it">support@dreamscape-tcg.it</a>
+      </address>
+
+      <small class="copyright">© 2026 Dreamscape TCG. Tutti i diritti riservati.</small>
+    </div>
+  </footer>
+
+  <script type="module" src="../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+/*
+  Breakpoints (mobile first, min-width):
+  md: 768px | lg: 992px | xl: 1200px
+  Custom properties can't be used inside media queries.
+*/
+
+:root {
+  /* Colors */
+  --color-bg: #111522;
+  --color-surface: #292733;
+  --color-border: #4f455c;
+  --color-gold: #c9955d;
+  --color-cream: #e8d9c4;
+  --color-light: #f3f4f6;
+  --color-muted: #a39ead;
+  --color-blue: #8fc8f4;
+  --color-purple: #76538d;
+  --color-purple-light: #b892d6;
+  --color-navy: #344c83;
+
+  /* Fonts */
+  --font-heading: "Cinzel", serif;
+  --font-accent: "Cormorant", serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-padding: 1.25rem;
+  --header-height: 100px;
+  --radius: 0.75rem;
+}

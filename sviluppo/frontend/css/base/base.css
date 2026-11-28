@@ -1,0 +1,52 @@
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-light);
+  background-color: var(--color-bg);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-padding);
+}
+
+.section {
+  padding-block: var(--space-xl);
+}
+
+.section-title {
+  margin-bottom: var(--space-lg);
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.5rem);
+  text-align: center;
+  color: var(--color-cream);
+}
+
+.body-text {
+  max-width: 70ch;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    color: var(--color-gold);
+  }
+}

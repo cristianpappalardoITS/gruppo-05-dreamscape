@@ -1,0 +1,260 @@
+/* ---------- Hero ---------- */
+.hero {
+  background: url("../../assets/images/backgrounds/background-section.webp") center / cover no-repeat;
+}
+
+.hero-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding-block: var(--space-lg) var(--space-xl);
+  text-align: center;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 1.2rem + 4vw, 4rem);
+  color: var(--color-gold);
+}
+
+.hero-tagline {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+  color: var(--color-cream);
+}
+
+.hero-content .button-group {
+  margin-top: var(--space-md);
+}
+
+/* ---------- Challenge ---------- */
+.step-list {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.step-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: var(--color-cream);
+  color: var(--color-bg);
+  font-weight: 700;
+}
+
+.step-title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-cream);
+}
+
+/* ---------- Factions ---------- */
+.factions {
+  background: linear-gradient(90deg, var(--color-purple), var(--color-blue));
+}
+
+.factions .section-title {
+  color: var(--color-bg);
+}
+
+.faction-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.faction {
+  --faction-color: var(--color-gold);
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3 / 4;
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+}
+
+/* Thin inner frame */
+.faction::before {
+  content: "";
+  position: absolute;
+  inset: 0.4rem;
+  border: 1px solid var(--faction-color);
+  border-radius: 0.5rem;
+  pointer-events: none;
+}
+
+.faction-memories {
+  --faction-color: var(--color-gold);
+}
+
+.faction-dreams {
+  --faction-color: var(--color-blue);
+}
+
+.faction-nightmares {
+  --faction-color: var(--color-purple-light);
+}
+
+.faction-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.faction-icon {
+  height: clamp(2.5rem, 12vw, 4.5rem);
+  width: auto;
+}
+
+.faction-name {
+  font-size: clamp(0.7rem, 2.6vw, 1.5rem);
+  color: var(--faction-color);
+}
+
+/* ---------- Rules ---------- */
+.rules .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rules-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 64rem;
+  margin-bottom: var(--space-md);
+}
+
+.rule-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  text-align: center;
+
+  min-height: 11rem;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-blue));
+  color: var(--color-bg);
+}
+
+.rule-icon {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.rule-text {
+  font-size: 0.9rem;
+}
+
+.rules .button {
+  align-self: stretch;
+}
+
+/* ---------- Arena CTA ---------- */
+.arena-cta {
+  padding-block: var(--space-lg) var(--space-xl);
+  background: url("../../assets/images/backgrounds/arena.webp") center / cover no-repeat;
+
+}
+
+.arena-cta-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-md);
+
+  border: 0;
+  border-radius: 2.5rem;
+  background-color: rgb(41 39 51 / 0.7);
+  backdrop-filter: blur(6px);
+}
+
+.arena-cta-card .section-title {
+  margin-bottom: 0;
+  color: var(--color-gold);
+}
+
+/* ---------- Tablet and up ---------- */
+@media (min-width: 768px) {
+  .hero-image {
+    aspect-ratio: 1440 / 751;
+  }
+
+  .hero-content .body-text {
+    max-width: 64rem;
+  }
+
+  .factions {
+    background: linear-gradient(135deg, var(--color-purple), var(--color-blue));
+  }
+
+  .faction-list {
+    gap: var(--space-md);
+  }
+
+  .rules-list {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+  }
+
+  .rule-tile {
+    min-height: 11rem;
+    border: 0;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, var(--color-blue), var(--color-gold));
+    color: var(--color-bg);
+  }
+
+  .rule-icon {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .rules .button {
+    align-self: center;
+    min-width: 17rem;
+  }
+
+  .arena-cta {
+    padding-block: 7rem;
+    background: url("../../assets/images/backgrounds/arena.webp") center / cover no-repeat;
+
+  }
+
+  .arena-cta-card {
+    padding: 4rem 3rem;
+    border: 0;
+    border-radius: 2.5rem;
+    background-color: rgb(41 39 51 / 0.7);
+    backdrop-filter: blur(6px);
+  }
+}

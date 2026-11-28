@@ -1,0 +1,140 @@
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-bg);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--header-height);
+}
+
+.logo {
+  height: 3.5rem;
+  width: auto;
+}
+
+/* Hamburger (mobile) */
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0.5rem;
+  background-color: var(--color-bg);
+  border: 0;
+}
+
+.hamburger-line {
+  width: 2.25rem;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--color-gold);
+  transition: transform 0.25s, opacity 0.25s;
+}
+
+/* 7px gap + 4px line = 11px between line centers */
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(1) {
+  transform: translateY(11px) rotate(45deg);
+}
+
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu[aria-expanded="true"] .hamburger-line:nth-child(3) {
+  transform: translateY(-11px) rotate(-45deg);
+}
+
+/* Dropdown menu (mobile) */
+.menu-list {
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  display: none;
+  flex-direction: column;
+  padding: var(--space-sm) var(--container-padding) var(--space-md);
+  background-color: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+.menu-list.is-open {
+  display: flex;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  text-decoration: none;
+  color: var(--color-light);
+}
+
+/* Hover and keyboard focus: temporary feedback */
+.menu-link:hover,
+.menu-link:focus-visible {
+  color: var(--color-cream);
+}
+
+/* Current page: always gold */
+.menu-link[aria-current="page"] {
+  color: var(--color-gold);
+}
+
+.account-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+@media (min-width: 992px) {
+  :root {
+    --header-height: 120px;
+  }
+
+  .site-header {
+    background-color: var(--color-bg);
+  }
+
+  .logo {
+    height: 4.5rem;
+  }
+
+  .hamburger-menu {
+    display: none;
+  }
+
+  .menu-list {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 4rem);
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  .menu-link {
+    padding: 0.5rem 0;
+  }
+
+  .account-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  /* Visually hidden, still read by screen readers */
+  .account-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

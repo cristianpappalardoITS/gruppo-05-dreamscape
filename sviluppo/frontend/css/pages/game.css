@@ -1,0 +1,340 @@
+/* ---------- Game card ---------- */
+.game-card {
+  position: relative;
+  isolation: isolate;
+  /* the blend stays inside the card */
+  overflow: hidden;
+  /* clips the black corners of the frame */
+  border-radius: 5.5% / 3.67%;
+  /* same radius horizontally and vertically */
+  container-type: inline-size;
+  /* enables cqw units for children */
+  width: min(100%, 13.75rem);
+  aspect-ratio: 2 / 3;
+  /* same ratio as the frame (1024 x 1536) */
+  margin-inline: auto;
+}
+
+/* Layers */
+.game-card-art,
+.game-card-frame {
+  position: absolute;
+}
+
+/* Art: fills the black window of the frame (15.2% to 61.4% of the height) */
+.game-card-art {
+  z-index: 1;
+  top: 14.5%;
+  left: 4.5%;
+  width: 91%;
+  height: 48%;
+  object-fit: cover;
+}
+
+/* Frame on top: its black becomes transparent */
+.game-card-frame {
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}
+
+/* Divider between flavor text and effect */
+.game-card::before,
+.game-card::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  background-color: color-mix(in srgb, var(--color-navy), var(--color-blue) 40%);
+}
+
+.game-card::before {
+  top: 72.6%;
+  left: 23.6%;
+  width: 52.8%;
+  height: 0.4cqw;
+}
+
+.game-card::after {
+  top: 72.7%;
+  left: 50%;
+  width: 2cqw;
+  height: 2cqw;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Shared by all texts */
+.game-card-name,
+.game-card-flavor,
+.game-card-effect,
+.game-card-stat {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-accent);
+  color: var(--color-surface);
+}
+
+/* Title: centered in the nameplate */
+.game-card-name {
+  top: 6.5%;
+  left: 1.5%;
+  width: 68.5%;
+  height: 7.2%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5.9cqw;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Flavor text */
+.game-card-flavor {
+  top: 66%;
+  left: 15.5%;
+  width: 69%;
+  height: 4.7%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.6cqw;
+  font-style: italic;
+  line-height: 1.1;
+}
+
+/* Effect: block, not flex, so <strong> and text stay on the same line */
+.game-card-effect {
+  top: 75.2%;
+  left: 14%;
+  width: 72%;
+  font-size: 4.6cqw;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+/* Attack and defense */
+.game-card-stat {
+  top: 87.7%;
+  width: 12%;
+  height: 6.4%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7.4cqw;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+  color: var(--color-light);
+}
+
+.game-card-attack {
+  left: 16%;
+}
+
+.game-card-defense {
+  left: 77%;
+}
+
+@media (min-width: 992px) {
+  .game-card {
+    width: 16.5rem;
+  }
+}
+
+/* ---------- Game page ---------- */
+
+/* Wider container for this page: 60px side padding at 1440px */
+.game-container {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4.2vw, 3.75rem);
+}
+
+/* Shared text */
+.game-text {
+  margin: 0 0 1rem;
+  line-height: 1.3;
+}
+
+.game-text:last-child {
+  margin-bottom: 0;
+}
+
+/* Sizes are fluid: 36px/22px at 402px wide, 64px/48px at 1440px wide */
+.game-title {
+  margin: 0 0 1rem;
+  font-size: clamp(2.25rem, 1.575rem + 2.7vw, 4rem);
+  color: var(--color-cream);
+}
+
+.game-subtitle {
+  margin: 0 0 1rem;
+  font-size: clamp(1.375rem, 0.75rem + 2.5vw, 3rem);
+  color: var(--color-cream);
+}
+
+/* ---------- Intro ---------- */
+.game-intro {
+  padding-block: 2rem 2.5rem;
+  background: linear-gradient(to bottom,
+      var(--color-bg),
+      color-mix(in srgb, var(--color-navy) 55%, var(--color-bg)));
+}
+
+.game-intro-inner {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.game-intro-text {
+  max-width: 52rem;
+}
+
+/* ---------- Threshold ---------- */
+.game-threshold {
+  padding-block: 2rem;
+  background: linear-gradient(90deg,
+      color-mix(in srgb, var(--color-purple) 45%, var(--color-bg)),
+      color-mix(in srgb, var(--color-blue) 40%, var(--color-bg)));
+}
+
+/* ---------- Factions ---------- */
+.game-factions {
+  padding-block: 2rem 1.5rem;
+}
+
+.game-factions-title {
+  margin: 0 0 2rem;
+  font-size: clamp(1.75rem, 0.88rem + 3.47vw, 4rem);
+  color: var(--color-gold);
+}
+
+.faction-detail-list {
+  display: grid;
+  gap: 1.75rem;
+}
+
+/* Mobile: icon + title on one row, text below */
+.faction-detail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 1rem;
+}
+
+.faction-detail-icon {
+  height: 3.5rem;
+  width: auto;
+}
+
+/* The wrapper disappears on mobile so title and text become grid items */
+.faction-detail-body {
+  display: contents;
+}
+
+.faction-detail-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 0.57rem + 2.7vw, 3rem);
+  color: var(--color-cream);
+}
+
+.faction-detail-body .game-text {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+}
+
+/* Desktop icon widths, taken from the mockup */
+.faction-detail-dreams {
+  --icon-width: 6.25rem;
+}
+
+.faction-detail-nightmares {
+  --icon-width: 9.3rem;
+}
+
+.faction-detail-memories {
+  --icon-width: 6.1rem;
+}
+
+/* ---------- Desktop ---------- */
+@media (min-width: 992px) {
+
+  .game-title,
+  .game-subtitle,
+  .faction-detail-title {
+    color: var(--color-light);
+  }
+
+  .game-title,
+  .game-subtitle {
+    margin-bottom: 1.5rem;
+  }
+
+  .game-text {
+    margin-bottom: 1.2em;
+    line-height: 1.2;
+  }
+
+  /* Text on the left, card on the right; glow behind the card */
+  .game-intro {
+    padding-block: 2.5rem;
+    background: linear-gradient(90deg,
+        var(--color-bg) 55%,
+        color-mix(in srgb, var(--color-blue) 25%, var(--color-bg)) 80%,
+        color-mix(in srgb, var(--color-purple) 35%, var(--color-bg)));
+  }
+
+  .game-intro-inner {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 3rem;
+  }
+
+  .game-intro .game-card {
+    justify-self: end;
+    margin-inline: 0;
+  }
+
+  .game-threshold {
+    padding-block: 3rem;
+  }
+
+  .game-factions {
+    padding-block: 2.5rem;
+  }
+
+  .game-factions-title {
+    margin-bottom: 3rem;
+  }
+
+  .faction-detail-list {
+    gap: 4.5rem;
+  }
+
+  /* Fixed icon column so all titles start on the same line */
+  .faction-detail {
+    grid-template-columns: 11.25rem 1fr;
+    column-gap: 0;
+  }
+
+  .faction-detail-icon {
+    height: auto;
+    width: var(--icon-width);
+  }
+
+  .faction-detail-body {
+    display: block;
+  }
+
+  .faction-detail-title {
+    margin-bottom: 1.25rem;
+  }
+
+  .faction-detail-body .game-text {
+    margin-top: 0;
+  }
+}

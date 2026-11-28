@@ -1,0 +1,10 @@
+@import "base/variables.css";
+@import "base/reset.css";
+@import "base/base.css";
+
+@import "components/button.css";
+@import "components/header.css";
+@import "components/footer.css";
+
+@import "pages/landing.css";
+@import "pages/game.css";
